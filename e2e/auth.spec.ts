@@ -1,53 +1,71 @@
 /**
- * Auth E2E smoke tests — PENDING REAL BACKEND
+ * Auth E2E smoke tests.
  *
- * These tests require a live Supabase instance:
- *   - Either a local Docker stack: `supabase start` (WU3)
- *   - Or a cloud project with .env.local populated
+ * Credentials for the throwaway test tenant+user are written by
+ * e2e/global-setup.ts before these tests run, and deleted by
+ * e2e/global-teardown.ts after they finish.
  *
- * Until WU3 (schema migration) lands and credentials are available in CI,
- * run these manually against a local Supabase stack:
- *   npx playwright test e2e/auth.spec.ts
+ * Run:  npm run test:e2e
  *
- * Do NOT run in the standard `npm test` pipeline yet — no DB, no server.
+ * Prerequisites:
+ *   - npx playwright install chromium (one-time)
+ *   - .env.local with NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
+ *     and SUPABASE_SECRET_KEY (needed by global-setup/teardown)
  */
 
-import { test, expect } from '@playwright/test';
+import { test, expect } from "@playwright/test";
+import { readFileSync } from "fs";
+import { join } from "path";
 
-test.describe('Authentication flows', () => {
-  test.skip(
-    process.env.SUPABASE_E2E !== 'true',
-    'Requires SUPABASE_E2E=true and a live Supabase instance (WU3+)'
-  );
+interface E2ECredentials {
+  email: string;
+  password: string;
+}
 
-  test('valid credentials → redirects to /dashboard', async ({ page }) => {
-    await page.goto('/login');
-    await page.fill('[name=email]', process.env.E2E_USER_EMAIL ?? '');
-    await page.fill('[name=password]', process.env.E2E_USER_PASSWORD ?? '');
-    await page.click('[type=submit]');
-    await expect(page).toHaveURL('/dashboard');
-  });
+// Credentials file is created by global-setup.ts before workers start.
+const creds: E2ECredentials = JSON.parse(
+  readFileSync(join(process.cwd(), "e2e", ".test-credentials.json"), "utf-8")
+);
 
-  test('invalid credentials → shows inline error', async ({ page }) => {
-    await page.goto('/login');
-    await page.fill('[name=email]', 'bad@example.com');
-    await page.fill('[name=password]', 'wrongpassword');
-    await page.click('[type=submit]');
-    await expect(page.getByRole('alert')).toBeVisible();
-    await expect(page).toHaveURL('/login');
-  });
-
-  test('sign out → redirects to /login', async ({ page }) => {
-    // Assumes prior test left an authenticated session, or re-login here.
-    await page.goto('/dashboard');
-    await page.click('[type=submit]'); // sign-out button is a form submit
-    await expect(page).toHaveURL('/login');
-  });
-
-  test('unauthenticated /dashboard → redirects to /login', async ({ page }) => {
-    // Clear cookies to ensure no session
+test.describe("Authentication flows", () => {
+  test("unauthenticated /dashboard redirects to /login", async ({ page }) => {
     await page.context().clearCookies();
-    await page.goto('/dashboard');
-    await expect(page).toHaveURL('/login');
+    await page.goto("/dashboard");
+    await expect(page).toHaveURL("/login");
+  });
+
+  test("valid credentials land on /dashboard", async ({ page }) => {
+    await page.goto("/login");
+    await page.fill("[name=email]", creds.email);
+    await page.fill("[name=password]", creds.password);
+    await page.click("[type=submit]");
+    await expect(page).toHaveURL("/dashboard");
+  });
+
+  test("invalid credentials show an inline error", async ({ page }) => {
+    await page.goto("/login");
+    await page.fill("[name=email]", "nobody@example.com");
+    await page.fill("[name=password]", "wrongpassword");
+    await page.click("[type=submit]");
+    await expect(page.getByRole("alert")).toBeVisible();
+    await expect(page).toHaveURL("/login");
+  });
+
+  test("sign out returns to /login and blocks protected routes", async ({ page }) => {
+    // Login first
+    await page.goto("/login");
+    await page.fill("[name=email]", creds.email);
+    await page.fill("[name=password]", creds.password);
+    await page.click("[type=submit]");
+    await expect(page).toHaveURL("/dashboard");
+
+    // Sign out via the form submit on the dashboard
+    await page.click("[type=submit]");
+    await expect(page).toHaveURL("/login");
+
+    // Confirm protected route is now blocked
+    await page.context().clearCookies();
+    await page.goto("/dashboard");
+    await expect(page).toHaveURL("/login");
   });
 });

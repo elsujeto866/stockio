@@ -42,6 +42,7 @@ supabase/.temp/
 # playwright
 test-results/
 playwright-report/
+e2e/.test-credentials.json
 
 # typescript
 *.tsbuildinfo

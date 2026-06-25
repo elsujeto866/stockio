@@ -1,6 +1,5 @@
 import { defineConfig } from "vitest/config";
 import react from "@vitejs/plugin-react";
-import tsconfigPaths from "vite-tsconfig-paths";
 import { readFileSync, existsSync } from "fs";
 import { join } from "path";
 
@@ -47,7 +46,12 @@ function loadLocalEnv(): Record<string, string> {
 }
 
 export default defineConfig({
-  plugins: [react(), tsconfigPaths()],
+  plugins: [react()],
+  resolve: {
+    // Native tsconfig path resolution (replaces the vite-tsconfig-paths plugin).
+    // Vite 6 / Vitest 4 support this natively — no plugin needed.
+    tsconfigPaths: true,
+  },
   test: {
     environment: "jsdom",
     globals: true,

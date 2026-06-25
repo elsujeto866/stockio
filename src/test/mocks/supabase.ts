@@ -43,7 +43,8 @@ export interface MockSupabaseOptions {
 
 function buildQueryResult(rows: MockRow[]) {
   let _rows = [...rows];
-  let _error: { message: string; code: string } | null = null;
+  // _error is reserved for future mock error injection; const because we never reassign it here.
+  const _error: { message: string; code: string } | null = null;
   let _single = false;
 
   const builder = {
