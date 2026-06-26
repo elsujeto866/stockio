@@ -10,6 +10,7 @@
 
 import Link from 'next/link';
 import type { OrderListItem } from '@/lib/data/orders';
+import { formatCurrency, formatDate } from '@/lib/format';
 
 interface Props {
   orders: OrderListItem[];
@@ -17,15 +18,15 @@ interface Props {
 
 const ESTADO_BADGE: Record<string, { label: string; className: string }> = {
   pendiente: {
-    label: 'Pending',
+    label: 'Pendiente',
     className: 'bg-yellow-100 text-yellow-700 border border-yellow-200',
   },
   entregado: {
-    label: 'Delivered',
+    label: 'Entregado',
     className: 'bg-green-100 text-green-700 border border-green-200',
   },
   cancelado: {
-    label: 'Cancelled',
+    label: 'Cancelado',
     className: 'bg-gray-100 text-gray-500 border border-gray-200',
   },
 };
@@ -33,10 +34,10 @@ const ESTADO_BADGE: Record<string, { label: string; className: string }> = {
 export function RecentOrdersWidget({ orders }: Props) {
   return (
     <div className="rounded-xl bg-white p-6 shadow-sm border border-gray-100 space-y-4">
-      <h2 className="font-semibold text-gray-900">Recent Orders</h2>
+      <h2 className="font-semibold text-gray-900">Pedidos recientes</h2>
 
       {orders.length === 0 ? (
-        <p className="text-sm text-gray-500">No orders yet.</p>
+        <p className="text-sm text-gray-500">No hay pedidos todavía</p>
       ) : (
         <ul className="space-y-2">
           {orders.map((order) => {
@@ -53,9 +54,9 @@ export function RecentOrdersWidget({ orders }: Props) {
                 >
                   <div className="min-w-0 space-y-0.5">
                     <p className="font-medium text-gray-900 truncate">
-                      {order.store?.nombre ?? 'Unknown store'}
+                      {order.store?.nombre ?? 'Tienda desconocida'}
                     </p>
-                    <p className="text-xs text-gray-500">{order.fecha}</p>
+                    <p className="text-xs text-gray-500">{formatDate(order.fecha)}</p>
                   </div>
                   <div className="ml-2 flex items-center gap-2 shrink-0">
                     <span
@@ -65,7 +66,7 @@ export function RecentOrdersWidget({ orders }: Props) {
                       {badge.label}
                     </span>
                     <span className="text-sm font-medium text-gray-900">
-                      {order.total !== null ? `$${order.total.toFixed(2)}` : '—'}
+                      {order.total !== null ? formatCurrency(order.total) : '—'}
                     </span>
                   </div>
                 </Link>

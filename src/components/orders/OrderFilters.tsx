@@ -39,7 +39,7 @@ export function OrderFilters({ stores }: Props) {
           htmlFor="store-filter"
           className="text-xs font-medium text-gray-500 uppercase tracking-wide"
         >
-          Store
+          Filtrar por tienda
         </label>
         <select
           id="store-filter"
@@ -47,7 +47,7 @@ export function OrderFilters({ stores }: Props) {
           value={searchParams.get('store') ?? ''}
           onChange={(e) => updateParam('store', e.target.value)}
         >
-          <option value="">All stores</option>
+          <option value="">Todas las tiendas</option>
           {stores.map((s) => (
             <option key={s.id} value={s.id}>
               {s.nombre}
@@ -62,7 +62,7 @@ export function OrderFilters({ stores }: Props) {
           htmlFor="from-filter"
           className="text-xs font-medium text-gray-500 uppercase tracking-wide"
         >
-          From
+          Desde
         </label>
         <input
           id="from-filter"
@@ -79,7 +79,7 @@ export function OrderFilters({ stores }: Props) {
           htmlFor="to-filter"
           className="text-xs font-medium text-gray-500 uppercase tracking-wide"
         >
-          To
+          Hasta
         </label>
         <input
           id="to-filter"

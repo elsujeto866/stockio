@@ -33,10 +33,10 @@ export default async function InvoicePage({ params }: Props) {
             href="/invoices"
             className="text-sm text-gray-500 hover:text-gray-700 transition-colors"
           >
-            ← Invoices
+            ← Facturas
           </Link>
           <h1 className="text-2xl font-semibold text-gray-900">
-            Invoice #{invoice.numero}
+            Factura #{invoice.numero}
           </h1>
         </div>
 

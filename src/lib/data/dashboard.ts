@@ -24,11 +24,11 @@ export interface DashboardData {
 }
 
 // ---------------------------------------------------------------------------
-// Month name lookup (English, UTC-based label)
+// Month name lookup (Spanish, UTC-based label)
 // ---------------------------------------------------------------------------
 const MONTH_NAMES = [
-  'January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December',
+  'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
+  'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre',
 ];
 
 // ---------------------------------------------------------------------------

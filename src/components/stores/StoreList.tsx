@@ -17,19 +17,19 @@ export function StoreList({ stores }: Props) {
   if (stores.length === 0) {
     return (
       <div className="rounded-xl bg-white border border-gray-100 shadow-sm p-8 text-center space-y-3">
-        <p className="text-gray-500 text-sm">No stores yet.</p>
+        <p className="text-gray-500 text-sm">No hay tiendas todavía</p>
         <Link
           href="/stores/new"
           className="inline-flex items-center justify-center rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors min-h-[44px]"
         >
-          Add your first store
+          Agrega tu primera tienda
         </Link>
       </div>
     );
   }
 
   return (
-    <ul className="space-y-3" aria-label="Store list">
+    <ul className="space-y-3" aria-label="Lista de tiendas">
       {stores.map((store) => (
         <li key={store.id}>
           <StoreCard store={store} />

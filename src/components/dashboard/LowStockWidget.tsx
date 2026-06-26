@@ -16,14 +16,14 @@ export function LowStockWidget({ products }: Props) {
   return (
     <div className="rounded-xl bg-white p-6 shadow-sm border border-gray-100 space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="font-semibold text-gray-900">Low Stock</h2>
+        <h2 className="font-semibold text-gray-900">Stock bajo</h2>
         <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-red-100 text-red-700 text-sm font-bold">
           {products.length}
         </span>
       </div>
 
       {products.length === 0 ? (
-        <p className="text-sm text-gray-500">All products are well stocked.</p>
+        <p className="text-sm text-gray-500">Todos los productos tienen stock suficiente</p>
       ) : (
         <ul className="space-y-2">
           {products.map((product) => (

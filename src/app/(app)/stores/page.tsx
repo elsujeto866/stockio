@@ -20,12 +20,12 @@ export default async function StoresPage() {
     <main className="min-h-screen bg-gray-50">
       <div className="max-w-2xl mx-auto px-4 py-8 space-y-6">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-semibold text-gray-900">Stores</h1>
+          <h1 className="text-2xl font-semibold text-gray-900">Tiendas</h1>
           <Link
             href="/stores/new"
             className="inline-flex items-center justify-center rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors min-h-[44px]"
           >
-            + New store
+            + Nueva tienda
           </Link>
         </div>
 

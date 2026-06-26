@@ -46,13 +46,13 @@ export async function createInvoiceAction(
     const msg = (err as { message?: string }).message ?? String(err);
 
     if (msg.includes('Cancelled orders cannot be invoiced')) {
-      return { error: 'This order is cancelled and cannot be invoiced.' };
+      return { error: 'Los pedidos cancelados no se pueden facturar' };
     }
     if (msg.includes('Invoice already exists')) {
-      return { error: 'An invoice already exists for this order.' };
+      return { error: 'Ya existe una factura para este pedido' };
     }
     if (msg.includes('not found')) {
-      return { error: 'Order not found.' };
+      return { error: 'Pedido no encontrado.' };
     }
     return { error: msg };
   }

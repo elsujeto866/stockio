@@ -44,7 +44,7 @@ export function ProductForm({ action, initialData }: Props) {
       {/* ── Group A: identity fields ────────────────────────────── */}
       <div className="rounded-xl bg-white border border-gray-100 shadow-sm p-4 space-y-4">
         <h2 className="text-sm font-medium text-gray-500 uppercase tracking-wide">
-          Product details
+          Detalles del producto
         </h2>
 
         <div className="space-y-1">
@@ -52,7 +52,7 @@ export function ProductForm({ action, initialData }: Props) {
             htmlFor="nombre"
             className="block text-sm font-medium text-gray-700"
           >
-            Name *
+            Nombre *
           </label>
           <input
             id="nombre"
@@ -61,7 +61,7 @@ export function ProductForm({ action, initialData }: Props) {
             required
             defaultValue={initialData?.nombre ?? ''}
             className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            placeholder="Product name"
+            placeholder="Nombre del producto"
           />
           <FieldError messages={state?.fieldErrors?.nombre} />
         </div>
@@ -71,7 +71,7 @@ export function ProductForm({ action, initialData }: Props) {
             htmlFor="sku"
             className="block text-sm font-medium text-gray-700"
           >
-            SKU
+            SKU / Código
           </label>
           <input
             id="sku"
@@ -90,7 +90,7 @@ export function ProductForm({ action, initialData }: Props) {
               htmlFor="categoria"
               className="block text-sm font-medium text-gray-700"
             >
-              Category
+              Categoría
             </label>
             <input
               id="categoria"
@@ -98,7 +98,7 @@ export function ProductForm({ action, initialData }: Props) {
               type="text"
               defaultValue={initialData?.categoria ?? ''}
               className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="e.g. Food"
+              placeholder="p. ej. Alimentos"
             />
             <FieldError messages={state?.fieldErrors?.categoria} />
           </div>
@@ -108,7 +108,7 @@ export function ProductForm({ action, initialData }: Props) {
               htmlFor="unidad_medida"
               className="block text-sm font-medium text-gray-700"
             >
-              Unit of measure
+              Unidad de medida
             </label>
             <input
               id="unidad_medida"
@@ -126,7 +126,7 @@ export function ProductForm({ action, initialData }: Props) {
       {/* ── Group B: numeric fields ─────────────────────────────── */}
       <div className="rounded-xl bg-white border border-gray-100 shadow-sm p-4 space-y-4">
         <h2 className="text-sm font-medium text-gray-500 uppercase tracking-wide">
-          Pricing &amp; stock
+          Precio y stock
         </h2>
 
         <div className="space-y-1">
@@ -134,7 +134,7 @@ export function ProductForm({ action, initialData }: Props) {
             htmlFor="precio_unitario"
             className="block text-sm font-medium text-gray-700"
           >
-            Unit price *
+            Precio unitario *
           </label>
           <input
             id="precio_unitario"
@@ -156,7 +156,7 @@ export function ProductForm({ action, initialData }: Props) {
               htmlFor="stock_actual"
               className="block text-sm font-medium text-gray-700"
             >
-              Current stock *
+              Stock actual *
             </label>
             <input
               id="stock_actual"
@@ -177,7 +177,7 @@ export function ProductForm({ action, initialData }: Props) {
               htmlFor="stock_minimo"
               className="block text-sm font-medium text-gray-700"
             >
-              Minimum stock *
+              Stock mínimo *
             </label>
             <input
               id="stock_minimo"
@@ -211,7 +211,7 @@ export function ProductForm({ action, initialData }: Props) {
         disabled={isPending}
         className="w-full rounded-lg bg-blue-600 px-4 py-3 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 transition-colors min-h-[44px]"
       >
-        {isPending ? 'Saving…' : isEdit ? 'Update product' : 'Create product'}
+        {isPending ? 'Guardando…' : isEdit ? 'Actualizar producto' : 'Crear producto'}
       </button>
     </form>
   );

@@ -28,31 +28,31 @@ export default async function AppLayout({
             href="/dashboard"
             className="text-sm text-gray-600 hover:text-gray-900 transition-colors"
           >
-            Dashboard
+            Inicio
           </Link>
           <Link
             href="/products"
             className="text-sm text-gray-600 hover:text-gray-900 transition-colors"
           >
-            Products
+            Productos
           </Link>
           <Link
             href="/stores"
             className="text-sm text-gray-600 hover:text-gray-900 transition-colors"
           >
-            Stores
+            Tiendas
           </Link>
           <Link
             href="/orders"
             className="text-sm text-gray-600 hover:text-gray-900 transition-colors"
           >
-            Orders
+            Pedidos
           </Link>
           <Link
             href="/invoices"
             className="text-sm text-gray-600 hover:text-gray-900 transition-colors"
           >
-            Invoices
+            Facturas
           </Link>
         </div>
       </nav>

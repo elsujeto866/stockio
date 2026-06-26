@@ -31,19 +31,19 @@ export function StoreCard({ store }: Props) {
         <div className="flex flex-col gap-0.5 text-sm text-gray-500">
           {store.contacto && (
             <p>
-              <span className="font-medium text-gray-700">Contact: </span>
+              <span className="font-medium text-gray-700">Contacto: </span>
               {store.contacto}
             </p>
           )}
           {store.direccion && (
             <p>
-              <span className="font-medium text-gray-700">Address: </span>
+              <span className="font-medium text-gray-700">Dirección: </span>
               {store.direccion}
             </p>
           )}
           {store.telefono && (
             <p>
-              <span className="font-medium text-gray-700">Phone: </span>
+              <span className="font-medium text-gray-700">Teléfono: </span>
               {store.telefono}
             </p>
           )}
@@ -56,7 +56,7 @@ export function StoreCard({ store }: Props) {
           href={`/stores/${store.id}/edit`}
           className="inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors min-h-[44px]"
         >
-          Edit
+          Editar
         </Link>
         <form action={deleteStoreAction} className="ml-auto">
           <input type="hidden" name="id" value={store.id} />
@@ -64,7 +64,7 @@ export function StoreCard({ store }: Props) {
             type="submit"
             className="inline-flex items-center justify-center rounded-lg border border-red-200 bg-red-50 px-3 py-2.5 text-sm font-medium text-red-600 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-500 transition-colors min-h-[44px]"
           >
-            Delete
+            Eliminar
           </button>
         </form>
       </div>

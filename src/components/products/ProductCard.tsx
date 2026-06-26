@@ -14,6 +14,7 @@ import Link from 'next/link';
 import type { Product } from '@/lib/data/products';
 import { LowStockBadge } from './LowStockBadge';
 import { deleteProductAction } from '@/app/(app)/products/actions';
+import { formatCurrency } from '@/lib/format';
 
 interface Props {
   product: Product;
@@ -46,13 +47,13 @@ export function ProductCard({ product }: Props) {
           </span>
         </div>
         <div>
-          <span className="text-gray-500">Min: </span>
+          <span className="text-gray-500">Mín: </span>
           <span className="font-medium text-gray-700">{product.stock_minimo}</span>
         </div>
         <div>
-          <span className="text-gray-500">Price: </span>
+          <span className="text-gray-500">Precio: </span>
           <span className="font-medium text-gray-900">
-            ${product.precio_unitario.toFixed(2)}
+            {formatCurrency(product.precio_unitario)}
           </span>
         </div>
       </div>
@@ -63,13 +64,13 @@ export function ProductCard({ product }: Props) {
           href={`/products/${product.id}/edit`}
           className="inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors min-h-[44px]"
         >
-          Edit
+          Editar
         </Link>
         <Link
           href={`/products/${product.id}/adjust`}
           className="inline-flex items-center justify-center rounded-lg border border-blue-300 bg-blue-50 px-3 py-2.5 text-sm font-medium text-blue-700 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors min-h-[44px]"
         >
-          Adjust stock
+          Ajustar stock
         </Link>
         <form action={deleteProductAction} className="ml-auto">
           <input type="hidden" name="id" value={product.id} />
@@ -77,7 +78,7 @@ export function ProductCard({ product }: Props) {
             type="submit"
             className="inline-flex items-center justify-center rounded-lg border border-red-200 bg-red-50 px-3 py-2.5 text-sm font-medium text-red-600 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-500 transition-colors min-h-[44px]"
           >
-            Delete
+            Eliminar
           </button>
         </form>
       </div>

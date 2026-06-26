@@ -34,10 +34,10 @@ export default async function AdjustStockPage({ params }: Props) {
             href="/products"
             className="text-sm text-gray-500 hover:text-gray-700"
           >
-            ← Products
+            ← Productos
           </Link>
           <h1 className="text-2xl font-semibold text-gray-900">
-            Adjust stock
+            Ajustar stock
           </h1>
         </div>
 

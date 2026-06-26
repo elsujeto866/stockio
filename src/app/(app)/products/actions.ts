@@ -120,7 +120,7 @@ export async function adjustStockAction(
     await adjustStock(supabase, productId, parsed.data.delta);
   } catch (err) {
     if (err instanceof StockUnderflowError) {
-      return { error: 'Stock cannot go below zero' };
+      return { error: 'El stock no puede ser negativo' };
     }
     return { error: (err as { message?: string }).message ?? String(err) };
   }

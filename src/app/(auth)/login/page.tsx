@@ -33,13 +33,13 @@ export default function LoginPage() {
           <h1 className="text-2xl font-semibold tracking-tight text-gray-900">
             Stockio
           </h1>
-          <p className="mt-1 text-sm text-gray-500">Sign in to your account</p>
+          <p className="mt-1 text-sm text-gray-500">Inicia sesión en tu cuenta</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-1">
             <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-              Email
+              Correo electrónico
             </label>
             <input
               id="email"
@@ -57,7 +57,7 @@ export default function LoginPage() {
               htmlFor="password"
               className="block text-sm font-medium text-gray-700"
             >
-              Password
+              Contraseña
             </label>
             <input
               id="password"
@@ -84,7 +84,7 @@ export default function LoginPage() {
             disabled={isPending}
             className="w-full rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 transition-colors"
           >
-            {isPending ? 'Signing in…' : 'Sign in'}
+            {isPending ? 'Iniciando sesión…' : 'Iniciar sesión'}
           </button>
         </form>
       </div>

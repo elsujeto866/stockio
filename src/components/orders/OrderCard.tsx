@@ -13,6 +13,7 @@
 
 import Link from 'next/link';
 import type { OrderListItem } from '@/lib/data/orders';
+import { formatCurrency, formatDate } from '@/lib/format';
 
 interface Props {
   order: OrderListItem;
@@ -20,15 +21,15 @@ interface Props {
 
 const ESTADO_BADGE: Record<string, { label: string; className: string }> = {
   pendiente: {
-    label: 'Pending',
+    label: 'Pendiente',
     className: 'bg-yellow-100 text-yellow-700 border border-yellow-200',
   },
   entregado: {
-    label: 'Delivered',
+    label: 'Entregado',
     className: 'bg-green-100 text-green-700 border border-green-200',
   },
   cancelado: {
-    label: 'Cancelled',
+    label: 'Cancelado',
     className: 'bg-gray-100 text-gray-500 border border-gray-200',
   },
 };
@@ -47,9 +48,9 @@ export function OrderCard({ order }: Props) {
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
           <h2 className="font-semibold text-gray-900 truncate">
-            {order.store?.nombre ?? 'Unknown store'}
+            {order.store?.nombre ?? 'Tienda desconocida'}
           </h2>
-          <p className="text-xs text-gray-500 mt-0.5">{order.fecha}</p>
+          <p className="text-xs text-gray-500 mt-0.5">{formatDate(order.fecha)}</p>
         </div>
         <span
           role="status"
@@ -62,7 +63,7 @@ export function OrderCard({ order }: Props) {
       <div className="text-sm">
         <span className="text-gray-500">Total: </span>
         <span className="font-medium text-gray-900">
-          {order.total !== null ? `$${order.total.toFixed(2)}` : '—'}
+          {order.total !== null ? formatCurrency(order.total) : '—'}
         </span>
       </div>
     </Link>

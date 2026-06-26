@@ -43,7 +43,7 @@ export function StockAdjustForm({ action, product }: Props) {
 
       {/* Current stock info */}
       <div className="rounded-xl bg-gray-50 border border-gray-200 p-4">
-        <p className="text-sm text-gray-500">Current stock</p>
+        <p className="text-sm text-gray-500">Stock actual</p>
         <p className="mt-1 text-2xl font-semibold text-gray-900">
           {product.stock_actual}
           {product.unidad_medida ? (
@@ -53,7 +53,7 @@ export function StockAdjustForm({ action, product }: Props) {
           ) : null}
         </p>
         <p className="text-xs text-gray-400 mt-1">
-          Minimum: {product.stock_minimo}
+          Mínimo: {product.stock_minimo}
         </p>
       </div>
 
@@ -63,14 +63,14 @@ export function StockAdjustForm({ action, product }: Props) {
           htmlFor="delta"
           className="block text-sm font-medium text-gray-700"
         >
-          Adjustment
+          Ajuste
         </label>
         <div className="flex items-center gap-2">
           <button
             type="button"
             onClick={decrement}
             disabled={isPending}
-            aria-label="Decrease stock"
+            aria-label="Disminuir stock"
             className="inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white text-lg font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 transition-colors min-h-[44px] min-w-[44px]"
           >
             −
@@ -88,7 +88,7 @@ export function StockAdjustForm({ action, product }: Props) {
             type="button"
             onClick={increment}
             disabled={isPending}
-            aria-label="Increase stock"
+            aria-label="Aumentar stock"
             className="inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white text-lg font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 transition-colors min-h-[44px] min-w-[44px]"
           >
             +
@@ -117,7 +117,7 @@ export function StockAdjustForm({ action, product }: Props) {
         disabled={isPending}
         className="w-full rounded-lg bg-blue-600 px-4 py-3 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 transition-colors min-h-[44px]"
       >
-        {isPending ? 'Adjusting…' : 'Apply adjustment'}
+        {isPending ? 'Ajustando…' : 'Aplicar ajuste'}
       </button>
     </form>
   );

@@ -11,7 +11,7 @@
 import { z } from 'zod';
 
 export const ProductInputSchema = z.object({
-  nombre: z.string().min(1, 'Name is required').max(255),
+  nombre: z.string().min(1, 'El nombre es obligatorio').max(255),
   sku: z
     .string()
     .max(100)
@@ -24,9 +24,9 @@ export const ProductInputSchema = z.object({
     .nullable()
     .optional()
     .transform((v) => v || null),
-  precio_unitario: z.coerce.number().min(0, 'Price must be non-negative'),
-  stock_actual: z.coerce.number().int().min(0, 'Current stock must be non-negative'),
-  stock_minimo: z.coerce.number().int().min(0, 'Minimum stock must be non-negative'),
+  precio_unitario: z.coerce.number().min(0, 'El precio debe ser mayor o igual a 0'),
+  stock_actual: z.coerce.number().int().min(0, 'El stock actual debe ser mayor o igual a 0'),
+  stock_minimo: z.coerce.number().int().min(0, 'El stock mínimo debe ser mayor o igual a 0'),
   unidad_medida: z
     .string()
     .max(50)

@@ -43,7 +43,7 @@ export function StoreForm({ action, initialData }: Props) {
 
       <div className="rounded-xl bg-white border border-gray-100 shadow-sm p-4 space-y-4">
         <h2 className="text-sm font-medium text-gray-500 uppercase tracking-wide">
-          Store details
+          Detalles de la tienda
         </h2>
 
         {/* nombre */}
@@ -52,7 +52,7 @@ export function StoreForm({ action, initialData }: Props) {
             htmlFor="nombre"
             className="block text-sm font-medium text-gray-700"
           >
-            Name *
+            Nombre *
           </label>
           <input
             id="nombre"
@@ -61,7 +61,7 @@ export function StoreForm({ action, initialData }: Props) {
             required
             defaultValue={initialData?.nombre ?? ''}
             className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            placeholder="Store name"
+            placeholder="Nombre de la tienda"
           />
           <FieldError messages={state?.fieldErrors?.nombre} />
         </div>
@@ -72,7 +72,7 @@ export function StoreForm({ action, initialData }: Props) {
             htmlFor="contacto"
             className="block text-sm font-medium text-gray-700"
           >
-            Contact
+            Contacto
           </label>
           <input
             id="contacto"
@@ -80,7 +80,7 @@ export function StoreForm({ action, initialData }: Props) {
             type="text"
             defaultValue={initialData?.contacto ?? ''}
             className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            placeholder="Contact person"
+            placeholder="Persona de contacto"
           />
           <FieldError messages={state?.fieldErrors?.contacto} />
         </div>
@@ -91,7 +91,7 @@ export function StoreForm({ action, initialData }: Props) {
             htmlFor="direccion"
             className="block text-sm font-medium text-gray-700"
           >
-            Address
+            Dirección
           </label>
           <input
             id="direccion"
@@ -99,7 +99,7 @@ export function StoreForm({ action, initialData }: Props) {
             type="text"
             defaultValue={initialData?.direccion ?? ''}
             className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            placeholder="Store address"
+            placeholder="Dirección de la tienda"
           />
           <FieldError messages={state?.fieldErrors?.direccion} />
         </div>
@@ -110,7 +110,7 @@ export function StoreForm({ action, initialData }: Props) {
             htmlFor="telefono"
             className="block text-sm font-medium text-gray-700"
           >
-            Phone
+            Teléfono
           </label>
           <input
             id="telefono"
@@ -118,7 +118,7 @@ export function StoreForm({ action, initialData }: Props) {
             type="text"
             defaultValue={initialData?.telefono ?? ''}
             className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            placeholder="Phone number"
+            placeholder="Número de teléfono"
           />
           <FieldError messages={state?.fieldErrors?.telefono} />
         </div>
@@ -140,7 +140,7 @@ export function StoreForm({ action, initialData }: Props) {
         disabled={isPending}
         className="w-full rounded-lg bg-blue-600 px-4 py-3 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 transition-colors min-h-[44px]"
       >
-        {isPending ? 'Saving…' : isEdit ? 'Update store' : 'Create store'}
+        {isPending ? 'Guardando…' : isEdit ? 'Actualizar tienda' : 'Crear tienda'}
       </button>
     </form>
   );

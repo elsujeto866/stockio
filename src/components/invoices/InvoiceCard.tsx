@@ -14,6 +14,7 @@
 
 import Link from 'next/link';
 import type { InvoiceListItem } from '@/lib/data/invoices';
+import { formatCurrency, formatDate } from '@/lib/format';
 
 interface Props {
   invoice: InvoiceListItem;
@@ -21,17 +22,17 @@ interface Props {
 
 const ESTADO_BADGE: Record<string, { label: string; className: string }> = {
   pendiente: {
-    label: 'Pending',
+    label: 'Pendiente',
     className: 'bg-yellow-100 text-yellow-700 border border-yellow-200',
   },
   pagado: {
-    label: 'Paid',
+    label: 'Pagado',
     className: 'bg-green-100 text-green-700 border border-green-200',
   },
 };
 
 const UNPAID_BADGE = {
-  label: 'Unpaid',
+  label: 'Sin pagar',
   className: 'bg-gray-100 text-gray-500 border border-gray-200',
 };
 
@@ -51,12 +52,12 @@ export function InvoiceCard({ invoice }: Props) {
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
           <h2 className="font-semibold text-gray-900 truncate">
-            Invoice #{invoice.numero}
+            Factura #{invoice.numero}
           </h2>
           <p className="text-xs text-gray-500 mt-0.5">
-            {invoice.order?.store?.nombre ?? 'Unknown store'}
+            {invoice.order?.store?.nombre ?? 'Tienda desconocida'}
           </p>
-          <p className="text-xs text-gray-400 mt-0.5">{invoice.fecha_emision}</p>
+          <p className="text-xs text-gray-400 mt-0.5">{formatDate(invoice.fecha_emision)}</p>
         </div>
         <span
           role="status"
@@ -69,7 +70,7 @@ export function InvoiceCard({ invoice }: Props) {
       <div className="text-sm">
         <span className="text-gray-500">Total: </span>
         <span className="font-medium text-gray-900">
-          ${invoice.total.toFixed(2)}
+          {formatCurrency(invoice.total)}
         </span>
       </div>
     </Link>

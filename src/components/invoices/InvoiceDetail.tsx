@@ -12,6 +12,7 @@
 
 import type { InvoiceDetail as InvoiceDetailType } from '@/lib/data/invoices';
 import { setPaymentStatusAction } from '@/app/(app)/invoices/actions';
+import { formatCurrency, formatDate } from '@/lib/format';
 
 interface Props {
   invoice: InvoiceDetailType;
@@ -19,17 +20,17 @@ interface Props {
 
 const ESTADO_BADGE: Record<string, { label: string; className: string }> = {
   pendiente: {
-    label: 'Pending',
+    label: 'Pendiente',
     className: 'bg-yellow-100 text-yellow-700 border border-yellow-200',
   },
   pagado: {
-    label: 'Paid',
+    label: 'Pagado',
     className: 'bg-green-100 text-green-700 border border-green-200',
   },
 };
 
 const UNPAID_BADGE = {
-  label: 'Unpaid',
+  label: 'Sin pagar',
   className: 'bg-gray-100 text-gray-500 border border-gray-200',
 };
 
@@ -44,7 +45,7 @@ export function InvoiceDetail({ invoice }: Props) {
   // Payment toggle: if currently pagado → offer pendiente, else offer pagado
   const nextEstado = invoice.estado_pago === 'pagado' ? 'pendiente' : 'pagado';
   const toggleLabel =
-    invoice.estado_pago === 'pagado' ? 'Mark as pending' : 'Mark as paid';
+    invoice.estado_pago === 'pagado' ? 'Marcar como pendiente' : 'Marcar como pagada';
 
   const items = invoice.order?.items ?? [];
 
@@ -55,12 +56,12 @@ export function InvoiceDetail({ invoice }: Props) {
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0">
             <h2 className="font-semibold text-gray-900 text-xl">
-              Invoice #{invoice.numero}
+              Factura #{invoice.numero}
             </h2>
             <p className="text-sm text-gray-600 mt-0.5">
-              {invoice.order?.store?.nombre ?? 'Unknown store'}
+              {invoice.order?.store?.nombre ?? 'Tienda desconocida'}
             </p>
-            <p className="text-sm text-gray-400 mt-0.5">{invoice.fecha_emision}</p>
+            <p className="text-sm text-gray-400 mt-0.5">{formatDate(invoice.fecha_emision)}</p>
           </div>
           <span
             role="status"
@@ -74,10 +75,10 @@ export function InvoiceDetail({ invoice }: Props) {
       {/* ── Line items ───────────────────────────────────────────── */}
       <div className="rounded-xl bg-white border border-gray-100 shadow-sm p-4 space-y-3">
         <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wide">
-          Items
+          Artículos
         </h3>
 
-        <ul className="space-y-0 divide-y divide-gray-50" aria-label="Invoice items">
+        <ul className="space-y-0 divide-y divide-gray-50" aria-label="Artículos de la factura">
           {items.map((item) => (
             <li
               key={item.id}
@@ -90,9 +91,9 @@ export function InvoiceDetail({ invoice }: Props) {
               </div>
               <div className="flex items-center gap-4 text-sm shrink-0">
                 <span className="text-gray-500">×{item.cantidad}</span>
-                <span className="text-gray-600">${item.precio_unitario.toFixed(2)}</span>
+                <span className="text-gray-600">{formatCurrency(item.precio_unitario)}</span>
                 <span className="font-medium text-gray-900 min-w-[64px] text-right">
-                  ${item.subtotal.toFixed(2)}
+                  {formatCurrency(item.subtotal)}
                 </span>
               </div>
             </li>
@@ -104,7 +105,7 @@ export function InvoiceDetail({ invoice }: Props) {
           <p className="text-sm">
             <span className="text-gray-500">Total: </span>
             <span className="font-semibold text-gray-900 text-base">
-              ${invoice.total.toFixed(2)}
+              {formatCurrency(invoice.total)}
             </span>
           </p>
         </div>

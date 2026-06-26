@@ -24,6 +24,7 @@ import type { Store } from '@/lib/data/stores';
 import type { Product } from '@/lib/data/products';
 import { createOrderAction } from '@/app/(app)/orders/actions';
 import type { ActionResult } from '@/app/(app)/orders/actions';
+import { formatCurrency } from '@/lib/format';
 
 interface LineItem {
   productId: string;
@@ -122,13 +123,13 @@ export function OrderBuilder({ stores, products }: Props) {
       {/* ── Order header fields ──────────────────────────────────── */}
       <div className="rounded-xl bg-white border border-gray-100 shadow-sm p-4 space-y-4">
         <h2 className="text-sm font-medium text-gray-500 uppercase tracking-wide">
-          Order details
+          Detalles del pedido
         </h2>
 
         {/* Store select */}
         <div className="space-y-1">
           <label htmlFor="storeId" className="block text-sm font-medium text-gray-700">
-            Store *
+            Tienda *
           </label>
           <select
             id="storeId"
@@ -138,7 +139,7 @@ export function OrderBuilder({ stores, products }: Props) {
             onChange={(e) => setSelectedStoreId(e.target.value)}
             className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[44px]"
           >
-            <option value="">Select a store…</option>
+            <option value="">Selecciona una tienda…</option>
             {stores.map((s) => (
               <option key={s.id} value={s.id}>
                 {s.nombre}
@@ -151,14 +152,14 @@ export function OrderBuilder({ stores, products }: Props) {
         {/* Notes */}
         <div className="space-y-1">
           <label htmlFor="notas" className="block text-sm font-medium text-gray-700">
-            Notes
+            Notas
           </label>
           <textarea
             id="notas"
             name="notas"
             rows={2}
             className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Optional notes…"
+            placeholder="Notas opcionales…"
           />
         </div>
       </div>
@@ -166,7 +167,7 @@ export function OrderBuilder({ stores, products }: Props) {
       {/* ── Line items ───────────────────────────────────────────── */}
       <div className="rounded-xl bg-white border border-gray-100 shadow-sm p-4 space-y-4">
         <h2 className="text-sm font-medium text-gray-500 uppercase tracking-wide">
-          Products
+          Productos
         </h2>
 
         {/* Product selector + Add button */}
@@ -175,12 +176,12 @@ export function OrderBuilder({ stores, products }: Props) {
             value={selectedProductId}
             onChange={(e) => setSelectedProductId(e.target.value)}
             className="flex-1 rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[44px]"
-            aria-label="Select a product to add"
+            aria-label="Seleccionar un producto para agregar"
           >
-            <option value="">Select a product…</option>
+            <option value="">Selecciona un producto…</option>
             {products.map((p) => (
               <option key={p.id} value={p.id}>
-                {p.nombre} — ${p.precio_unitario.toFixed(2)}
+                {p.nombre} — {formatCurrency(p.precio_unitario)}
               </option>
             ))}
           </select>
@@ -190,7 +191,7 @@ export function OrderBuilder({ stores, products }: Props) {
             disabled={!selectedProductId}
             className="inline-flex items-center justify-center rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors min-h-[44px]"
           >
-            Add
+            Agregar
           </button>
         </div>
 
@@ -219,13 +220,13 @@ export function OrderBuilder({ stores, products }: Props) {
                         onClick={() => updateCantidad(item.productId, item.cantidad - 1)}
                         disabled={item.cantidad <= 1}
                         className="inline-flex items-center justify-center w-11 h-11 rounded-lg border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-40 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        aria-label={`Decrease quantity of ${productName}`}
+                        aria-label={`Disminuir cantidad de ${productName}`}
                       >
                         −
                       </button>
                       <span
                         className="w-8 text-center text-sm font-medium"
-                        aria-label={`Quantity: ${item.cantidad}`}
+                        aria-label={`Cantidad: ${item.cantidad}`}
                       >
                         {item.cantidad}
                       </span>
@@ -233,7 +234,7 @@ export function OrderBuilder({ stores, products }: Props) {
                         type="button"
                         onClick={() => updateCantidad(item.productId, item.cantidad + 1)}
                         className="inline-flex items-center justify-center w-11 h-11 rounded-lg border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        aria-label={`Increase quantity of ${productName}`}
+                        aria-label={`Aumentar cantidad de ${productName}`}
                       >
                         +
                       </button>
@@ -244,7 +245,7 @@ export function OrderBuilder({ stores, products }: Props) {
                       onClick={() => removeItem(item.productId)}
                       className="inline-flex items-center justify-center rounded-lg border border-red-200 bg-red-50 px-3 py-2.5 text-sm font-medium text-red-600 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-500 transition-colors min-h-[44px]"
                     >
-                      Remove
+                      Eliminar
                     </button>
                   </li>
                 );
@@ -254,12 +255,12 @@ export function OrderBuilder({ stores, products }: Props) {
             {/* Display-only preview total */}
             <div className="flex justify-end pt-2 border-t border-gray-100">
               <p className="text-sm text-gray-500">
-                Estimated total:{' '}
+                Total estimado:{' '}
                 <span
                   className="font-semibold text-gray-900"
-                  aria-label="Estimated total"
+                  aria-label="Total estimado"
                 >
-                  ${previewTotal.toFixed(2)}
+                  {formatCurrency(previewTotal)}
                 </span>
               </p>
             </div>
@@ -273,9 +274,7 @@ export function OrderBuilder({ stores, products }: Props) {
           role="alert"
           className="rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700"
         >
-          Insufficient stock for &ldquo;{stockError.name}&rdquo;:{' '}
-          {stockError.available} available,{' '}
-          {stockError.requested} requested.
+          Stock insuficiente para &ldquo;{stockError.name}&rdquo;: disponible {stockError.available}, solicitado {stockError.requested}.
         </p>
       )}
 
@@ -295,7 +294,7 @@ export function OrderBuilder({ stores, products }: Props) {
         disabled={isPending || lineItems.length === 0}
         className="w-full rounded-lg bg-blue-600 px-4 py-3 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 transition-colors min-h-[44px]"
       >
-        {isPending ? 'Creating…' : 'Create order'}
+        {isPending ? 'Creando…' : 'Crear pedido'}
       </button>
     </form>
   );

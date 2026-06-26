@@ -33,9 +33,9 @@ export default async function EditStorePage({ params }: Props) {
             href="/stores"
             className="text-sm text-gray-500 hover:text-gray-700"
           >
-            ← Stores
+            ← Tiendas
           </Link>
-          <h1 className="text-2xl font-semibold text-gray-900">Edit store</h1>
+          <h1 className="text-2xl font-semibold text-gray-900">Editar tienda</h1>
         </div>
 
         <StoreForm action={updateStoreAction} initialData={store} />

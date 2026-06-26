@@ -11,7 +11,7 @@
 import { z } from 'zod';
 
 export const StoreInputSchema = z.object({
-  nombre: z.string().min(1, 'Name is required'),
+  nombre: z.string().min(1, 'El nombre es obligatorio'),
   contacto: z
     .string()
     .optional()

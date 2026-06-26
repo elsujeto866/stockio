@@ -23,12 +23,12 @@ import { z } from 'zod';
 
 export const OrderItemInputSchema = z.object({
   productId: z.string().uuid('Product ID must be a valid UUID'),
-  cantidad: z.coerce.number().int().min(1, 'Quantity must be at least 1'),
+  cantidad: z.coerce.number().int().min(1, 'La cantidad debe ser al menos 1'),
 });
 
 export const CreateOrderSchema = z.object({
-  storeId: z.string().uuid('Store is required'),
-  items: z.array(OrderItemInputSchema).min(1, 'At least one item is required'),
+  storeId: z.string().uuid('Selecciona una tienda'),
+  items: z.array(OrderItemInputSchema).min(1, 'Agrega al menos un producto'),
   notas: z
     .string()
     .optional()
