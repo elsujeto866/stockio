@@ -42,6 +42,12 @@ export default async function AppLayout({
           >
             Stores
           </Link>
+          <Link
+            href="/orders"
+            className="text-sm text-gray-600 hover:text-gray-900 transition-colors"
+          >
+            Orders
+          </Link>
         </div>
       </nav>
       {children}

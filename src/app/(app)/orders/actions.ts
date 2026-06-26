@@ -75,7 +75,10 @@ export async function createOrderAction(
       notas: parsed.data.notas ?? undefined,
     });
   } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
+    // Supabase throws PostgrestError (plain object, not Error instance).
+    // Access .message directly before falling back to String(err).
+    const msg =
+      (err as { message?: string }).message ?? String(err);
     const match = INSUFFICIENT_STOCK_RE.exec(msg);
     if (match) {
       return {

@@ -69,6 +69,22 @@ export function OrderBuilder({ stores, products }: Props) {
     [lineItems, productMap]
   );
 
+  /**
+   * Resolved insufficient-stock error for the current action state.
+   * Precomputed here (not in JSX) to avoid IIFE patterns that can mis-render.
+   */
+  const stockError = state?.insufficientStock
+    ? (() => {
+        const { productId, available, requested } = state.insufficientStock;
+        const product = productMap.get(productId);
+        return {
+          name: product?.nombre ?? productId,
+          available,
+          requested,
+        };
+      })()
+    : null;
+
   function addItem() {
     if (!selectedProductId) return;
     setLineItems((prev) => {
@@ -252,20 +268,16 @@ export function OrderBuilder({ stores, products }: Props) {
       </div>
 
       {/* ── Insufficient stock error ─────────────────────────────── */}
-      {state?.insufficientStock && (() => {
-        const product = productMap.get(state.insufficientStock.productId);
-        const name = product?.nombre ?? state.insufficientStock.productId;
-        return (
-          <p
-            role="alert"
-            className="rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700"
-          >
-            Insufficient stock for &ldquo;{name}&rdquo;:{' '}
-            {state.insufficientStock.available} available,{' '}
-            {state.insufficientStock.requested} requested.
-          </p>
-        );
-      })()}
+      {stockError && (
+        <p
+          role="alert"
+          className="rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700"
+        >
+          Insufficient stock for &ldquo;{stockError.name}&rdquo;:{' '}
+          {stockError.available} available,{' '}
+          {stockError.requested} requested.
+        </p>
+      )}
 
       {/* ── Generic error ────────────────────────────────────────── */}
       {state?.error && (
