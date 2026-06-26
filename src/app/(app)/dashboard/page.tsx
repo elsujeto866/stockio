@@ -1,16 +1,25 @@
 import { requireUser } from '@/lib/auth/get-user';
 import { signOut } from '@/app/(auth)/login/actions';
+import { createClient } from '@/lib/supabase/server';
+import { getDashboardData } from '@/lib/data/dashboard';
+import { LowStockWidget } from '@/components/dashboard/LowStockWidget';
+import { RecentOrdersWidget } from '@/components/dashboard/RecentOrdersWidget';
+import { PeriodTotalsWidget } from '@/components/dashboard/PeriodTotalsWidget';
 
 /**
- * Dashboard — protected RSC placeholder.
- * Proves that auth + middleware work end-to-end.
- * Data queries (profiles, products, etc.) are added in WU3+ once the schema is in place.
+ * Dashboard — protected RSC.
+ *
+ * Fetches low-stock products, recent orders, and current-month totals in a
+ * single parallel round-trip, then passes slices to each widget as props.
  */
 export default async function DashboardPage() {
   const user = await requireUser();
+  const supabase = await createClient();
+  const { lowStockProducts, recentOrders, periodOrders, period } =
+    await getDashboardData(supabase);
 
   return (
-    <main className="min-h-screen p-8 bg-gray-50">
+    <main className="min-h-screen p-4 sm:p-8 bg-gray-50">
       <div className="max-w-2xl mx-auto space-y-6">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-semibold text-gray-900">Dashboard</h1>
@@ -24,14 +33,20 @@ export default async function DashboardPage() {
           </form>
         </div>
 
-        <div className="rounded-xl bg-white p-6 shadow-sm">
-          <p className="text-sm text-gray-500">Signed in as</p>
-          <p className="mt-1 font-medium text-gray-900">{user.email}</p>
+        <div className="rounded-xl bg-white p-4 shadow-sm border border-gray-100">
+          <p className="text-xs text-gray-500">Signed in as</p>
+          <p className="mt-0.5 text-sm font-medium text-gray-900">{user.email}</p>
         </div>
 
-        <p className="text-xs text-gray-400">
-          Data tables (products, orders, stores) are available after WU3 schema migration.
-        </p>
+        <PeriodTotalsWidget
+          orders={periodOrders}
+          lowStockCount={lowStockProducts.length}
+          period={period}
+        />
+
+        <LowStockWidget products={lowStockProducts} />
+
+        <RecentOrdersWidget orders={recentOrders} />
       </div>
     </main>
   );
