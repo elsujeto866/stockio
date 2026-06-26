@@ -7,15 +7,22 @@
  *  - Line items with frozen precio_unitario, cantidad, subtotal
  *  - Authoritative order.total (from the DB — may differ from current product prices)
  *  - Mark-as-delivered and Cancel order forms — ONLY when estado === 'pendiente'
+ *  - Invoice section:
+ *    - "Generate invoice" form — when invoiceId is null AND estado !== 'cancelado'
+ *    - "View invoice →" link — when invoiceId is provided
  *
  * Mobile-first layout, consistent with the container/presentational pattern.
  */
 
+import Link from 'next/link';
 import type { OrderDetail as OrderDetailType } from '@/lib/data/orders';
 import { markDeliveredAction, cancelOrderAction } from '@/app/(app)/orders/actions';
+import { generateInvoiceAction } from '@/app/(app)/invoices/actions';
 
 interface Props {
   order: OrderDetailType;
+  /** UUID of an existing invoice for this order, or null if none yet. */
+  invoiceId?: string | null;
 }
 
 const ESTADO_BADGE: Record<string, { label: string; className: string }> = {
@@ -33,12 +40,14 @@ const ESTADO_BADGE: Record<string, { label: string; className: string }> = {
   },
 };
 
-export function OrderDetail({ order }: Props) {
+export function OrderDetail({ order, invoiceId = null }: Props) {
   const badge = ESTADO_BADGE[order.estado] ?? {
     label: order.estado,
     className: 'bg-gray-100 text-gray-500 border border-gray-200',
   };
   const isPending = order.estado === 'pendiente';
+  const isCancelled = order.estado === 'cancelado';
+  const canInvoice = !isCancelled;
 
   return (
     <div className="space-y-6">
@@ -105,7 +114,7 @@ export function OrderDetail({ order }: Props) {
         </div>
       </div>
 
-      {/* ── Actions — only when estado === 'pendiente' ───────────── */}
+      {/* ── Order actions — only when estado === 'pendiente' ────── */}
       {isPending && (
         <div className="flex flex-wrap gap-3">
           <form action={markDeliveredAction}>
@@ -129,6 +138,32 @@ export function OrderDetail({ order }: Props) {
           </form>
         </div>
       )}
+
+      {/* ── Invoice section ──────────────────────────────────────── */}
+      {invoiceId !== null ? (
+        <div className="rounded-xl bg-white border border-gray-100 shadow-sm p-4">
+          <p className="text-sm text-gray-500 mb-3">Invoice</p>
+          <Link
+            href={`/invoices/${invoiceId}`}
+            className="inline-flex items-center text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors"
+          >
+            View invoice →
+          </Link>
+        </div>
+      ) : canInvoice ? (
+        <div className="rounded-xl bg-white border border-gray-100 shadow-sm p-4">
+          <p className="text-sm text-gray-500 mb-3">Invoice</p>
+          <form action={generateInvoiceAction}>
+            <input type="hidden" name="orderId" value={order.id} />
+            <button
+              type="submit"
+              className="inline-flex items-center justify-center rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors min-h-[44px]"
+            >
+              Generate invoice
+            </button>
+          </form>
+        </div>
+      ) : null}
     </div>
   );
 }

@@ -1,7 +1,10 @@
 /**
  * Order detail page — RSC.
  *
- * Fetches the order by id (with store name and line items via nested select).
+ * Fetches the order and its invoice in parallel:
+ *  - getOrder — full nested detail (store + line items)
+ *  - getInvoiceByOrderId — lightweight check to get the invoice id (if any)
+ *
  * Calls notFound() when getOrder returns null — handles both missing orders
  * and cross-tenant RLS blocks transparently.
  */
@@ -11,6 +14,7 @@ import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import { requireUser } from '@/lib/auth/get-user';
 import { getOrder } from '@/lib/data/orders';
+import { getInvoiceByOrderId } from '@/lib/data/invoices';
 import { OrderDetail } from '@/components/orders/OrderDetail';
 
 interface Props {
@@ -21,7 +25,11 @@ export default async function OrderPage({ params }: Props) {
   await requireUser();
   const { id } = await params;
   const supabase = await createClient();
-  const order = await getOrder(supabase, id);
+
+  const [order, invoice] = await Promise.all([
+    getOrder(supabase, id),
+    getInvoiceByOrderId(supabase, id),
+  ]);
 
   if (!order) notFound();
 
@@ -38,7 +46,7 @@ export default async function OrderPage({ params }: Props) {
           <h1 className="text-2xl font-semibold text-gray-900">Order detail</h1>
         </div>
 
-        <OrderDetail order={order} />
+        <OrderDetail order={order} invoiceId={invoice?.id ?? null} />
       </div>
     </main>
   );

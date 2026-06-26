@@ -48,6 +48,12 @@ export default async function AppLayout({
           >
             Orders
           </Link>
+          <Link
+            href="/invoices"
+            className="text-sm text-gray-600 hover:text-gray-900 transition-colors"
+          >
+            Invoices
+          </Link>
         </div>
       </nav>
       {children}
