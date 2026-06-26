@@ -116,6 +116,21 @@ describe('createProductAction', () => {
     expect(redirect).not.toHaveBeenCalled();
   });
 
+  it('surfaces real Postgres error message from a plain PostgrestError object', async () => {
+    vi.mocked(createProduct).mockRejectedValue({
+      message: 'duplicate key value violates unique constraint "products_nombre_key"',
+      code: '23505',
+    });
+
+    const result = await createProductAction(null, validProductFormData());
+
+    expect(result).toHaveProperty(
+      'error',
+      'duplicate key value violates unique constraint "products_nombre_key"'
+    );
+    expect(redirect).not.toHaveBeenCalled();
+  });
+
   it('calls requireUser to guard the action', async () => {
     vi.mocked(createProduct).mockResolvedValue({} as never);
 
@@ -177,6 +192,24 @@ describe('updateProductAction', () => {
     const result = await updateProductAction(null, fd);
 
     expect(result).toHaveProperty('error', 'not found');
+    expect(redirect).not.toHaveBeenCalled();
+  });
+
+  it('surfaces real Postgres error message from a plain PostgrestError object', async () => {
+    vi.mocked(updateProduct).mockRejectedValue({
+      message: 'violates check constraint "products_precio_unitario_check"',
+      code: '23514',
+    });
+
+    const fd = validProductFormData();
+    fd.set('id', 'prod-1');
+
+    const result = await updateProductAction(null, fd);
+
+    expect(result).toHaveProperty(
+      'error',
+      'violates check constraint "products_precio_unitario_check"'
+    );
     expect(redirect).not.toHaveBeenCalled();
   });
 });
@@ -271,6 +304,22 @@ describe('adjustStockAction', () => {
     const result = await adjustStockAction(null, fd);
 
     expect(result).toHaveProperty('error', 'connection lost');
+    expect(redirect).not.toHaveBeenCalled();
+  });
+
+  it('surfaces real Postgres error message from a plain PostgrestError object', async () => {
+    vi.mocked(adjustStock).mockRejectedValue({
+      message: 'stock_actual cannot be negative',
+      code: '23514',
+    });
+
+    const fd = new FormData();
+    fd.set('productId', 'prod-1');
+    fd.set('delta', '-999');
+
+    const result = await adjustStockAction(null, fd);
+
+    expect(result).toHaveProperty('error', 'stock_actual cannot be negative');
     expect(redirect).not.toHaveBeenCalled();
   });
 });

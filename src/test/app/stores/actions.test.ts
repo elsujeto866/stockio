@@ -94,6 +94,21 @@ describe('createStoreAction', () => {
     expect(redirect).not.toHaveBeenCalled();
   });
 
+  it('surfaces real Postgres error message from a plain PostgrestError object', async () => {
+    vi.mocked(createStore).mockRejectedValue({
+      message: 'duplicate key value violates unique constraint "stores_nombre_key"',
+      code: '23505',
+    });
+
+    const result = await createStoreAction(null, validStoreFormData());
+
+    expect(result).toHaveProperty(
+      'error',
+      'duplicate key value violates unique constraint "stores_nombre_key"'
+    );
+    expect(redirect).not.toHaveBeenCalled();
+  });
+
   it('calls requireUser to guard the action', async () => {
     vi.mocked(createStore).mockResolvedValue({} as never);
 
@@ -155,6 +170,24 @@ describe('updateStoreAction', () => {
     const result = await updateStoreAction(null, fd);
 
     expect(result).toHaveProperty('error', 'not found');
+    expect(redirect).not.toHaveBeenCalled();
+  });
+
+  it('surfaces real Postgres error message from a plain PostgrestError object', async () => {
+    vi.mocked(updateStore).mockRejectedValue({
+      message: 'violates foreign key constraint "stores_tenant_id_fkey"',
+      code: '23503',
+    });
+
+    const fd = validStoreFormData();
+    fd.set('id', 'store-1');
+
+    const result = await updateStoreAction(null, fd);
+
+    expect(result).toHaveProperty(
+      'error',
+      'violates foreign key constraint "stores_tenant_id_fkey"'
+    );
     expect(redirect).not.toHaveBeenCalled();
   });
 });

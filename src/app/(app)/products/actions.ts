@@ -43,7 +43,7 @@ export async function createProductAction(
   try {
     await createProduct(supabase, parsed.data);
   } catch (err) {
-    return { error: err instanceof Error ? err.message : 'Failed to create product' };
+    return { error: (err as { message?: string }).message ?? String(err) };
   }
 
   revalidatePath('/products');
@@ -73,7 +73,7 @@ export async function updateProductAction(
   try {
     await updateProduct(supabase, id, parsed.data);
   } catch (err) {
-    return { error: err instanceof Error ? err.message : 'Failed to update product' };
+    return { error: (err as { message?: string }).message ?? String(err) };
   }
 
   revalidatePath('/products');
@@ -122,7 +122,7 @@ export async function adjustStockAction(
     if (err instanceof StockUnderflowError) {
       return { error: 'Stock cannot go below zero' };
     }
-    return { error: err instanceof Error ? err.message : 'Failed to adjust stock' };
+    return { error: (err as { message?: string }).message ?? String(err) };
   }
 
   revalidatePath('/products');

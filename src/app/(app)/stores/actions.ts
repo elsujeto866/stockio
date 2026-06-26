@@ -37,7 +37,7 @@ export async function createStoreAction(
   try {
     await createStore(supabase, parsed.data);
   } catch (err) {
-    return { error: err instanceof Error ? err.message : 'Failed to create store' };
+    return { error: (err as { message?: string }).message ?? String(err) };
   }
 
   revalidatePath('/stores');
@@ -67,7 +67,7 @@ export async function updateStoreAction(
   try {
     await updateStore(supabase, id, parsed.data);
   } catch (err) {
-    return { error: err instanceof Error ? err.message : 'Failed to update store' };
+    return { error: (err as { message?: string }).message ?? String(err) };
   }
 
   revalidatePath('/stores');
