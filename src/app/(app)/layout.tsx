@@ -21,47 +21,48 @@ export default async function AppLayout({
   return (
     <div className="min-h-screen bg-cream">
       <nav className="bg-brand shadow-md">
-        <div className="max-w-2xl mx-auto px-4 flex items-center gap-5 h-14">
-          {/* Wordmark */}
-          <span className="font-bold text-white text-base tracking-tight shrink-0">
-            🛒 Stockio
-          </span>
-
-          {/* Nav links */}
-          <Link
-            href="/dashboard"
-            className="text-sm text-white/80 hover:text-white transition-colors"
-          >
-            Inicio
-          </Link>
-          <Link
-            href="/products"
-            className="text-sm text-white/80 hover:text-white transition-colors"
-          >
-            Productos
-          </Link>
-          <Link
-            href="/stores"
-            className="text-sm text-white/80 hover:text-white transition-colors"
-          >
-            Tiendas
-          </Link>
-          <Link
-            href="/orders"
-            className="text-sm text-white/80 hover:text-white transition-colors"
-          >
-            Pedidos
-          </Link>
-          <Link
-            href="/invoices"
-            className="text-sm text-white/80 hover:text-white transition-colors"
-          >
-            Facturas
-          </Link>
-
-          {/* Sign-out pushed to the right — type="button" to avoid [type=submit] collision */}
-          <div className="ml-auto">
+        <div className="max-w-2xl mx-auto px-4">
+          {/* Top row: wordmark + sign-out, always visible on every width */}
+          <div className="flex items-center justify-between h-14">
+            <span className="font-bold text-white text-lg tracking-tight">
+              🛒 Stockio
+            </span>
+            {/* type="button" avoids [type=submit] collision with content forms */}
             <NavSignOutButton />
+          </div>
+
+          {/* Nav links: wrap instead of overflowing on narrow (mobile) screens */}
+          <div className="flex flex-wrap items-center gap-x-5 gap-y-1 pb-2.5">
+            <Link
+              href="/dashboard"
+              className="text-sm font-medium text-white/85 hover:text-white transition-colors"
+            >
+              Inicio
+            </Link>
+            <Link
+              href="/products"
+              className="text-sm font-medium text-white/85 hover:text-white transition-colors"
+            >
+              Productos
+            </Link>
+            <Link
+              href="/stores"
+              className="text-sm font-medium text-white/85 hover:text-white transition-colors"
+            >
+              Tiendas
+            </Link>
+            <Link
+              href="/orders"
+              className="text-sm font-medium text-white/85 hover:text-white transition-colors"
+            >
+              Pedidos
+            </Link>
+            <Link
+              href="/invoices"
+              className="text-sm font-medium text-white/85 hover:text-white transition-colors"
+            >
+              Facturas
+            </Link>
           </div>
         </div>
       </nav>

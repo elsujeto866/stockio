@@ -59,8 +59,8 @@ test.describe("Authentication flows", () => {
     await page.click("[type=submit]");
     await expect(page).toHaveURL("/dashboard");
 
-    // Sign out via the form submit on the dashboard
-    await page.click("[type=submit]");
+    // Sign out via the global nav button (the only "Cerrar sesión" control)
+    await page.getByRole("button", { name: "Cerrar sesión" }).click();
     await expect(page).toHaveURL("/login");
 
     // Confirm protected route is now blocked
