@@ -106,7 +106,7 @@ describe('createInvoiceAction', () => {
     const result = await createInvoiceAction(null, validInvoiceFormData());
 
     expect(result).toHaveProperty('error');
-    expect((result as { error: string }).error).toMatch(/cancelled/i);
+    expect((result as { error: string }).error).toMatch(/cancelados/i);
     expect(redirect).not.toHaveBeenCalled();
   });
 
@@ -118,7 +118,7 @@ describe('createInvoiceAction', () => {
     const result = await createInvoiceAction(null, validInvoiceFormData());
 
     expect(result).toHaveProperty('error');
-    expect((result as { error: string }).error).toMatch(/already/i);
+    expect((result as { error: string }).error).toMatch(/ya existe/i);
     expect(redirect).not.toHaveBeenCalled();
   });
 
@@ -130,7 +130,7 @@ describe('createInvoiceAction', () => {
     const result = await createInvoiceAction(null, validInvoiceFormData());
 
     expect(result).toHaveProperty('error');
-    expect((result as { error: string }).error).toMatch(/not found/i);
+    expect((result as { error: string }).error).toMatch(/no encontrado/i);
     expect(redirect).not.toHaveBeenCalled();
   });
 

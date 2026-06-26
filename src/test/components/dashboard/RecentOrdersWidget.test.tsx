@@ -32,6 +32,7 @@ vi.mock('next/link', () => ({
 
 import { RecentOrdersWidget } from '@/components/dashboard/RecentOrdersWidget';
 import type { OrderListItem } from '@/lib/data/orders';
+import { formatCurrency, formatDate } from '@/lib/format';
 
 // ---------------------------------------------------------------------------
 // Fixtures
@@ -56,27 +57,27 @@ describe('RecentOrdersWidget', () => {
 
   it('renders the order fecha', () => {
     render(<RecentOrdersWidget orders={[baseOrder]} />);
-    expect(screen.getByText('2026-06-15')).toBeInTheDocument();
+    expect(screen.getByText(formatDate('2026-06-15'))).toBeInTheDocument();
   });
 
   it('renders a Pending badge for pendiente estado', () => {
     render(<RecentOrdersWidget orders={[baseOrder]} />);
-    expect(screen.getByRole('status')).toHaveTextContent(/Pending/i);
+    expect(screen.getByRole('status')).toHaveTextContent(/Pendiente/i);
   });
 
   it('renders a Delivered badge for entregado estado', () => {
     render(<RecentOrdersWidget orders={[{ ...baseOrder, estado: 'entregado' }]} />);
-    expect(screen.getByRole('status')).toHaveTextContent(/Delivered/i);
+    expect(screen.getByRole('status')).toHaveTextContent(/Entregado/i);
   });
 
   it('renders a Cancelled badge for cancelado estado', () => {
     render(<RecentOrdersWidget orders={[{ ...baseOrder, estado: 'cancelado' }]} />);
-    expect(screen.getByRole('status')).toHaveTextContent(/Cancelled/i);
+    expect(screen.getByRole('status')).toHaveTextContent(/Cancelado/i);
   });
 
   it('renders the total formatted with $', () => {
     render(<RecentOrdersWidget orders={[baseOrder]} />);
-    expect(screen.getByText(/\$75\.50/)).toBeInTheDocument();
+    expect(screen.getByText(formatCurrency(75.5))).toBeInTheDocument();
   });
 
   it('renders "—" when total is null', () => {
@@ -92,16 +93,16 @@ describe('RecentOrdersWidget', () => {
 
   it('renders the empty state when no orders', () => {
     render(<RecentOrdersWidget orders={[]} />);
-    expect(screen.getByText(/No orders yet/i)).toBeInTheDocument();
+    expect(screen.getByText(/No hay pedidos todavía/i)).toBeInTheDocument();
   });
 
   it('does NOT render the empty state when orders are present', () => {
     render(<RecentOrdersWidget orders={[baseOrder]} />);
-    expect(screen.queryByText(/No orders yet/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/No hay pedidos todavía/i)).not.toBeInTheDocument();
   });
 
   it('renders "Unknown store" when store is null', () => {
     render(<RecentOrdersWidget orders={[{ ...baseOrder, store: null }]} />);
-    expect(screen.getByText(/Unknown store/i)).toBeInTheDocument();
+    expect(screen.getByText(/Tienda desconocida/i)).toBeInTheDocument();
   });
 });

@@ -33,6 +33,7 @@ vi.mock('next/link', () => ({
 
 import { InvoiceCard } from '@/components/invoices/InvoiceCard';
 import type { InvoiceListItem } from '@/lib/data/invoices';
+import { formatCurrency, formatDate } from '@/lib/format';
 
 // ---------------------------------------------------------------------------
 // Fixtures
@@ -65,27 +66,27 @@ describe('InvoiceCard', () => {
 
   it('displays the fecha_emision', () => {
     render(<InvoiceCard invoice={baseInvoice} />);
-    expect(screen.getByText('2026-06-25')).toBeInTheDocument();
+    expect(screen.getByText(formatDate('2026-06-25'))).toBeInTheDocument();
   });
 
   it('displays the total formatted with $', () => {
     render(<InvoiceCard invoice={baseInvoice} />);
-    expect(screen.getByText(/\$150\.00/)).toBeInTheDocument();
+    expect(screen.getByText(formatCurrency(150))).toBeInTheDocument();
   });
 
   it('shows a Pending badge for pendiente estado_pago', () => {
     render(<InvoiceCard invoice={baseInvoice} />);
-    expect(screen.getByRole('status')).toHaveTextContent(/Pending/i);
+    expect(screen.getByRole('status')).toHaveTextContent(/Pendiente/i);
   });
 
   it('shows a Paid badge for pagado estado_pago', () => {
     render(<InvoiceCard invoice={{ ...baseInvoice, estado_pago: 'pagado' }} />);
-    expect(screen.getByRole('status')).toHaveTextContent(/Paid/i);
+    expect(screen.getByRole('status')).toHaveTextContent(/Pagado/i);
   });
 
   it('shows an Unpaid badge when estado_pago is null', () => {
     render(<InvoiceCard invoice={{ ...baseInvoice, estado_pago: null }} />);
-    expect(screen.getByRole('status')).toHaveTextContent(/Unpaid/i);
+    expect(screen.getByRole('status')).toHaveTextContent(/Sin pagar/i);
   });
 
   it('links to /invoices/[id]', () => {
@@ -96,6 +97,6 @@ describe('InvoiceCard', () => {
 
   it('shows "Unknown store" when order store is null', () => {
     render(<InvoiceCard invoice={{ ...baseInvoice, order: null }} />);
-    expect(screen.getByText(/Unknown store/i)).toBeInTheDocument();
+    expect(screen.getByText(/Tienda desconocida/i)).toBeInTheDocument();
   });
 });

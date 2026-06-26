@@ -57,7 +57,7 @@ test.describe('Stores management', () => {
     // ── 4. Edit store name ────────────────────────────────────────────────
     const editedName = `${STORE_NAME} (edited)`;
     const card = page.locator('li', { has: page.getByText(STORE_NAME) }).first();
-    await card.getByRole('link', { name: /^edit$/i }).click();
+    await card.getByRole('link', { name: /^editar$/i }).click();
 
     await page.fill('[name=nombre]', editedName);
     await page.click('[type=submit]');
@@ -68,7 +68,7 @@ test.describe('Stores management', () => {
 
     // ── 5. Soft-delete → absent from list ─────────────────────────────────
     const card2 = page.locator('li', { has: page.getByText(editedName) }).first();
-    await card2.getByRole('button', { name: /delete/i }).click();
+    await card2.getByRole('button', { name: /eliminar/i }).click();
 
     // Store should no longer appear in the list.
     await expect(page).toHaveURL('/stores');

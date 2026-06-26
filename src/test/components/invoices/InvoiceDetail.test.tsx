@@ -22,6 +22,7 @@ vi.mock('@/app/(app)/invoices/actions', () => ({
 
 import { InvoiceDetail } from '@/components/invoices/InvoiceDetail';
 import type { InvoiceDetail as InvoiceDetailType } from '@/lib/data/invoices';
+import { formatCurrency, formatDate } from '@/lib/format';
 
 // ---------------------------------------------------------------------------
 // Fixtures
@@ -68,7 +69,7 @@ const baseInvoice: InvoiceDetailType = {
 describe('InvoiceDetail — header', () => {
   it('displays the invoice numero', () => {
     render(<InvoiceDetail invoice={baseInvoice} />);
-    expect(screen.getByText(/Invoice #7/i)).toBeInTheDocument();
+    expect(screen.getByText(/Factura #7/i)).toBeInTheDocument();
   });
 
   it('displays the store nombre', () => {
@@ -78,17 +79,17 @@ describe('InvoiceDetail — header', () => {
 
   it('displays the fecha_emision', () => {
     render(<InvoiceDetail invoice={baseInvoice} />);
-    expect(screen.getByText('2026-06-25')).toBeInTheDocument();
+    expect(screen.getByText(formatDate('2026-06-25'))).toBeInTheDocument();
   });
 
   it('shows a Pending badge for pendiente estado_pago', () => {
     render(<InvoiceDetail invoice={baseInvoice} />);
-    expect(screen.getByRole('status')).toHaveTextContent(/Pending/i);
+    expect(screen.getByRole('status')).toHaveTextContent(/Pendiente/i);
   });
 
   it('shows a Paid badge for pagado estado_pago', () => {
     render(<InvoiceDetail invoice={{ ...baseInvoice, estado_pago: 'pagado' }} />);
-    expect(screen.getByRole('status')).toHaveTextContent(/Paid/i);
+    expect(screen.getByRole('status')).toHaveTextContent(/Pagado/i);
   });
 });
 
@@ -104,17 +105,17 @@ describe('InvoiceDetail — line items', () => {
 
   it('renders frozen precio_unitario for Widget X', () => {
     render(<InvoiceDetail invoice={baseInvoice} />);
-    expect(screen.getByText('$20.00')).toBeInTheDocument();
+    expect(screen.getByText(formatCurrency(20))).toBeInTheDocument();
   });
 
   it('renders frozen precio_unitario for Gadget Y', () => {
     render(<InvoiceDetail invoice={baseInvoice} />);
-    expect(screen.getByText('$15.00')).toBeInTheDocument();
+    expect(screen.getByText(formatCurrency(15))).toBeInTheDocument();
   });
 
   it('renders the invoice total', () => {
     render(<InvoiceDetail invoice={baseInvoice} />);
-    expect(screen.getByText('$90.00')).toBeInTheDocument();
+    expect(screen.getByText(formatCurrency(90))).toBeInTheDocument();
   });
 });
 
@@ -125,21 +126,21 @@ describe('InvoiceDetail — payment toggle', () => {
   it('shows a "Mark as paid" button when estado_pago is pendiente', () => {
     render(<InvoiceDetail invoice={baseInvoice} />);
     expect(
-      screen.getByRole('button', { name: /mark as paid/i })
+      screen.getByRole('button', { name: /marcar como pagada/i })
     ).toBeInTheDocument();
   });
 
   it('shows a "Mark as pending" button when estado_pago is pagado', () => {
     render(<InvoiceDetail invoice={{ ...baseInvoice, estado_pago: 'pagado' }} />);
     expect(
-      screen.getByRole('button', { name: /mark as pending/i })
+      screen.getByRole('button', { name: /marcar como pendiente/i })
     ).toBeInTheDocument();
   });
 
   it('shows a "Mark as paid" button when estado_pago is null', () => {
     render(<InvoiceDetail invoice={{ ...baseInvoice, estado_pago: null }} />);
     expect(
-      screen.getByRole('button', { name: /mark as paid/i })
+      screen.getByRole('button', { name: /marcar como pagada/i })
     ).toBeInTheDocument();
   });
 });

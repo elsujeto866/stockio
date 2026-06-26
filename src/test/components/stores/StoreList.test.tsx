@@ -48,12 +48,12 @@ const baseStore = {
 describe('StoreList', () => {
   it('renders empty state when stores array is empty', () => {
     render(<StoreList stores={[]} />);
-    expect(screen.getByText(/no stores yet/i)).toBeInTheDocument();
+    expect(screen.getByText(/no hay tiendas/i)).toBeInTheDocument();
   });
 
   it('renders an accessible list when stores are present', () => {
     render(<StoreList stores={[baseStore]} />);
-    expect(screen.getByRole('list', { name: /store list/i })).toBeInTheDocument();
+    expect(screen.getByRole('list', { name: /lista de tiendas/i })).toBeInTheDocument();
   });
 
   it('renders one list item per store', () => {

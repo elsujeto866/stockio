@@ -128,8 +128,8 @@ describe('getDashboardData', () => {
   it('includes a human-readable period label', async () => {
     const now = new Date('2026-06-26T10:00:00Z');
     const result = await getDashboardData(supabase as never, now);
-    // Label must contain "June" and "2026"
-    expect(result.period.label).toMatch(/June/i);
+    // Label must contain the Spanish month name and the year
+    expect(result.period.label).toMatch(/junio/i);
     expect(result.period.label).toContain('2026');
   });
 

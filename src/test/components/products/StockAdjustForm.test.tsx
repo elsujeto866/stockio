@@ -44,17 +44,17 @@ beforeEach(() => {
 describe('StockAdjustForm — rendering', () => {
   it('renders the delta input', () => {
     render(<StockAdjustForm action={noop} product={product} />);
-    expect(screen.getByLabelText(/adjustment/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/ajuste/i)).toBeInTheDocument();
   });
 
   it('renders the + button', () => {
     render(<StockAdjustForm action={noop} product={product} />);
-    expect(screen.getByLabelText('Increase stock')).toBeInTheDocument();
+    expect(screen.getByLabelText('Aumentar stock')).toBeInTheDocument();
   });
 
   it('renders the - button', () => {
     render(<StockAdjustForm action={noop} product={product} />);
-    expect(screen.getByLabelText('Decrease stock')).toBeInTheDocument();
+    expect(screen.getByLabelText('Disminuir stock')).toBeInTheDocument();
   });
 
   it('shows the current stock of the product', () => {
@@ -64,7 +64,7 @@ describe('StockAdjustForm — rendering', () => {
 
   it('renders a submit button', () => {
     render(<StockAdjustForm action={noop} product={product} />);
-    expect(screen.getByRole('button', { name: /apply/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /aplicar/i })).toBeInTheDocument();
   });
 });
 
@@ -74,8 +74,8 @@ describe('StockAdjustForm — rendering', () => {
 describe('StockAdjustForm — button interaction', () => {
   it('+ button increments the delta input value', () => {
     render(<StockAdjustForm action={noop} product={product} />);
-    const deltaInput = screen.getByLabelText(/adjustment/i) as HTMLInputElement;
-    const plusBtn = screen.getByLabelText('Increase stock');
+    const deltaInput = screen.getByLabelText(/ajuste/i) as HTMLInputElement;
+    const plusBtn = screen.getByLabelText('Aumentar stock');
 
     expect(deltaInput.value).toBe('0');
     fireEvent.click(plusBtn);
@@ -84,8 +84,8 @@ describe('StockAdjustForm — button interaction', () => {
 
   it('- button decrements the delta input value', () => {
     render(<StockAdjustForm action={noop} product={product} />);
-    const deltaInput = screen.getByLabelText(/adjustment/i) as HTMLInputElement;
-    const minusBtn = screen.getByLabelText('Decrease stock');
+    const deltaInput = screen.getByLabelText(/ajuste/i) as HTMLInputElement;
+    const minusBtn = screen.getByLabelText('Disminuir stock');
 
     expect(deltaInput.value).toBe('0');
     fireEvent.click(minusBtn);
@@ -94,8 +94,8 @@ describe('StockAdjustForm — button interaction', () => {
 
   it('accumulates clicks: clicking + three times gives delta = 3', () => {
     render(<StockAdjustForm action={noop} product={product} />);
-    const deltaInput = screen.getByLabelText(/adjustment/i) as HTMLInputElement;
-    const plusBtn = screen.getByLabelText('Increase stock');
+    const deltaInput = screen.getByLabelText(/ajuste/i) as HTMLInputElement;
+    const plusBtn = screen.getByLabelText('Aumentar stock');
 
     fireEvent.click(plusBtn);
     fireEvent.click(plusBtn);
@@ -110,7 +110,7 @@ describe('StockAdjustForm — button interaction', () => {
 describe('StockAdjustForm — error display', () => {
   it('shows error message when action returns StockUnderflowError message', async () => {
     const errAction = vi.fn().mockResolvedValue({
-      error: 'Stock cannot go below zero',
+      error: 'El stock no puede ser negativo',
     } satisfies ActionResult);
 
     const { container } = render(
@@ -121,6 +121,6 @@ describe('StockAdjustForm — error display', () => {
       fireEvent.submit(container.querySelector('form')!);
     });
 
-    expect(screen.getByText('Stock cannot go below zero')).toBeInTheDocument();
+    expect(screen.getByText('El stock no puede ser negativo')).toBeInTheDocument();
   });
 });

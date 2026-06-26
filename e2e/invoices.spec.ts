@@ -181,16 +181,16 @@ async function createOrder(
   await page.selectOption('select[name="storeId"]', seededStoreId);
 
   for (const { productId, productName, cantidad = 1 } of options) {
-    await page.selectOption('select[aria-label="Select a product to add"]', productId);
-    await page.click('button:has-text("Add")');
+    await page.selectOption('select[aria-label="Seleccionar un producto para agregar"]', productId);
+    await page.click('button:has-text("Agregar")');
 
     // Increment quantity beyond the default (1) if needed
     for (let i = 1; i < cantidad; i++) {
-      await page.click(`button[aria-label="Increase quantity of ${productName}"]`);
+      await page.click(`button[aria-label="Aumentar cantidad de ${productName}"]`);
     }
   }
 
-  await page.click('button[type="submit"]:has-text("Create order")');
+  await page.click('button[type="submit"]:has-text("Crear pedido")');
   await expect(page).toHaveURL(/\/orders\/[0-9a-f-]{36}$/);
 
   return page.url();
@@ -211,65 +211,65 @@ test.describe('Invoices management', () => {
       { productId: seededProductBId, productName: PRODUCT_B_NAME, cantidad: 1 },
     ]);
 
-    // Order detail shows Generate invoice button (no invoice yet)
+    // Order detail shows Generar factura button (no invoice yet)
     await expect(
-      page.getByRole('button', { name: /generate invoice/i })
+      page.getByRole('button', { name: /generar factura/i })
     ).toBeVisible();
 
     // Generate the invoice
-    await page.click('button:has-text("Generate invoice")');
+    await page.click('button:has-text("Generar factura")');
 
     // Should land on /invoices/<uuid>
     await expect(page).toHaveURL(/\/invoices\/[0-9a-f-]{36}$/);
 
-    // Comprobante header — Invoice # and store name.
+    // Comprobante header — Factura # and store name.
     // Use h1 locator to avoid strict-mode violation with InvoiceDetail's h2.
-    await expect(page.locator('h1', { hasText: /Invoice #/ })).toBeVisible();
+    await expect(page.locator('h1', { hasText: /Factura #/ })).toBeVisible();
     await expect(page.getByText(STORE_NAME)).toBeVisible();
 
     // Product names confirm both line items are present
     await expect(page.getByText(PRODUCT_A_NAME)).toBeVisible();
     await expect(page.getByText(PRODUCT_B_NAME)).toBeVisible();
 
-    // Widget precio $10.00 is unique (its subtotal is $20.00)
-    await expect(page.getByText('$10.00')).toBeVisible();
+    // Widget precio $10,00 is unique (its subtotal is $20,00)
+    await expect(page.getByText('$10,00')).toBeVisible();
 
-    // Gadget precio $25.00 — scope to its <li> because precio === subtotal
+    // Gadget precio $25,00 — scope to its <li> because precio === subtotal
     // when cantidad === 1 (same disambiguation pattern as orders.spec.ts)
     await expect(
-      page.locator('li', { has: page.getByText(PRODUCT_B_NAME) }).getByText('$25.00').first()
+      page.locator('li', { has: page.getByText(PRODUCT_B_NAME) }).getByText('$25,00').first()
     ).toBeVisible();
 
-    // Total: 2×10 + 1×25 = $45.00
-    await expect(page.getByText('$45.00')).toBeVisible();
+    // Total: 2×10 + 1×25 = $45,00
+    await expect(page.getByText('$45,00')).toBeVisible();
 
-    // Payment badge is Unpaid (create_invoice sets estado_pago = null)
-    // Use positive assertion — "not /Paid/i" would wrongly match "Unpaid".
-    await expect(page.getByRole('status')).toHaveText(/Unpaid/i);
+    // Payment badge is Sin pagar (create_invoice sets estado_pago = null)
+    // Use positive assertion — "not /Pagado/i" would wrongly match "Sin pagar".
+    await expect(page.getByRole('status')).toHaveText(/Sin pagar/i);
 
     // Toggle payment to paid
-    await page.click('button:has-text("Mark as paid")');
+    await page.click('button:has-text("Marcar como pagada")');
 
-    // Payment badge is now Paid
-    await expect(page.getByRole('status')).toHaveText(/Paid/i);
+    // Payment badge is now Pagado
+    await expect(page.getByRole('status')).toHaveText(/Pagado/i);
 
     // Navigate back to the order detail
     await page.goto(orderUrl);
 
-    // Order detail now shows "View invoice →" link instead of Generate button
+    // Order detail now shows "Ver factura →" link instead of Generate button
     await expect(
-      page.getByRole('link', { name: /view invoice/i })
+      page.getByRole('link', { name: /ver factura/i })
     ).toBeVisible();
     await expect(
-      page.locator('button:has-text("Generate invoice")')
+      page.locator('button:has-text("Generar factura")')
     ).not.toBeVisible();
 
     // Follow the View invoice link
-    await page.click('a:has-text("View invoice")');
+    await page.click('a:has-text("Ver factura")');
     await expect(page).toHaveURL(/\/invoices\/[0-9a-f-]{36}$/);
 
-    // Invoice is still marked Paid after navigation
-    await expect(page.getByRole('status')).toHaveText(/Paid/i);
+    // Invoice is still marked Pagado after navigation
+    await expect(page.getByRole('status')).toHaveText(/Pagado/i);
   });
 
   // ---------------------------------------------------------------------------
@@ -283,24 +283,24 @@ test.describe('Invoices management', () => {
       { productId: seededProductAId, productName: PRODUCT_A_NAME, cantidad: 1 },
     ]);
 
-    // The Generate invoice button IS present before cancel
+    // The Generar factura button IS present before cancel
     await expect(
-      page.getByRole('button', { name: /generate invoice/i })
+      page.getByRole('button', { name: /generar factura/i })
     ).toBeVisible();
 
     // Cancel the order
-    await page.click('button:has-text("Cancel order")');
-    await expect(page.getByRole('status')).toHaveText(/Cancelled/i);
+    await page.click('button:has-text("Cancelar pedido")');
+    await expect(page.getByRole('status')).toHaveText(/Cancelado/i);
 
-    // Generate invoice button is now absent
+    // Generar factura button is now absent
     await expect(
-      page.locator('button:has-text("Generate invoice")')
+      page.locator('button:has-text("Generar factura")')
     ).not.toBeVisible();
 
     // Refresh the page and verify the button is still absent
     await page.goto(orderUrl);
     await expect(
-      page.locator('button:has-text("Generate invoice")')
+      page.locator('button:has-text("Generar factura")')
     ).not.toBeVisible();
   });
 });

@@ -54,9 +54,9 @@ beforeEach(() => {
 describe('OrderFilters', () => {
   it('renders a store select with "All stores" default option', () => {
     render(<OrderFilters stores={stores} />);
-    const select = screen.getByRole('combobox', { name: /store/i });
+    const select = screen.getByRole('combobox', { name: /tienda/i });
     expect(select).toBeInTheDocument();
-    expect(screen.getByRole('option', { name: /all stores/i })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: /todas las tiendas/i })).toBeInTheDocument();
   });
 
   it('renders store options from the stores prop', () => {
@@ -67,17 +67,17 @@ describe('OrderFilters', () => {
 
   it('renders From date input', () => {
     render(<OrderFilters stores={stores} />);
-    expect(screen.getByLabelText(/from/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/desde/i)).toBeInTheDocument();
   });
 
   it('renders To date input', () => {
     render(<OrderFilters stores={stores} />);
-    expect(screen.getByLabelText(/^to$/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/^hasta$/i)).toBeInTheDocument();
   });
 
   it('calls router.push with store param when store select changes', () => {
     render(<OrderFilters stores={stores} />);
-    const select = screen.getByRole('combobox', { name: /store/i });
+    const select = screen.getByRole('combobox', { name: /tienda/i });
 
     fireEvent.change(select, { target: { value: 'store-1' } });
 
@@ -88,7 +88,7 @@ describe('OrderFilters', () => {
 
   it('calls router.push with from param when from date changes', () => {
     render(<OrderFilters stores={stores} />);
-    const fromInput = screen.getByLabelText(/from/i);
+    const fromInput = screen.getByLabelText(/desde/i);
 
     fireEvent.change(fromInput, { target: { value: '2026-06-01' } });
 
@@ -99,7 +99,7 @@ describe('OrderFilters', () => {
 
   it('calls router.push with to param when to date changes', () => {
     render(<OrderFilters stores={stores} />);
-    const toInput = screen.getByLabelText(/^to$/i);
+    const toInput = screen.getByLabelText(/^hasta$/i);
 
     fireEvent.change(toInput, { target: { value: '2026-06-30' } });
 
@@ -114,7 +114,7 @@ describe('OrderFilters', () => {
     );
 
     render(<OrderFilters stores={stores} />);
-    const select = screen.getByRole('combobox', { name: /store/i });
+    const select = screen.getByRole('combobox', { name: /tienda/i });
 
     fireEvent.change(select, { target: { value: '' } });
 

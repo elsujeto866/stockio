@@ -281,7 +281,7 @@ describe('adjustStockAction', () => {
     expect(redirect).toHaveBeenCalledWith('/products');
   });
 
-  it('maps StockUnderflowError → { error: "Stock cannot go below zero" }', async () => {
+  it('maps StockUnderflowError → { error: "El stock no puede ser negativo" }', async () => {
     vi.mocked(adjustStock).mockRejectedValue(new StockUnderflowError('prod-1'));
 
     const fd = new FormData();
@@ -290,7 +290,7 @@ describe('adjustStockAction', () => {
 
     const result = await adjustStockAction(null, fd);
 
-    expect(result).toEqual({ error: 'Stock cannot go below zero' });
+    expect(result).toEqual({ error: 'El stock no puede ser negativo' });
     expect(redirect).not.toHaveBeenCalled();
   });
 

@@ -41,7 +41,7 @@ beforeEach(() => {
 describe('StoreForm — field rendering', () => {
   it('renders the nombre field', () => {
     render(<StoreForm action={noop} />);
-    expect(screen.getByLabelText(/^name/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/^nombre/i)).toBeInTheDocument();
   });
 
   it('renders the contacto field', () => {
@@ -51,12 +51,12 @@ describe('StoreForm — field rendering', () => {
 
   it('renders the direccion field', () => {
     render(<StoreForm action={noop} />);
-    expect(screen.getByLabelText(/address/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/direcci/i)).toBeInTheDocument();
   });
 
   it('renders the telefono field', () => {
     render(<StoreForm action={noop} />);
-    expect(screen.getByLabelText(/phone/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/tel/i)).toBeInTheDocument();
   });
 });
 
@@ -66,12 +66,12 @@ describe('StoreForm — field rendering', () => {
 describe('StoreForm — create vs edit mode', () => {
   it('shows "Create store" submit label in create mode', () => {
     render(<StoreForm action={noop} />);
-    expect(screen.getByRole('button', { name: /create store/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /crear tienda/i })).toBeInTheDocument();
   });
 
   it('shows "Update store" submit label in edit mode', () => {
     render(<StoreForm action={noop} initialData={store} />);
-    expect(screen.getByRole('button', { name: /update store/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /actualizar tienda/i })).toBeInTheDocument();
   });
 
   it('pre-fills the nombre field from initialData', () => {
@@ -91,7 +91,7 @@ describe('StoreForm — create vs edit mode', () => {
 describe('StoreForm — error display', () => {
   it('displays a field error under nombre when action returns fieldErrors', async () => {
     const errAction = vi.fn().mockResolvedValue({
-      fieldErrors: { nombre: ['Name is required'] },
+      fieldErrors: { nombre: ['El nombre es obligatorio'] },
     } satisfies ActionResult);
 
     const { container } = render(<StoreForm action={errAction} />);
@@ -100,7 +100,7 @@ describe('StoreForm — error display', () => {
       fireEvent.submit(container.querySelector('form')!);
     });
 
-    expect(screen.getByText('Name is required')).toBeInTheDocument();
+    expect(screen.getByText('El nombre es obligatorio')).toBeInTheDocument();
   });
 
   it('displays a top-level error banner when action returns an error', async () => {

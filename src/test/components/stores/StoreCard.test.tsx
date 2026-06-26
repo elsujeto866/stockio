@@ -96,6 +96,6 @@ describe('StoreCard', () => {
 
   it('contains a delete button', () => {
     render(<StoreCard store={baseStore} />);
-    expect(screen.getByRole('button', { name: /delete/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /eliminar/i })).toBeInTheDocument();
   });
 });

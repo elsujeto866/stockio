@@ -12,6 +12,7 @@ import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { PeriodTotalsWidget } from '@/components/dashboard/PeriodTotalsWidget';
 import type { OrderListItem } from '@/lib/data/orders';
+import { formatCurrency } from '@/lib/format';
 
 // ---------------------------------------------------------------------------
 // Fixtures
@@ -47,7 +48,7 @@ describe('PeriodTotalsWidget', () => {
   it('renders the total sales excluding cancelado orders', () => {
     render(<PeriodTotalsWidget orders={sampleOrders} lowStockCount={3} period={period} />);
     // 100 + 200 = 300 (cancelado 999 excluded)
-    expect(screen.getByText(/\$300\.00/)).toBeInTheDocument();
+    expect(screen.getByText(formatCurrency(300))).toBeInTheDocument();
   });
 
   it('renders the non-cancelado order count', () => {
@@ -64,12 +65,12 @@ describe('PeriodTotalsWidget', () => {
   it('renders $0.00 when all orders are cancelado', () => {
     const allCancelled = [makeOrder('o1', 'cancelado', 500)];
     render(<PeriodTotalsWidget orders={allCancelled} lowStockCount={0} period={period} />);
-    expect(screen.getByText(/\$0\.00/)).toBeInTheDocument();
+    expect(screen.getByText(formatCurrency(0))).toBeInTheDocument();
   });
 
   it('handles null totals gracefully (treats as 0)', () => {
     const nullTotalOrders = [makeOrder('o1', 'pendiente', null)];
     render(<PeriodTotalsWidget orders={nullTotalOrders} lowStockCount={0} period={period} />);
-    expect(screen.getByText(/\$0\.00/)).toBeInTheDocument();
+    expect(screen.getByText(formatCurrency(0))).toBeInTheDocument();
   });
 });

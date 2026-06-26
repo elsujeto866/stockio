@@ -45,7 +45,7 @@ beforeEach(() => {
 describe('ProductForm — field rendering', () => {
   it('renders Group A: nombre field', () => {
     render(<ProductForm action={noop} />);
-    expect(screen.getByLabelText(/^name/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/^nombre/i)).toBeInTheDocument();
   });
 
   it('renders Group A: sku field', () => {
@@ -55,27 +55,27 @@ describe('ProductForm — field rendering', () => {
 
   it('renders Group A: categoria field', () => {
     render(<ProductForm action={noop} />);
-    expect(screen.getByLabelText(/^category/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/^categor/i)).toBeInTheDocument();
   });
 
   it('renders Group A: unidad_medida field', () => {
     render(<ProductForm action={noop} />);
-    expect(screen.getByLabelText(/unit of measure/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/unidad de medida/i)).toBeInTheDocument();
   });
 
   it('renders Group B: precio_unitario field', () => {
     render(<ProductForm action={noop} />);
-    expect(screen.getByLabelText(/unit price/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/precio unitario/i)).toBeInTheDocument();
   });
 
   it('renders Group B: stock_actual field', () => {
     render(<ProductForm action={noop} />);
-    expect(screen.getByLabelText(/current stock/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/stock actual/i)).toBeInTheDocument();
   });
 
   it('renders Group B: stock_minimo field', () => {
     render(<ProductForm action={noop} />);
-    expect(screen.getByLabelText(/minimum stock/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/stock m/i)).toBeInTheDocument();
   });
 });
 
@@ -85,12 +85,12 @@ describe('ProductForm — field rendering', () => {
 describe('ProductForm — create vs edit mode', () => {
   it('shows "Create product" submit label in create mode', () => {
     render(<ProductForm action={noop} />);
-    expect(screen.getByRole('button', { name: /create product/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /crear producto/i })).toBeInTheDocument();
   });
 
   it('shows "Update product" submit label in edit mode', () => {
     render(<ProductForm action={noop} initialData={product} />);
-    expect(screen.getByRole('button', { name: /update product/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /actualizar producto/i })).toBeInTheDocument();
   });
 
   it('pre-fills the nombre field from initialData', () => {
@@ -111,7 +111,7 @@ describe('ProductForm — create vs edit mode', () => {
 describe('ProductForm — error display', () => {
   it('displays a field error under nombre when action returns fieldErrors', async () => {
     const errAction = vi.fn().mockResolvedValue({
-      fieldErrors: { nombre: ['Name is required'] },
+      fieldErrors: { nombre: ['El nombre es obligatorio'] },
     } satisfies ActionResult);
 
     const { container } = render(<ProductForm action={errAction} />);
@@ -120,7 +120,7 @@ describe('ProductForm — error display', () => {
       fireEvent.submit(container.querySelector('form')!);
     });
 
-    expect(screen.getByText('Name is required')).toBeInTheDocument();
+    expect(screen.getByText('El nombre es obligatorio')).toBeInTheDocument();
   });
 
   it('displays a top-level error banner when action returns an error', async () => {

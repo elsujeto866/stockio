@@ -67,7 +67,7 @@ test.describe('Inventory management', () => {
     await expect(card.getByRole('status')).toBeVisible();
 
     // ── 5. Adjust stock up by 10 (total becomes 12 ≥ minimo 10) ───────────
-    await card.getByRole('link', { name: /adjust stock/i }).click();
+    await card.getByRole('link', { name: /ajustar stock/i }).click();
 
     // Fill the delta input directly (overrides the default 0).
     await page.fill('[name=delta]', '10');
@@ -80,7 +80,7 @@ test.describe('Inventory management', () => {
 
     // ── 7. Edit product name ───────────────────────────────────────────────
     const editedName = `${PRODUCT_NAME} (edited)`;
-    await card2.getByRole('link', { name: /^edit$/i }).click();
+    await card2.getByRole('link', { name: /^editar$/i }).click();
 
     await page.fill('[name=nombre]', editedName);
     await page.click('[type=submit]');
@@ -91,7 +91,7 @@ test.describe('Inventory management', () => {
 
     // ── 8. Soft-delete → absent from list ─────────────────────────────────
     const card3 = page.locator('li', { has: page.getByText(editedName) }).first();
-    await card3.getByRole('button', { name: /delete/i }).click();
+    await card3.getByRole('button', { name: /eliminar/i }).click();
 
     // Product should no longer appear in the list.
     await expect(page).toHaveURL('/products');

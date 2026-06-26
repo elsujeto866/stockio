@@ -31,6 +31,7 @@ vi.mock('next/link', () => ({
 
 import { OrderCard } from '@/components/orders/OrderCard';
 import type { OrderListItem } from '@/lib/data/orders';
+import { formatCurrency, formatDate } from '@/lib/format';
 
 // ---------------------------------------------------------------------------
 // Fixtures
@@ -55,27 +56,27 @@ describe('OrderCard', () => {
 
   it('displays the fecha', () => {
     render(<OrderCard order={baseOrder} />);
-    expect(screen.getByText('2026-06-01')).toBeInTheDocument();
+    expect(screen.getByText(formatDate('2026-06-01'))).toBeInTheDocument();
   });
 
   it('shows a Pending badge for pendiente estado', () => {
     render(<OrderCard order={baseOrder} />);
-    expect(screen.getByRole('status')).toHaveTextContent(/Pending/i);
+    expect(screen.getByRole('status')).toHaveTextContent(/Pendiente/i);
   });
 
   it('shows a Delivered badge for entregado estado', () => {
     render(<OrderCard order={{ ...baseOrder, estado: 'entregado' }} />);
-    expect(screen.getByRole('status')).toHaveTextContent(/Delivered/i);
+    expect(screen.getByRole('status')).toHaveTextContent(/Entregado/i);
   });
 
   it('shows a Cancelled badge for cancelado estado', () => {
     render(<OrderCard order={{ ...baseOrder, estado: 'cancelado' }} />);
-    expect(screen.getByRole('status')).toHaveTextContent(/Cancelled/i);
+    expect(screen.getByRole('status')).toHaveTextContent(/Cancelado/i);
   });
 
   it('displays the total formatted with $', () => {
     render(<OrderCard order={baseOrder} />);
-    expect(screen.getByText(/\$99\.50/)).toBeInTheDocument();
+    expect(screen.getByText(formatCurrency(99.5))).toBeInTheDocument();
   });
 
   it('displays "—" when total is null', () => {
@@ -91,6 +92,6 @@ describe('OrderCard', () => {
 
   it('shows "Unknown store" when store is null', () => {
     render(<OrderCard order={{ ...baseOrder, store: null }} />);
-    expect(screen.getByText(/Unknown store/i)).toBeInTheDocument();
+    expect(screen.getByText(/Tienda desconocida/i)).toBeInTheDocument();
   });
 });

@@ -26,6 +26,7 @@ import { OrderBuilder } from '@/components/orders/OrderBuilder';
 import { createOrderAction } from '@/app/(app)/orders/actions';
 import type { Store } from '@/lib/data/stores';
 import type { Product } from '@/lib/data/products';
+import { formatCurrency } from '@/lib/format';
 
 // ---------------------------------------------------------------------------
 // Fixtures
@@ -81,9 +82,9 @@ beforeEach(() => {
 // Helpers
 // ---------------------------------------------------------------------------
 function addProduct(productId: string) {
-  const selector = screen.getByRole('combobox', { name: /select a product/i });
+  const selector = screen.getByRole('combobox', { name: /seleccionar un producto/i });
   fireEvent.change(selector, { target: { value: productId } });
-  fireEvent.click(screen.getByRole('button', { name: /^add$/i }));
+  fireEvent.click(screen.getByRole('button', { name: /^agregar$/i }));
 }
 
 // ---------------------------------------------------------------------------
@@ -92,17 +93,17 @@ function addProduct(productId: string) {
 describe('OrderBuilder — rendering', () => {
   it('renders a store select', () => {
     render(<OrderBuilder stores={stores} products={products} />);
-    expect(screen.getByRole('combobox', { name: /store/i })).toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: /tienda/i })).toBeInTheDocument();
   });
 
   it('renders a product selector select', () => {
     render(<OrderBuilder stores={stores} products={products} />);
-    expect(screen.getByRole('combobox', { name: /select a product/i })).toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: /seleccionar un producto/i })).toBeInTheDocument();
   });
 
   it('submit button is disabled initially (0 items)', () => {
     render(<OrderBuilder stores={stores} products={products} />);
-    expect(screen.getByRole('button', { name: /create order/i })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /crear pedido/i })).toBeDisabled();
   });
 });
 
@@ -120,7 +121,7 @@ describe('OrderBuilder — add item', () => {
 
     addProduct('prod-1');
 
-    expect(screen.getByRole('button', { name: /create order/i })).not.toBeDisabled();
+    expect(screen.getByRole('button', { name: /crear pedido/i })).not.toBeDisabled();
   });
 
   it('merges duplicate productId by summing cantidad (no duplicate rows)', () => {
@@ -144,7 +145,7 @@ describe('OrderBuilder — remove item', () => {
     addProduct('prod-1');
     expect(screen.getByText('Widget X')).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: /remove/i }));
+    fireEvent.click(screen.getByRole('button', { name: /eliminar/i }));
 
     expect(screen.queryByText('Widget X')).not.toBeInTheDocument();
   });
@@ -153,9 +154,9 @@ describe('OrderBuilder — remove item', () => {
     render(<OrderBuilder stores={stores} products={products} />);
 
     addProduct('prod-1');
-    fireEvent.click(screen.getByRole('button', { name: /remove/i }));
+    fireEvent.click(screen.getByRole('button', { name: /eliminar/i }));
 
-    expect(screen.getByRole('button', { name: /create order/i })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /crear pedido/i })).toBeDisabled();
   });
 });
 
@@ -167,7 +168,7 @@ describe('OrderBuilder — quantity stepper', () => {
     // Initial quantity is 1
     expect(screen.getByText('1')).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: /increase quantity/i }));
+    fireEvent.click(screen.getByRole('button', { name: /aumentar cantidad/i }));
 
     expect(screen.getByText('2')).toBeInTheDocument();
   });
@@ -176,10 +177,10 @@ describe('OrderBuilder — quantity stepper', () => {
     render(<OrderBuilder stores={stores} products={products} />);
     addProduct('prod-1');
 
-    fireEvent.click(screen.getByRole('button', { name: /increase quantity/i }));
+    fireEvent.click(screen.getByRole('button', { name: /aumentar cantidad/i }));
     expect(screen.getByText('2')).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: /decrease quantity/i }));
+    fireEvent.click(screen.getByRole('button', { name: /disminuir cantidad/i }));
     expect(screen.getByText('1')).toBeInTheDocument();
   });
 
@@ -187,7 +188,7 @@ describe('OrderBuilder — quantity stepper', () => {
     render(<OrderBuilder stores={stores} products={products} />);
     addProduct('prod-1');
 
-    expect(screen.getByRole('button', { name: /decrease quantity/i })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /disminuir cantidad/i })).toBeDisabled();
   });
 });
 
@@ -196,16 +197,16 @@ describe('OrderBuilder — preview total', () => {
     render(<OrderBuilder stores={stores} products={products} />);
     addProduct('prod-1'); // $10.00 × 1
 
-    expect(screen.getByLabelText(/estimated total/i)).toHaveTextContent('$10.00');
+    expect(screen.getByLabelText(/total estimado/i)).toHaveTextContent(formatCurrency(10));
   });
 
   it('preview total updates when cantidad changes', () => {
     render(<OrderBuilder stores={stores} products={products} />);
     addProduct('prod-1'); // $10.00 × 1
 
-    fireEvent.click(screen.getByRole('button', { name: /increase quantity/i })); // × 2
+    fireEvent.click(screen.getByRole('button', { name: /aumentar cantidad/i })); // × 2
 
-    expect(screen.getByLabelText(/estimated total/i)).toHaveTextContent('$20.00');
+    expect(screen.getByLabelText(/total estimado/i)).toHaveTextContent(formatCurrency(20));
   });
 
   it('preview total sums multiple products', () => {
@@ -213,7 +214,7 @@ describe('OrderBuilder — preview total', () => {
     addProduct('prod-1'); // $10.00 × 1
     addProduct('prod-2'); // $25.00 × 1  → total $35.00
 
-    expect(screen.getByLabelText(/estimated total/i)).toHaveTextContent('$35.00');
+    expect(screen.getByLabelText(/total estimado/i)).toHaveTextContent(formatCurrency(35));
   });
 });
 
@@ -231,7 +232,7 @@ describe('OrderBuilder — JSON serialization', () => {
   it('hidden items JSON updates when cantidad changes', () => {
     render(<OrderBuilder stores={stores} products={products} />);
     addProduct('prod-1');
-    fireEvent.click(screen.getByRole('button', { name: /increase quantity/i }));
+    fireEvent.click(screen.getByRole('button', { name: /aumentar cantidad/i }));
 
     const hiddenInput = document.querySelector<HTMLInputElement>('input[name="items"]');
     const parsed = JSON.parse(hiddenInput!.value);
@@ -263,7 +264,7 @@ describe('OrderBuilder — error display', () => {
 
   it('renders fieldErrors for storeId when action returns them', async () => {
     vi.mocked(createOrderAction).mockResolvedValue({
-      fieldErrors: { storeId: ['Store is required'] },
+      fieldErrors: { storeId: ['Selecciona una tienda'] },
     });
 
     render(<OrderBuilder stores={stores} products={products} />);
@@ -274,7 +275,7 @@ describe('OrderBuilder — error display', () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByText('Store is required')).toBeInTheDocument();
+      expect(screen.getByText('Selecciona una tienda')).toBeInTheDocument();
     });
   });
 });

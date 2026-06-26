@@ -98,7 +98,7 @@ describe('ProductCard', () => {
 
   it('contains an adjust stock link pointing to /products/[id]/adjust', () => {
     render(<ProductCard product={baseProduct} />);
-    const adjustLink = screen.getByRole('link', { name: /adjust/i });
+    const adjustLink = screen.getByRole('link', { name: /ajustar/i });
     expect(adjustLink).toHaveAttribute('href', '/products/prod-1/adjust');
   });
 });

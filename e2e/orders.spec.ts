@@ -181,20 +181,20 @@ test.describe('Orders management', () => {
     // Select the seeded store
     await page.selectOption('select[name="storeId"]', seededStoreId);
 
-    // Add product A (select → Add, then increment to cantidad 2)
-    await page.selectOption('select[aria-label="Select a product to add"]', seededProductAId);
-    await page.click('button:has-text("Add")');
-    await page.click(`button[aria-label="Increase quantity of ${PRODUCT_A_NAME}"]`);
+    // Add product A (select → Agregar, then increment to cantidad 2)
+    await page.selectOption('select[aria-label="Seleccionar un producto para agregar"]', seededProductAId);
+    await page.click('button:has-text("Agregar")');
+    await page.click(`button[aria-label="Aumentar cantidad de ${PRODUCT_A_NAME}"]`);
 
     // Add product B (cantidad 1)
-    await page.selectOption('select[aria-label="Select a product to add"]', seededProductBId);
-    await page.click('button:has-text("Add")');
+    await page.selectOption('select[aria-label="Seleccionar un producto para agregar"]', seededProductBId);
+    await page.click('button:has-text("Agregar")');
 
-    // Preview total: 2×10 + 1×20 = $40.00
-    await expect(page.getByLabel('Estimated total')).toHaveText('$40.00');
+    // Preview total: 2×10 + 1×20 = $40,00 (es-EC format)
+    await expect(page.getByLabel('Total estimado')).toHaveText('$40,00');
 
     // Submit
-    await page.click('button[type="submit"]:has-text("Create order")');
+    await page.click('button[type="submit"]:has-text("Crear pedido")');
 
     // Lands on /orders/<uuid>
     await expect(page).toHaveURL(/\/orders\/[0-9a-f-]{36}$/);
@@ -202,34 +202,34 @@ test.describe('Orders management', () => {
     // Detail shows store name
     await expect(page.getByText(STORE_NAME)).toBeVisible();
 
-    // Estado badge = Pending
-    await expect(page.getByRole('status')).toHaveText(/Pending/i);
+    // Estado badge = Pendiente
+    await expect(page.getByRole('status')).toHaveText(/Pendiente/i);
 
     // Line items show both product names
     await expect(page.getByText(PRODUCT_A_NAME)).toBeVisible();
     await expect(page.getByText(PRODUCT_B_NAME)).toBeVisible();
 
-    // Frozen prices are displayed.
-    // $10.00 is unique (only precio_unitario of A).
+    // Frozen prices are displayed (es-EC comma format).
+    // $10,00 is unique (only precio_unitario of A).
     // For B we scope to the list item containing its name to avoid ambiguity
-    // when $20.00 appears multiple times (subtotal A=20, precio B=20, subtotal B=20).
-    await expect(page.getByText('$10.00')).toBeVisible();
+    // when $20,00 appears multiple times (subtotal A=20, precio B=20, subtotal B=20).
+    await expect(page.getByText('$10,00')).toBeVisible();
     await expect(
-      page.locator('li', { has: page.getByText(PRODUCT_B_NAME) }).getByText('$20.00').first()
+      page.locator('li', { has: page.getByText(PRODUCT_B_NAME) }).getByText('$20,00').first()
     ).toBeVisible();
 
-    // Authoritative total from DB ($40.00)
-    await expect(page.getByText('$40.00')).toBeVisible();
+    // Authoritative total from DB ($40,00)
+    await expect(page.getByText('$40,00')).toBeVisible();
 
     // Mark as delivered
-    await page.click('button:has-text("Mark as delivered")');
+    await page.click('button:has-text("Marcar como entregado")');
 
-    // Status badge updates to Delivered
-    await expect(page.getByRole('status')).toHaveText(/Delivered/i);
+    // Status badge updates to Entregado
+    await expect(page.getByRole('status')).toHaveText(/Entregado/i);
 
     // Cancel button is now absent
     await expect(
-      page.getByRole('button', { name: /cancel order/i })
+      page.getByRole('button', { name: /cancelar pedido/i })
     ).not.toBeVisible();
 
     // Navigate to /orders — history shows the order card with the store name.
@@ -257,14 +257,14 @@ test.describe('Orders management', () => {
     // Create order with product B (cantidad 1)
     await page.goto('/orders/new');
     await page.selectOption('select[name="storeId"]', seededStoreId);
-    await page.selectOption('select[aria-label="Select a product to add"]', seededProductBId);
-    await page.click('button:has-text("Add")');
-    await page.click('button[type="submit"]:has-text("Create order")');
+    await page.selectOption('select[aria-label="Seleccionar un producto para agregar"]', seededProductBId);
+    await page.click('button:has-text("Agregar")');
+    await page.click('button[type="submit"]:has-text("Crear pedido")');
     await expect(page).toHaveURL(/\/orders\/[0-9a-f-]{36}$/);
 
     // Cancel the order
-    await page.click('button:has-text("Cancel order")');
-    await expect(page.getByRole('status')).toHaveText(/Cancelled/i);
+    await page.click('button:has-text("Cancelar pedido")');
+    await expect(page.getByRole('status')).toHaveText(/Cancelado/i);
 
     // Check stock has been restored (via admin client — DB read after cancel)
     const { data: after } = await admin
@@ -292,15 +292,15 @@ test.describe('Orders management', () => {
 
     await page.goto('/orders/new');
     await page.selectOption('select[name="storeId"]', seededStoreId);
-    await page.selectOption('select[aria-label="Select a product to add"]', seededProductAId);
-    await page.click('button:has-text("Add")');
+    await page.selectOption('select[aria-label="Seleccionar un producto para agregar"]', seededProductAId);
+    await page.click('button:has-text("Agregar")');
 
     // Increment to 5 (need 4 more clicks after the initial add gives cantidad=1)
     for (let i = 0; i < 4; i++) {
-      await page.click(`button[aria-label="Increase quantity of ${PRODUCT_A_NAME}"]`);
+      await page.click(`button[aria-label="Aumentar cantidad de ${PRODUCT_A_NAME}"]`);
     }
 
-    await page.click('button[type="submit"]:has-text("Create order")');
+    await page.click('button[type="submit"]:has-text("Crear pedido")');
 
     // Should stay on /orders/new (action returns insufficientStock, no redirect)
     await expect(page).toHaveURL('/orders/new');

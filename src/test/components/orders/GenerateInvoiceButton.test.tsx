@@ -48,7 +48,7 @@ describe('GenerateInvoiceButton', () => {
     render(<GenerateInvoiceButton orderId={ORDER_UUID} />);
 
     expect(
-      screen.getByRole('button', { name: /generate invoice/i })
+      screen.getByRole('button', { name: /generar factura/i })
     ).toBeInTheDocument();
   });
 
@@ -60,19 +60,19 @@ describe('GenerateInvoiceButton', () => {
 
   it('shows an error alert when useActionState returns an error state', () => {
     vi.mocked(useActionState).mockReturnValue([
-      { error: 'An invoice already exists for this order.' },
+      { error: 'Ya existe una factura para este pedido' },
       vi.fn(),
       false,
     ] as never);
 
     render(<GenerateInvoiceButton orderId={ORDER_UUID} />);
 
-    expect(screen.getByRole('alert')).toHaveTextContent(/already exists/i);
+    expect(screen.getByRole('alert')).toHaveTextContent(/ya existe/i);
   });
 
   it('still renders the button even when an error is shown', () => {
     vi.mocked(useActionState).mockReturnValue([
-      { error: 'This order is cancelled and cannot be invoiced.' },
+      { error: 'Los pedidos cancelados no se pueden facturar' },
       vi.fn(),
       false,
     ] as never);
@@ -80,8 +80,8 @@ describe('GenerateInvoiceButton', () => {
     render(<GenerateInvoiceButton orderId={ORDER_UUID} />);
 
     expect(
-      screen.getByRole('button', { name: /generate invoice/i })
+      screen.getByRole('button', { name: /generar factura/i })
     ).toBeInTheDocument();
-    expect(screen.getByRole('alert')).toHaveTextContent(/cancelled/i);
+    expect(screen.getByRole('alert')).toHaveTextContent(/cancelados/i);
   });
 });

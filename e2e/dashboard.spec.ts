@@ -183,21 +183,21 @@ test.describe('Dashboard', () => {
   test('PeriodTotalsWidget is visible with period label', async ({ page }) => {
     await loginAndGoToDashboard(page);
 
-    // Period widget shows "This Month" heading
-    await expect(page.getByText('This Month')).toBeVisible();
+    // Period widget shows "Totales del mes" heading
+    await expect(page.getByText('Totales del mes')).toBeVisible();
 
-    // The month label (e.g. "June 2026") is visible
+    // The month label (e.g. "junio 2026") is visible
     const now = new Date();
     const monthNames = [
-      'January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December',
+      'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
+      'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre',
     ];
     const expectedLabel = `${monthNames[now.getUTCMonth()]} ${now.getUTCFullYear()}`;
     await expect(page.getByText(expectedLabel)).toBeVisible();
 
-    // Sales total is present (may be $0.00 if order total is null from admin insert)
-    // Assert presence: any element containing a dollar sign
-    const salesElements = page.locator('text=/\\$\\d+\\.\\d{2}/');
+    // Sales total is present (may be $0,00 if order total is null from admin insert)
+    // Assert presence: any element containing a dollar sign (es-EC uses comma as decimal)
+    const salesElements = page.locator('text=/\\$\\d+[,\\.]\\d{2}/');
     await expect(salesElements.first()).toBeVisible();
   });
 

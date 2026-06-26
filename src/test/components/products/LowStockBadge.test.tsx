@@ -37,6 +37,6 @@ describe('LowStockBadge', () => {
 
   it('badge text indicates low stock', () => {
     render(<LowStockBadge product={{ stock_actual: 1, stock_minimo: 5 }} />);
-    expect(screen.getByRole('status')).toHaveTextContent(/low stock/i);
+    expect(screen.getByRole('status')).toHaveTextContent(/stock bajo/i);
   });
 });

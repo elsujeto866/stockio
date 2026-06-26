@@ -78,7 +78,7 @@ describe('LowStockWidget', () => {
 
   it('renders the empty state when no products are low stock', () => {
     render(<LowStockWidget products={[]} />);
-    expect(screen.getByText(/All products are well stocked/i)).toBeInTheDocument();
+    expect(screen.getByText(/Todos los productos tienen stock suficiente/i)).toBeInTheDocument();
   });
 
   it('does NOT render the empty state when products are present', () => {
