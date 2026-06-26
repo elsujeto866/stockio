@@ -42,8 +42,18 @@ vi.mock('@/app/(app)/orders/actions', () => ({
 
 vi.mock('@/app/(app)/invoices/actions', () => ({
   createInvoiceAction: vi.fn(),
-  generateInvoiceAction: vi.fn(),
   setPaymentStatusAction: vi.fn(),
+}));
+
+// GenerateInvoiceButton is a 'use client' component tested separately.
+// Stub it here so OrderDetail tests stay focused on RSC rendering logic.
+vi.mock('@/components/orders/GenerateInvoiceButton', () => ({
+  GenerateInvoiceButton: ({ orderId }: { orderId: string }) => (
+    <form>
+      <input type="hidden" name="orderId" value={orderId} />
+      <button type="submit">Generate invoice</button>
+    </form>
+  ),
 }));
 
 import { OrderDetail } from '@/components/orders/OrderDetail';

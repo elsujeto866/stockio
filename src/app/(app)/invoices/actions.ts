@@ -62,17 +62,6 @@ export async function createInvoiceAction(
 }
 
 // ---------------------------------------------------------------------------
-// generateInvoiceAction — plain form action wrapper for RSC contexts.
-//
-// OrderDetail is an RSC and cannot use useActionState. This wrapper adapts
-// createInvoiceAction (prevState + formData) into a plain (formData) action.
-// Errors are silently dropped — success always redirects to the new invoice.
-// ---------------------------------------------------------------------------
-export async function generateInvoiceAction(formData: FormData): Promise<void> {
-  await createInvoiceAction(null, formData);
-}
-
-// ---------------------------------------------------------------------------
 // setPaymentStatusAction — plain form action (no useActionState needed)
 // ---------------------------------------------------------------------------
 export async function setPaymentStatusAction(formData: FormData): Promise<void> {

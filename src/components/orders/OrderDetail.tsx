@@ -17,7 +17,7 @@
 import Link from 'next/link';
 import type { OrderDetail as OrderDetailType } from '@/lib/data/orders';
 import { markDeliveredAction, cancelOrderAction } from '@/app/(app)/orders/actions';
-import { generateInvoiceAction } from '@/app/(app)/invoices/actions';
+import { GenerateInvoiceButton } from '@/components/orders/GenerateInvoiceButton';
 
 interface Props {
   order: OrderDetailType;
@@ -153,15 +153,7 @@ export function OrderDetail({ order, invoiceId = null }: Props) {
       ) : canInvoice ? (
         <div className="rounded-xl bg-white border border-gray-100 shadow-sm p-4">
           <p className="text-sm text-gray-500 mb-3">Invoice</p>
-          <form action={generateInvoiceAction}>
-            <input type="hidden" name="orderId" value={order.id} />
-            <button
-              type="submit"
-              className="inline-flex items-center justify-center rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors min-h-[44px]"
-            >
-              Generate invoice
-            </button>
-          </form>
+          <GenerateInvoiceButton orderId={order.id} />
         </div>
       ) : null}
     </div>
