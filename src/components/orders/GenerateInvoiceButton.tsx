@@ -29,13 +29,13 @@ export function GenerateInvoiceButton({ orderId }: Props) {
     <form action={formAction}>
       <input type="hidden" name="orderId" value={orderId} />
       {state?.error && (
-        <p role="alert" className="text-sm text-red-600 mb-2">
+        <p role="alert" className="text-sm text-danger mb-2">
           {state.error}
         </p>
       )}
       <button
         type="submit"
-        className="inline-flex items-center justify-center rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors min-h-[44px]"
+        className="btn-primary"
       >
         Generar factura
       </button>

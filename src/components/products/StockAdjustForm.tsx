@@ -42,9 +42,9 @@ export function StockAdjustForm({ action, product }: Props) {
       <input type="hidden" name="productId" value={product.id} />
 
       {/* Current stock info */}
-      <div className="rounded-xl bg-gray-50 border border-gray-200 p-4">
-        <p className="text-sm text-gray-500">Stock actual</p>
-        <p className="mt-1 text-2xl font-semibold text-gray-900">
+      <div className="rounded-2xl bg-brand-50 border border-orange-200 p-4">
+        <p className="text-sm text-brand font-medium">Stock actual</p>
+        <p className="mt-1 text-3xl font-bold text-gray-900">
           {product.stock_actual}
           {product.unidad_medida ? (
             <span className="text-base font-normal text-gray-500 ml-1">
@@ -52,7 +52,7 @@ export function StockAdjustForm({ action, product }: Props) {
             </span>
           ) : null}
         </p>
-        <p className="text-xs text-gray-400 mt-1">
+        <p className="text-xs text-gray-500 mt-1">
           Mínimo: {product.stock_minimo}
         </p>
       </div>
@@ -61,7 +61,7 @@ export function StockAdjustForm({ action, product }: Props) {
       <div className="space-y-2">
         <label
           htmlFor="delta"
-          className="block text-sm font-medium text-gray-700"
+          className="block text-sm font-semibold text-brand uppercase tracking-wide"
         >
           Ajuste
         </label>
@@ -71,7 +71,7 @@ export function StockAdjustForm({ action, product }: Props) {
             onClick={decrement}
             disabled={isPending}
             aria-label="Disminuir stock"
-            className="inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white text-lg font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 transition-colors min-h-[44px] min-w-[44px]"
+            className="inline-flex items-center justify-center rounded-xl border border-gray-300 bg-white text-lg font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-brand disabled:opacity-50 transition-colors min-h-[44px] min-w-[44px]"
           >
             −
           </button>
@@ -82,20 +82,20 @@ export function StockAdjustForm({ action, product }: Props) {
             step="1"
             defaultValue="0"
             ref={deltaRef}
-            className="w-24 rounded-lg border border-gray-300 px-3 py-2.5 text-center text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-24 rounded-lg border border-gray-300 px-3 py-2.5 text-center text-sm font-medium focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent"
           />
           <button
             type="button"
             onClick={increment}
             disabled={isPending}
             aria-label="Aumentar stock"
-            className="inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white text-lg font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 transition-colors min-h-[44px] min-w-[44px]"
+            className="inline-flex items-center justify-center rounded-xl border border-gray-300 bg-white text-lg font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-brand disabled:opacity-50 transition-colors min-h-[44px] min-w-[44px]"
           >
             +
           </button>
         </div>
         {state?.fieldErrors?.delta && (
-          <p role="alert" className="text-xs text-red-600">
+          <p role="alert" className="text-xs text-danger">
             {state.fieldErrors.delta[0]}
           </p>
         )}
@@ -105,7 +105,7 @@ export function StockAdjustForm({ action, product }: Props) {
       {state?.error && (
         <p
           role="alert"
-          className="rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700"
+          className="rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-danger"
         >
           {state.error}
         </p>
@@ -115,7 +115,7 @@ export function StockAdjustForm({ action, product }: Props) {
       <button
         type="submit"
         disabled={isPending}
-        className="w-full rounded-lg bg-blue-600 px-4 py-3 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 transition-colors min-h-[44px]"
+        className="btn-primary w-full"
       >
         {isPending ? 'Ajustando…' : 'Aplicar ajuste'}
       </button>

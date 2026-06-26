@@ -25,11 +25,14 @@ interface Props {
 function FieldError({ messages }: { messages?: string[] }) {
   if (!messages?.length) return null;
   return (
-    <p role="alert" className="mt-1 text-xs text-red-600">
+    <p role="alert" className="mt-1 text-xs text-danger">
       {messages[0]}
     </p>
   );
 }
+
+const inputClass =
+  'w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent';
 
 export function ProductForm({ action, initialData }: Props) {
   const [state, dispatch, isPending] = useActionState(action, null);
@@ -42,155 +45,161 @@ export function ProductForm({ action, initialData }: Props) {
       )}
 
       {/* ── Group A: identity fields ────────────────────────────── */}
-      <div className="rounded-xl bg-white border border-gray-100 shadow-sm p-4 space-y-4">
-        <h2 className="text-sm font-medium text-gray-500 uppercase tracking-wide">
-          Detalles del producto
-        </h2>
+      <div className="rounded-2xl bg-white border border-gray-100 shadow-sm overflow-hidden">
+        <div className="h-1 bg-brand" />
+        <div className="p-4 space-y-4">
+          <h2 className="text-sm font-semibold text-brand uppercase tracking-wide">
+            Detalles del producto
+          </h2>
 
-        <div className="space-y-1">
-          <label
-            htmlFor="nombre"
-            className="block text-sm font-medium text-gray-700"
-          >
-            Nombre *
-          </label>
-          <input
-            id="nombre"
-            name="nombre"
-            type="text"
-            required
-            defaultValue={initialData?.nombre ?? ''}
-            className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            placeholder="Nombre del producto"
-          />
-          <FieldError messages={state?.fieldErrors?.nombre} />
-        </div>
-
-        <div className="space-y-1">
-          <label
-            htmlFor="sku"
-            className="block text-sm font-medium text-gray-700"
-          >
-            SKU / Código
-          </label>
-          <input
-            id="sku"
-            name="sku"
-            type="text"
-            defaultValue={initialData?.sku ?? ''}
-            className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            placeholder="e.g. OL-001"
-          />
-          <FieldError messages={state?.fieldErrors?.sku} />
-        </div>
-
-        <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1">
             <label
-              htmlFor="categoria"
+              htmlFor="nombre"
               className="block text-sm font-medium text-gray-700"
             >
-              Categoría
+              Nombre *
             </label>
             <input
-              id="categoria"
-              name="categoria"
+              id="nombre"
+              name="nombre"
               type="text"
-              defaultValue={initialData?.categoria ?? ''}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="p. ej. Alimentos"
+              required
+              defaultValue={initialData?.nombre ?? ''}
+              className={inputClass}
+              placeholder="Nombre del producto"
             />
-            <FieldError messages={state?.fieldErrors?.categoria} />
+            <FieldError messages={state?.fieldErrors?.nombre} />
           </div>
 
           <div className="space-y-1">
             <label
-              htmlFor="unidad_medida"
+              htmlFor="sku"
               className="block text-sm font-medium text-gray-700"
             >
-              Unidad de medida
+              SKU / Código
             </label>
             <input
-              id="unidad_medida"
-              name="unidad_medida"
+              id="sku"
+              name="sku"
               type="text"
-              defaultValue={initialData?.unidad_medida ?? ''}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="e.g. kg"
+              defaultValue={initialData?.sku ?? ''}
+              className={inputClass}
+              placeholder="e.g. OL-001"
             />
-            <FieldError messages={state?.fieldErrors?.unidad_medida} />
+            <FieldError messages={state?.fieldErrors?.sku} />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <label
+                htmlFor="categoria"
+                className="block text-sm font-medium text-gray-700"
+              >
+                Categoría
+              </label>
+              <input
+                id="categoria"
+                name="categoria"
+                type="text"
+                defaultValue={initialData?.categoria ?? ''}
+                className={inputClass}
+                placeholder="p. ej. Alimentos"
+              />
+              <FieldError messages={state?.fieldErrors?.categoria} />
+            </div>
+
+            <div className="space-y-1">
+              <label
+                htmlFor="unidad_medida"
+                className="block text-sm font-medium text-gray-700"
+              >
+                Unidad de medida
+              </label>
+              <input
+                id="unidad_medida"
+                name="unidad_medida"
+                type="text"
+                defaultValue={initialData?.unidad_medida ?? ''}
+                className={inputClass}
+                placeholder="e.g. kg"
+              />
+              <FieldError messages={state?.fieldErrors?.unidad_medida} />
+            </div>
           </div>
         </div>
       </div>
 
       {/* ── Group B: numeric fields ─────────────────────────────── */}
-      <div className="rounded-xl bg-white border border-gray-100 shadow-sm p-4 space-y-4">
-        <h2 className="text-sm font-medium text-gray-500 uppercase tracking-wide">
-          Precio y stock
-        </h2>
+      <div className="rounded-2xl bg-white border border-gray-100 shadow-sm overflow-hidden">
+        <div className="h-1 bg-info" />
+        <div className="p-4 space-y-4">
+          <h2 className="text-sm font-semibold text-info uppercase tracking-wide">
+            Precio y stock
+          </h2>
 
-        <div className="space-y-1">
-          <label
-            htmlFor="precio_unitario"
-            className="block text-sm font-medium text-gray-700"
-          >
-            Precio unitario *
-          </label>
-          <input
-            id="precio_unitario"
-            name="precio_unitario"
-            type="number"
-            step="0.01"
-            min="0"
-            required
-            defaultValue={initialData?.precio_unitario ?? ''}
-            className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            placeholder="0.00"
-          />
-          <FieldError messages={state?.fieldErrors?.precio_unitario} />
-        </div>
-
-        <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1">
             <label
-              htmlFor="stock_actual"
+              htmlFor="precio_unitario"
               className="block text-sm font-medium text-gray-700"
             >
-              Stock actual *
+              Precio unitario *
             </label>
             <input
-              id="stock_actual"
-              name="stock_actual"
+              id="precio_unitario"
+              name="precio_unitario"
               type="number"
+              step="0.01"
               min="0"
-              step="1"
               required
-              defaultValue={initialData?.stock_actual ?? ''}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="0"
+              defaultValue={initialData?.precio_unitario ?? ''}
+              className={inputClass}
+              placeholder="0.00"
             />
-            <FieldError messages={state?.fieldErrors?.stock_actual} />
+            <FieldError messages={state?.fieldErrors?.precio_unitario} />
           </div>
 
-          <div className="space-y-1">
-            <label
-              htmlFor="stock_minimo"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Stock mínimo *
-            </label>
-            <input
-              id="stock_minimo"
-              name="stock_minimo"
-              type="number"
-              min="0"
-              step="1"
-              required
-              defaultValue={initialData?.stock_minimo ?? ''}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="0"
-            />
-            <FieldError messages={state?.fieldErrors?.stock_minimo} />
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <label
+                htmlFor="stock_actual"
+                className="block text-sm font-medium text-gray-700"
+              >
+                Stock actual *
+              </label>
+              <input
+                id="stock_actual"
+                name="stock_actual"
+                type="number"
+                min="0"
+                step="1"
+                required
+                defaultValue={initialData?.stock_actual ?? ''}
+                className={inputClass}
+                placeholder="0"
+              />
+              <FieldError messages={state?.fieldErrors?.stock_actual} />
+            </div>
+
+            <div className="space-y-1">
+              <label
+                htmlFor="stock_minimo"
+                className="block text-sm font-medium text-gray-700"
+              >
+                Stock mínimo *
+              </label>
+              <input
+                id="stock_minimo"
+                name="stock_minimo"
+                type="number"
+                min="0"
+                step="1"
+                required
+                defaultValue={initialData?.stock_minimo ?? ''}
+                className={inputClass}
+                placeholder="0"
+              />
+              <FieldError messages={state?.fieldErrors?.stock_minimo} />
+            </div>
           </div>
         </div>
       </div>
@@ -199,7 +208,7 @@ export function ProductForm({ action, initialData }: Props) {
       {state?.error && (
         <p
           role="alert"
-          className="rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700"
+          className="rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-danger"
         >
           {state.error}
         </p>
@@ -209,7 +218,7 @@ export function ProductForm({ action, initialData }: Props) {
       <button
         type="submit"
         disabled={isPending}
-        className="w-full rounded-lg bg-blue-600 px-4 py-3 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 transition-colors min-h-[44px]"
+        className="btn-primary w-full"
       >
         {isPending ? 'Guardando…' : isEdit ? 'Actualizar producto' : 'Crear producto'}
       </button>

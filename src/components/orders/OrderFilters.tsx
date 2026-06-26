@@ -32,18 +32,18 @@ export function OrderFilters({ stores }: Props) {
   }
 
   return (
-    <div className="rounded-xl bg-white border border-gray-100 shadow-sm p-4 flex flex-wrap gap-3">
+    <div className="rounded-2xl bg-white border border-gray-100 shadow-sm p-4 flex flex-wrap gap-3">
       {/* Store filter */}
       <div className="flex flex-col gap-1 min-w-[160px]">
         <label
           htmlFor="store-filter"
-          className="text-xs font-medium text-gray-500 uppercase tracking-wide"
+          className="text-xs font-semibold text-brand uppercase tracking-wide"
         >
           Filtrar por tienda
         </label>
         <select
           id="store-filter"
-          className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[44px]"
+          className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand min-h-[44px]"
           value={searchParams.get('store') ?? ''}
           onChange={(e) => updateParam('store', e.target.value)}
         >
@@ -60,14 +60,14 @@ export function OrderFilters({ stores }: Props) {
       <div className="flex flex-col gap-1">
         <label
           htmlFor="from-filter"
-          className="text-xs font-medium text-gray-500 uppercase tracking-wide"
+          className="text-xs font-semibold text-brand uppercase tracking-wide"
         >
           Desde
         </label>
         <input
           id="from-filter"
           type="date"
-          className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[44px]"
+          className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand min-h-[44px]"
           value={searchParams.get('from') ?? ''}
           onChange={(e) => updateParam('from', e.target.value)}
         />
@@ -77,14 +77,14 @@ export function OrderFilters({ stores }: Props) {
       <div className="flex flex-col gap-1">
         <label
           htmlFor="to-filter"
-          className="text-xs font-medium text-gray-500 uppercase tracking-wide"
+          className="text-xs font-semibold text-brand uppercase tracking-wide"
         >
           Hasta
         </label>
         <input
           id="to-filter"
           type="date"
-          className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[44px]"
+          className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand min-h-[44px]"
           value={searchParams.get('to') ?? ''}
           onChange={(e) => updateParam('to', e.target.value)}
         />

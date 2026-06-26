@@ -1,7 +1,7 @@
 /**
  * LowStockBadge — RSC presentational component.
  *
- * Renders a red "Low stock" badge when stock_actual < stock_minimo.
+ * Renders a bold danger-red "Stock bajo" badge when stock_actual < stock_minimo.
  * Renders nothing when stock is at or above the minimum (R6).
  *
  * Uses the pure isLowStock domain helper — no I/O.
@@ -20,7 +20,7 @@ export function LowStockBadge({ product }: Props) {
   return (
     <span
       role="status"
-      className="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-700 border border-red-200"
+      className="inline-flex items-center rounded-full bg-danger px-2.5 py-0.5 text-xs font-bold text-white"
     >
       Stock bajo
     </span>

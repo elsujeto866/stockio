@@ -16,11 +16,12 @@ interface Props {
 export function StoreList({ stores }: Props) {
   if (stores.length === 0) {
     return (
-      <div className="rounded-xl bg-white border border-gray-100 shadow-sm p-8 text-center space-y-3">
+      <div className="rounded-2xl bg-white border border-gray-100 shadow-sm p-8 text-center space-y-3">
+        <p className="text-3xl">🏪</p>
         <p className="text-gray-500 text-sm">No hay tiendas todavía</p>
         <Link
           href="/stores/new"
-          className="inline-flex items-center justify-center rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors min-h-[44px]"
+          className="btn-primary"
         >
           Agrega tu primera tienda
         </Link>
