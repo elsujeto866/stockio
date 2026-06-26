@@ -96,10 +96,11 @@ export class OrderNotDeliverableError extends Error {
  * @param options.storeId  Filter by store UUID (exact match).
  * @param options.from     Filter by fecha >= value (ISO date string, inclusive).
  * @param options.to       Filter by fecha <= value (ISO date string, inclusive).
+ * @param options.limit    Cap the number of returned rows (applied last, after filters).
  */
 export async function getOrders(
   supabase: SupabaseClient,
-  options?: { storeId?: string; from?: string; to?: string }
+  options?: { storeId?: string; from?: string; to?: string; limit?: number }
 ): Promise<OrderListItem[]> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let query: any = supabase
@@ -115,6 +116,9 @@ export async function getOrders(
   }
   if (options?.to) {
     query = query.lte('fecha', options.to);
+  }
+  if (options?.limit !== undefined) {
+    query = query.limit(options.limit);
   }
 
   const { data, error } = await query;

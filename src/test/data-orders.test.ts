@@ -35,6 +35,31 @@ describe('getOrders', () => {
     const orders = await getOrders(supabase);
     expect(orders).toHaveLength(0);
   });
+
+  it('returns at most limit rows when limit option is provided', async () => {
+    const manyOrders = Array.from({ length: 10 }, (_, i) => ({
+      ...sampleOrder,
+      id: `order-${i + 1}`,
+      created_at: `2026-01-0${(i % 9) + 1}T00:00:00Z`,
+    }));
+    const supabase = createMockSupabaseClient({ tables: { orders: manyOrders } });
+
+    const orders = await getOrders(supabase, { limit: 3 });
+
+    expect(orders).toHaveLength(3);
+  });
+
+  it('returns all orders when limit is not provided (backward-compatible)', async () => {
+    const manyOrders = Array.from({ length: 4 }, (_, i) => ({
+      ...sampleOrder,
+      id: `order-${i + 1}`,
+    }));
+    const supabase = createMockSupabaseClient({ tables: { orders: manyOrders } });
+
+    const orders = await getOrders(supabase);
+
+    expect(orders).toHaveLength(4);
+  });
 });
 
 // ---------------------------------------------------------------------------
