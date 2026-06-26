@@ -195,8 +195,8 @@ test.describe('Dashboard', () => {
     const expectedLabel = `${monthNames[now.getUTCMonth()]} ${now.getUTCFullYear()}`;
     await expect(page.getByText(expectedLabel)).toBeVisible();
 
-    // Sales total is present (may be $0,00 if order total is null from admin insert)
-    // Assert presence: any element containing a dollar sign (es-EC uses comma as decimal)
+    // Sales total is present (may be $0.00 if order total is null from admin insert)
+    // Assert presence: any element containing a dollar sign followed by digits
     const salesElements = page.locator('text=/\\$\\d+[,\\.]\\d{2}/');
     await expect(salesElements.first()).toBeVisible();
   });

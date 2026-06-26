@@ -231,17 +231,17 @@ test.describe('Invoices management', () => {
     await expect(page.getByText(PRODUCT_A_NAME)).toBeVisible();
     await expect(page.getByText(PRODUCT_B_NAME)).toBeVisible();
 
-    // Widget precio $10,00 is unique (its subtotal is $20,00)
-    await expect(page.getByText('$10,00')).toBeVisible();
+    // Widget precio $10.00 is unique (its subtotal is $20.00)
+    await expect(page.getByText('$10.00')).toBeVisible();
 
-    // Gadget precio $25,00 — scope to its <li> because precio === subtotal
+    // Gadget precio $25.00 — scope to its <li> because precio === subtotal
     // when cantidad === 1 (same disambiguation pattern as orders.spec.ts)
     await expect(
-      page.locator('li', { has: page.getByText(PRODUCT_B_NAME) }).getByText('$25,00').first()
+      page.locator('li', { has: page.getByText(PRODUCT_B_NAME) }).getByText('$25.00').first()
     ).toBeVisible();
 
-    // Total: 2×10 + 1×25 = $45,00
-    await expect(page.getByText('$45,00')).toBeVisible();
+    // Total: 2×10 + 1×25 = $45.00
+    await expect(page.getByText('$45.00')).toBeVisible();
 
     // Payment badge is Sin pagar (create_invoice sets estado_pago = null)
     // Use positive assertion — "not /Pagado/i" would wrongly match "Sin pagar".

@@ -190,8 +190,8 @@ test.describe('Orders management', () => {
     await page.selectOption('select[aria-label="Seleccionar un producto para agregar"]', seededProductBId);
     await page.click('button:has-text("Agregar")');
 
-    // Preview total: 2×10 + 1×20 = $40,00 (es-EC format)
-    await expect(page.getByLabel('Total estimado')).toHaveText('$40,00');
+    // Preview total: 2×10 + 1×20 = $40.00 (en-US format)
+    await expect(page.getByLabel('Total estimado')).toHaveText('$40.00');
 
     // Submit
     await page.click('button[type="submit"]:has-text("Crear pedido")');
@@ -209,17 +209,17 @@ test.describe('Orders management', () => {
     await expect(page.getByText(PRODUCT_A_NAME)).toBeVisible();
     await expect(page.getByText(PRODUCT_B_NAME)).toBeVisible();
 
-    // Frozen prices are displayed (es-EC comma format).
-    // $10,00 is unique (only precio_unitario of A).
+    // Frozen prices are displayed (en-US dot format).
+    // $10.00 is unique (only precio_unitario of A).
     // For B we scope to the list item containing its name to avoid ambiguity
-    // when $20,00 appears multiple times (subtotal A=20, precio B=20, subtotal B=20).
-    await expect(page.getByText('$10,00')).toBeVisible();
+    // when $20.00 appears multiple times (subtotal A=20, precio B=20, subtotal B=20).
+    await expect(page.getByText('$10.00')).toBeVisible();
     await expect(
-      page.locator('li', { has: page.getByText(PRODUCT_B_NAME) }).getByText('$20,00').first()
+      page.locator('li', { has: page.getByText(PRODUCT_B_NAME) }).getByText('$20.00').first()
     ).toBeVisible();
 
-    // Authoritative total from DB ($40,00)
-    await expect(page.getByText('$40,00')).toBeVisible();
+    // Authoritative total from DB ($40.00)
+    await expect(page.getByText('$40.00')).toBeVisible();
 
     // Mark as delivered
     await page.click('button:has-text("Marcar como entregado")');

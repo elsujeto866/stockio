@@ -1,18 +1,18 @@
 /**
- * Formatting helpers for es-EC locale.
+ * Formatting helpers.
  *
- * formatCurrency — formats a number as USD currency in Ecuador locale.
- * formatDate     — formats an ISO date string (YYYY-MM-DD) in Ecuador locale.
+ * formatCurrency — formats a number as USD currency in US locale (en-US).
+ * formatDate     — formats an ISO date string (YYYY-MM-DD) in Ecuador locale (es-EC).
  *
  * Both use Intl APIs so no external library is needed.
  */
 
 /**
- * Formats a number as a USD currency string using the es-EC locale.
- * Example: formatCurrency(99.5) → "$99,50"
+ * Formats a number as a USD currency string using the en-US locale.
+ * Example: formatCurrency(99.5) → "$99.50"
  */
 export function formatCurrency(n: number): string {
-  return new Intl.NumberFormat('es-EC', {
+  return new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: 'USD',
   }).format(n);
