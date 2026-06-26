@@ -111,6 +111,22 @@ function buildQueryResult(rows: MockRow[], mutationOpts: MutationOpts) {
       }
       return builder;
     },
+    gte(col: string, value: unknown) {
+      if (_mutationKind === null) {
+        _rows = _rows.filter(
+          (r) => (r[col] as string | number) >= (value as string | number)
+        );
+      }
+      return builder;
+    },
+    lte(col: string, value: unknown) {
+      if (_mutationKind === null) {
+        _rows = _rows.filter(
+          (r) => (r[col] as string | number) <= (value as string | number)
+        );
+      }
+      return builder;
+    },
     order(_col: string, _opts?: unknown) {
       return builder;
     },
