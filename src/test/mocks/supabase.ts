@@ -140,6 +140,14 @@ function buildQueryResult(rows: MockRow[], mutationOpts: MutationOpts) {
       _single = true;
       return builder;
     },
+    maybeSingle() {
+      // Behaves identically to single() in mock context: returns { data: row|null, error: null }.
+      // The real client differs (single() errors on no-rows; maybeSingle() returns null).
+      // For unit tests the distinction is irrelevant — use maybeSingle() on queries that
+      // should return null (not error) when no row is found.
+      _single = true;
+      return builder;
+    },
     insert(values: unknown) {
       mutationOpts.captured.insertPayload = values;
       _mutationKind = 'insert';
