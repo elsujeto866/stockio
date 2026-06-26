@@ -1,26 +1,40 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+
+  /* Brand palette — Stockio snack theme */
+  --color-brand: #F5821F;
+  --color-brand-dark: #D96D10;
+  --color-brand-50: #FFF1E3;
+  --color-info: #0E76BD;
+  --color-danger: #E1251B;
+  --color-success: #2FA336;
+  --color-warning: #FDB913;
+  --color-grape: #5B2D8E;
+  --color-cream: #FFF7EE;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
+/* Lock in the warm light theme — no OS dark-mode override */
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: #FFF7EE;
+  color: #2A2724;
+}
+
+@layer components {
+  /* Primary action — brand orange */
+  .btn-primary {
+    @apply inline-flex items-center justify-center rounded-xl bg-brand px-4 py-2.5 text-sm font-medium text-white hover:bg-brand-dark focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 transition-colors min-h-[44px];
+  }
+
+  /* Secondary / neutral action */
+  .btn-secondary {
+    @apply inline-flex items-center justify-center rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2 transition-colors min-h-[44px];
+  }
+
+  /* Destructive action — danger red */
+  .btn-danger {
+    @apply inline-flex items-center justify-center rounded-xl border border-red-200 bg-red-50 px-4 py-2.5 text-sm font-medium text-danger hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-danger focus:ring-offset-2 transition-colors min-h-[44px];
+  }
 }
