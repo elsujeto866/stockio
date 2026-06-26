@@ -27,25 +27,28 @@ export default async function AdjustStockPage({ params }: Props) {
   if (!product) notFound();
 
   return (
-    <main className="min-h-screen bg-gray-50">
+    <main className="min-h-screen bg-cream">
       <div className="max-w-md mx-auto px-4 py-8 space-y-6">
         <div className="flex items-center gap-3">
           <Link
             href="/products"
-            className="text-sm text-gray-500 hover:text-gray-700"
+            className="text-sm text-brand hover:text-brand-dark font-medium"
           >
             ← Productos
           </Link>
-          <h1 className="text-2xl font-semibold text-gray-900">
+          <h1 className="text-2xl font-bold text-gray-900">
             Ajustar stock
           </h1>
         </div>
 
-        <div className="rounded-xl bg-white border border-gray-100 shadow-sm p-4">
-          <p className="font-semibold text-gray-900">{product.nombre}</p>
-          {product.sku && (
-            <p className="text-xs text-gray-500 mt-0.5">SKU: {product.sku}</p>
-          )}
+        <div className="rounded-2xl bg-white border border-gray-100 shadow-sm overflow-hidden">
+          <div className="h-1 bg-brand" />
+          <div className="p-4">
+            <p className="font-semibold text-gray-900">{product.nombre}</p>
+            {product.sku && (
+              <p className="text-xs text-gray-500 mt-0.5">SKU: {product.sku}</p>
+            )}
+          </div>
         </div>
 
         <StockAdjustForm action={adjustStockAction} product={product} />

@@ -6,6 +6,8 @@
  *  - Total sales (sum of non-cancelado order totals, null guarded as 0)
  *  - Non-cancelado order count
  *  - Low-stock product count
+ *
+ * Colored header: success green — celebrates the sales momentum.
  */
 
 import type { OrderListItem } from '@/lib/data/orders';
@@ -23,26 +25,29 @@ export function PeriodTotalsWidget({ orders, lowStockCount, period }: Props) {
   const orderCount = countNonCancelledOrders(orders);
 
   return (
-    <div className="rounded-xl bg-white p-6 shadow-sm border border-gray-100 space-y-4">
-      <div className="flex items-center justify-between">
-        <h2 className="font-semibold text-gray-900">Totales del mes</h2>
-        <span className="text-sm text-gray-500">{period.label}</span>
+    <div className="rounded-2xl bg-white shadow-sm border border-gray-100 overflow-hidden">
+      {/* Success green header */}
+      <div className="bg-success px-6 py-4 flex items-center justify-between">
+        <h2 className="font-bold text-white">💰 Totales del mes</h2>
+        <span className="text-sm text-white/80">{period.label}</span>
       </div>
 
-      <div className="grid grid-cols-3 gap-4">
-        <div className="space-y-1">
-          <p className="text-xs text-gray-500 uppercase tracking-wide">Ventas</p>
-          <p className="text-xl font-bold text-gray-900">{formatCurrency(totalSales)}</p>
-        </div>
+      <div className="p-6">
+        <div className="grid grid-cols-3 gap-4">
+          <div className="space-y-1">
+            <p className="text-xs text-gray-500 uppercase tracking-wide font-medium">Ventas</p>
+            <p className="text-2xl font-bold text-info">{formatCurrency(totalSales)}</p>
+          </div>
 
-        <div className="space-y-1">
-          <p className="text-xs text-gray-500 uppercase tracking-wide">Pedidos</p>
-          <p className="text-xl font-bold text-gray-900">{orderCount}</p>
-        </div>
+          <div className="space-y-1">
+            <p className="text-xs text-gray-500 uppercase tracking-wide font-medium">Pedidos</p>
+            <p className="text-2xl font-bold text-success">{orderCount}</p>
+          </div>
 
-        <div className="space-y-1">
-          <p className="text-xs text-gray-500 uppercase tracking-wide">Stock bajo</p>
-          <p className="text-xl font-bold text-gray-900">{lowStockCount}</p>
+          <div className="space-y-1">
+            <p className="text-xs text-gray-500 uppercase tracking-wide font-medium">Stock bajo</p>
+            <p className="text-2xl font-bold text-danger">{lowStockCount}</p>
+          </div>
         </div>
       </div>
     </div>

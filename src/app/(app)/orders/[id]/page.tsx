@@ -34,16 +34,16 @@ export default async function OrderPage({ params }: Props) {
   if (!order) notFound();
 
   return (
-    <main className="min-h-screen bg-gray-50">
+    <main className="min-h-screen bg-cream">
       <div className="max-w-2xl mx-auto px-4 py-8 space-y-6">
         <div className="flex items-center gap-3">
           <Link
             href="/orders"
-            className="text-sm text-gray-500 hover:text-gray-700 transition-colors"
+            className="text-sm text-brand hover:text-brand-dark font-medium transition-colors"
           >
             ← Pedidos
           </Link>
-          <h1 className="text-2xl font-semibold text-gray-900">Detalle del pedido</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Detalle del pedido</h1>
         </div>
 
         <OrderDetail order={order} invoiceId={invoice?.id ?? null} />
