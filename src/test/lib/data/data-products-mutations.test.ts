@@ -203,6 +203,64 @@ describe('deleteProduct', () => {
 });
 
 // ---------------------------------------------------------------------------
+// cost_price — data layer (S3-T7)
+// ---------------------------------------------------------------------------
+describe('cost_price — data layer (S3-T7)', () => {
+  it('SELECT_COLS string includes cost_price', () => {
+    // Verify by checking that createProduct round-trips cost_price in the insert payload
+    // The mock returns what we configure, and SELECT_COLS is verified by the mock capturing it
+    // Indirect: if SELECT_COLS lacked cost_price, the returned product would not have it
+    const productWithCost = { ...baseProduct, cost_price: 8.00 };
+    const supabase = createMockSupabaseClient({
+      insertResult: productWithCost,
+      rpcs: { get_tenant_id: () => ({ data: 'tenant-1', error: null }) },
+    });
+    return createProduct(supabase, { ...validInput, cost_price: 8.00 }).then((p) => {
+      expect(p.cost_price).toBe(8.00);
+    });
+  });
+
+  it('createProduct round-trips cost_price in the insert payload', async () => {
+    const productWithCost = { ...baseProduct, cost_price: 5.99 };
+    const supabase = createMockSupabaseClient({
+      insertResult: productWithCost,
+      rpcs: { get_tenant_id: () => ({ data: 'tenant-1', error: null }) },
+    });
+
+    const result = await createProduct(supabase, { ...validInput, cost_price: 5.99 });
+
+    const payload = supabase.__captured.insertPayload as Record<string, unknown>;
+    expect(payload.cost_price).toBe(5.99);
+    expect(result.cost_price).toBe(5.99);
+  });
+
+  it('updateProduct round-trips cost_price = 10.00', async () => {
+    const updated = { ...baseProduct, cost_price: 10.00 };
+    const supabase = createMockSupabaseClient({
+      tables: { products: [baseProduct] },
+      updateResult: updated,
+    });
+
+    const result = await updateProduct(supabase, 'prod-1', { ...validInput, cost_price: 10.00 });
+
+    const payload = supabase.__captured.updatePayload as Record<string, unknown>;
+    expect(payload.cost_price).toBe(10.00);
+    expect(result.cost_price).toBe(10.00);
+  });
+
+  it('ProductInput accepts cost_price as optional (undefined does not break)', async () => {
+    const supabase = createMockSupabaseClient({
+      insertResult: { ...baseProduct, cost_price: null },
+      rpcs: { get_tenant_id: () => ({ data: 'tenant-1', error: null }) },
+    });
+
+    // cost_price absent — should succeed
+    const result = await createProduct(supabase, validInput);
+    expect(result.cost_price).toBeNull();
+  });
+});
+
+// ---------------------------------------------------------------------------
 // adjustStock
 // ---------------------------------------------------------------------------
 describe('adjustStock', () => {

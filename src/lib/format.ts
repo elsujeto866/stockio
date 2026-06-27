@@ -19,6 +19,14 @@ export function formatCurrency(n: number): string {
 }
 
 /**
+ * Formats a percentage number with 1 decimal place and a % suffix.
+ * Example: formatPercent(40) → "40.0%", formatPercent(-25.0) → "-25.0%"
+ */
+export function formatPercent(n: number): string {
+  return `${n.toFixed(1)}%`;
+}
+
+/**
  * Formats an ISO date string (YYYY-MM-DD) using the es-EC locale with medium style.
  * Parses as a local date to avoid UTC-midnight timezone shifts.
  * Example: formatDate('2026-06-15') → "15 jun. 2026"

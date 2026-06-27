@@ -309,6 +309,60 @@ describe('ProductInputSchema — pack fields (S1-T4)', () => {
 });
 
 // ---------------------------------------------------------------------------
+// ProductInputSchema — cost_price field (S3-T5)
+// ---------------------------------------------------------------------------
+describe('ProductInputSchema — cost_price field (S3-T5)', () => {
+  const base = {
+    nombre: 'Aceite',
+    precio_unitario: 10.0,
+    stock_actual: 50,
+    stock_minimo: 5,
+  };
+
+  it('empty string for cost_price is treated as null (emptyToNull preprocess)', () => {
+    const result = ProductInputSchema.safeParse({ ...base, cost_price: '' });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.cost_price).toBeNull();
+    }
+  });
+
+  it('absent cost_price is treated as null', () => {
+    const result = ProductInputSchema.safeParse({ ...base });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.cost_price).toBeNull();
+    }
+  });
+
+  it('coerces valid string "5.50" to number 5.5', () => {
+    const result = ProductInputSchema.safeParse({ ...base, cost_price: '5.50' });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.cost_price).toBe(5.5);
+    }
+  });
+
+  it('accepts zero cost_price', () => {
+    const result = ProductInputSchema.safeParse({ ...base, cost_price: '0' });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.cost_price).toBe(0);
+    }
+  });
+
+  it('rejects negative cost_price with field error', () => {
+    const result = ProductInputSchema.safeParse({ ...base, cost_price: '-1' });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      const errors = result.error.flatten().fieldErrors;
+      expect(errors.cost_price).toBeDefined();
+      expect(errors.cost_price![0]).toMatch(/mayor o igual a 0/);
+    }
+  });
+});
+
+// ---------------------------------------------------------------------------
 // StockAdjustSchema
 // ---------------------------------------------------------------------------
 describe('StockAdjustSchema', () => {

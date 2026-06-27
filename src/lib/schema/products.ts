@@ -55,6 +55,10 @@ export const ProductInputSchema = z
       emptyToNull,
       z.coerce.number().min(0, 'El precio de paca debe ser mayor o igual a 0').nullable()
     ),
+    cost_price: z.preprocess(
+      emptyToNull,
+      z.coerce.number().min(0, 'El costo debe ser mayor o igual a 0').nullable()
+    ),
   })
   .superRefine((d, ctx) => {
     const hasPack = d.units_per_package !== null;

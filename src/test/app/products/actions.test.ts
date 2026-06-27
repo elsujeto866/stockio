@@ -141,6 +141,48 @@ describe('createProductAction', () => {
 });
 
 // ---------------------------------------------------------------------------
+// cost_price round-trip in actions (S3-T9)
+// ---------------------------------------------------------------------------
+describe('createProductAction — cost_price (S3-T9)', () => {
+  it('passes cost_price = 5.50 from FormData to createProduct', async () => {
+    vi.mocked(createProduct).mockResolvedValue({} as never);
+
+    const fd = validProductFormData();
+    fd.set('cost_price', '5.50');
+    await createProductAction(null, fd);
+
+    expect(createProduct).toHaveBeenCalledWith(
+      mockClient,
+      expect.objectContaining({ cost_price: 5.5 })
+    );
+  });
+
+  it('passes cost_price = null when form field is blank (empty → null via emptyToNull)', async () => {
+    vi.mocked(createProduct).mockResolvedValue({} as never);
+
+    const fd = validProductFormData();
+    fd.set('cost_price', '');
+    await createProductAction(null, fd);
+
+    expect(createProduct).toHaveBeenCalledWith(
+      mockClient,
+      expect.objectContaining({ cost_price: null })
+    );
+  });
+
+  it('returns fieldErrors.cost_price when cost_price is negative', async () => {
+    const fd = validProductFormData();
+    fd.set('cost_price', '-1');
+
+    const result = await createProductAction(null, fd);
+
+    expect(result).toHaveProperty('fieldErrors');
+    expect((result as { fieldErrors: Record<string, string[]> }).fieldErrors).toHaveProperty('cost_price');
+    expect(createProduct).not.toHaveBeenCalled();
+  });
+});
+
+// ---------------------------------------------------------------------------
 // updateProductAction
 // ---------------------------------------------------------------------------
 describe('updateProductAction', () => {
