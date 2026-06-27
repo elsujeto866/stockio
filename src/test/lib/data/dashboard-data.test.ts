@@ -88,6 +88,11 @@ describe('getDashboardData', () => {
   const supabase = createMockSupabaseClient();
 
   beforeEach(() => {
+    // Clear accumulated call history so each test inspects only its own
+    // getOrders calls. Without this, mock.calls leaks across tests and the
+    // period-query assertion can match a call from a no-`now` test that used
+    // the real current date.
+    vi.clearAllMocks();
     vi.mocked(getProducts).mockResolvedValue([lowProduct, okProduct]);
     vi.mocked(getOrders)
       .mockResolvedValueOnce([recentOrder])   // first call: recent (limit:5)
