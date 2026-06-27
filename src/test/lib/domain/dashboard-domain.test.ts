@@ -29,6 +29,9 @@ function makeProduct(overrides: Partial<Product> = {}): Product {
     unidad_medida: null,
     activo: true,
     created_at: '2026-01-01T00:00:00Z',
+    units_per_package: null,
+    precio_paca: null,
+    cost_price: null,
     ...overrides,
   };
 }

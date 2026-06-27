@@ -64,6 +64,7 @@ const products: Product[] = [
     created_at: '2026-01-01T00:00:00Z',
     units_per_package: null,
     precio_paca: null,
+    cost_price: null,
   },
   {
     id: 'prod-2',
@@ -79,6 +80,7 @@ const products: Product[] = [
     created_at: '2026-01-01T00:00:00Z',
     units_per_package: null,
     precio_paca: null,
+    cost_price: null,
   },
   // Packaged product — for S2-T9 tests
   {
@@ -95,6 +97,7 @@ const products: Product[] = [
     created_at: '2026-01-01T00:00:00Z',
     units_per_package: 30,
     precio_paca: 120.0,
+    cost_price: null,
   },
 ];
 

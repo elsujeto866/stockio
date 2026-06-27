@@ -86,9 +86,9 @@ beforeAll(async () => {
 
   // Users
   const { data: uA } = await admin.auth.admin.createUser({ email: userAEmail, password: PASSWORD, email_confirm: true });
-  userAId = uA!.user.id;
+  userAId = uA!.user!.id;
   const { data: uB } = await admin.auth.admin.createUser({ email: userBEmail, password: PASSWORD, email_confirm: true });
-  userBId = uB!.user.id;
+  userBId = uB!.user!.id;
 
   // Profiles
   await admin.from('profiles').insert({ id: userAId, tenant_id: tenantAId, nombre: 'User A', rol: 'admin' });

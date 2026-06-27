@@ -80,13 +80,13 @@ describe('createOrder', () => {
 
     const orderId = await createOrder(supabase, {
       storeId: 'store-1',
-      items: [{ productId: 'prod-1', cantidad: 3 }],
+      items: [{ productId: 'prod-1', cantidad: 3, saleUnit: 'unit' }],
       notas: 'urgent delivery',
     });
 
     expect(capturedArgs).toEqual({
       p_store_id: 'store-1',
-      p_items: [{ product_id: 'prod-1', cantidad: 3 }],
+      p_items: [{ product_id: 'prod-1', cantidad: 3, sale_unit: 'unit' }],
       p_notas: 'urgent delivery',
     });
     expect(orderId).toBe('new-order-uuid');
@@ -106,7 +106,7 @@ describe('createOrder', () => {
 
     await createOrder(supabase, {
       storeId: 'store-1',
-      items: [{ productId: 'prod-1', cantidad: 1 }],
+      items: [{ productId: 'prod-1', cantidad: 1, saleUnit: 'unit' }],
     });
 
     expect(capturedArgs?.p_notas).toBeNull();
@@ -127,14 +127,14 @@ describe('createOrder', () => {
     await createOrder(supabase, {
       storeId: 'store-1',
       items: [
-        { productId: 'prod-1', cantidad: 2 },
-        { productId: 'prod-2', cantidad: 5 },
+        { productId: 'prod-1', cantidad: 2, saleUnit: 'unit' },
+        { productId: 'prod-2', cantidad: 5, saleUnit: 'unit' },
       ],
     });
 
     expect(capturedArgs?.p_items).toEqual([
-      { product_id: 'prod-1', cantidad: 2 },
-      { product_id: 'prod-2', cantidad: 5 },
+      { product_id: 'prod-1', cantidad: 2, sale_unit: 'unit' },
+      { product_id: 'prod-2', cantidad: 5, sale_unit: 'unit' },
     ]);
   });
 });

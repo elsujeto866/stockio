@@ -82,9 +82,9 @@ beforeAll(async () => {
   tenantBId = tB!.id;
 
   const { data: uA } = await admin.auth.admin.createUser({ email: userAEmail, password: PASSWORD, email_confirm: true });
-  userAId = uA!.user.id;
+  userAId = uA!.user!.id;
   const { data: uB } = await admin.auth.admin.createUser({ email: userBEmail, password: PASSWORD, email_confirm: true });
-  userBId = uB!.user.id;
+  userBId = uB!.user!.id;
 
   await admin.from('profiles').insert({ id: userAId, tenant_id: tenantAId, nombre: 'User A', rol: 'admin' });
   await admin.from('profiles').insert({ id: userBId, tenant_id: tenantBId, nombre: 'User B', rol: 'admin' });

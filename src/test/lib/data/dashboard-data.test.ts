@@ -41,6 +41,9 @@ const lowProduct: Product = {
   unidad_medida: null,
   activo: true,
   created_at: '2026-01-01T00:00:00Z',
+  units_per_package: null,
+  precio_paca: null,
+  cost_price: null,
 };
 
 const okProduct: Product = {
@@ -55,6 +58,9 @@ const okProduct: Product = {
   unidad_medida: null,
   activo: true,
   created_at: '2026-01-01T00:00:00Z',
+  units_per_package: null,
+  precio_paca: null,
+  cost_price: null,
 };
 
 const recentOrder: OrderListItem = {
