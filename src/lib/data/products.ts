@@ -12,6 +12,10 @@ export interface Product {
   unidad_medida: string | null;
   activo: boolean;
   created_at: string;
+  /** NULL = unit-only product; >= 2 = packaged product. */
+  units_per_package: number | null;
+  /** Price per pack. NULL for unit-only products. */
+  precio_paca: number | null;
 }
 
 /**
@@ -26,6 +30,8 @@ export interface ProductInput {
   stock_actual: number;
   stock_minimo: number;
   unidad_medida?: string | null;
+  units_per_package?: number | null;
+  precio_paca?: number | null;
 }
 
 /**
@@ -48,7 +54,7 @@ export class StockUnderflowError extends Error {
 // Column list — shared by all queries and mutations to avoid drift
 // ---------------------------------------------------------------------------
 const SELECT_COLS =
-  'id, tenant_id, nombre, sku, categoria, precio_unitario, stock_actual, stock_minimo, unidad_medida, activo, created_at';
+  'id, tenant_id, nombre, sku, categoria, precio_unitario, stock_actual, stock_minimo, unidad_medida, activo, created_at, units_per_package, precio_paca';
 
 // ---------------------------------------------------------------------------
 // Queries
