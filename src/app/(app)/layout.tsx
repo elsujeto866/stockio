@@ -58,6 +58,12 @@ export default async function AppLayout({
               Pedidos
             </Link>
             <Link
+              href="/suppliers"
+              className="text-sm font-medium text-white/85 hover:text-white transition-colors"
+            >
+              Proveedores
+            </Link>
+            <Link
               href="/invoices"
               className="text-sm font-medium text-white/85 hover:text-white transition-colors"
             >
