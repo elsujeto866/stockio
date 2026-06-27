@@ -16,6 +16,8 @@ export interface Product {
   units_per_package: number | null;
   /** Price per pack. NULL for unit-only products. */
   precio_paca: number | null;
+  /** Manual reference unit cost. NULL = cost unset → margin unknown. */
+  cost_price: number | null;
 }
 
 /**
@@ -32,6 +34,7 @@ export interface ProductInput {
   unidad_medida?: string | null;
   units_per_package?: number | null;
   precio_paca?: number | null;
+  cost_price?: number | null;
 }
 
 /**
@@ -54,7 +57,7 @@ export class StockUnderflowError extends Error {
 // Column list — shared by all queries and mutations to avoid drift
 // ---------------------------------------------------------------------------
 const SELECT_COLS =
-  'id, tenant_id, nombre, sku, categoria, precio_unitario, stock_actual, stock_minimo, unidad_medida, activo, created_at, units_per_package, precio_paca';
+  'id, tenant_id, nombre, sku, categoria, precio_unitario, stock_actual, stock_minimo, unidad_medida, activo, created_at, units_per_package, precio_paca, cost_price';
 
 // ---------------------------------------------------------------------------
 // Queries
