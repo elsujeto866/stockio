@@ -64,6 +64,23 @@ describe('getSuppliers', () => {
     const result = await getSuppliers(supabase);
     expect(result).toHaveLength(0);
   });
+
+  it('excludes inactive suppliers (activo=true filter is applied)', async () => {
+    const inactiveSupplier = {
+      ...baseSupplier,
+      id: 'supplier-2',
+      nombre: 'Proveedor Inactivo',
+      activo: false,
+    };
+    const supabase = createMockSupabaseClient({
+      tables: { suppliers: [baseSupplier, inactiveSupplier] },
+    });
+    const result = await getSuppliers(supabase);
+    // Regression guard: dropping `.eq('activo', true)` would leak the inactive row.
+    expect(result).toHaveLength(1);
+    expect(result[0].id).toBe('supplier-1');
+    expect(result.every((s) => s.activo === true)).toBe(true);
+  });
 });
 
 // ---------------------------------------------------------------------------
