@@ -24,6 +24,7 @@ import { z } from 'zod';
 export const OrderItemInputSchema = z.object({
   productId: z.string().uuid('Product ID must be a valid UUID'),
   cantidad: z.coerce.number().int().min(1, 'La cantidad debe ser al menos 1'),
+  saleUnit: z.enum(['unit', 'package']).default('unit'),
 });
 
 export const CreateOrderSchema = z.object({

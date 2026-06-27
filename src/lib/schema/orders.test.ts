@@ -130,6 +130,74 @@ describe('CreateOrderSchema — valid input', () => {
 });
 
 // ---------------------------------------------------------------------------
+// S2-T5: OrderItemInputSchema — saleUnit enum (REQ-2, Scenarios 2.1/2.2)
+// RED until saleUnit is added to OrderItemInputSchema.
+// ---------------------------------------------------------------------------
+describe('OrderItemInputSchema — saleUnit (S2-T5)', () => {
+  const validProductId = '123e4567-e89b-12d3-a456-426614174000';
+
+  it('saleUnit defaults to "unit" when omitted', () => {
+    const result = OrderItemInputSchema.safeParse({ productId: validProductId, cantidad: 1 });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.saleUnit).toBe('unit');
+    }
+  });
+
+  it('accepts saleUnit = "unit" explicitly', () => {
+    const result = OrderItemInputSchema.safeParse({
+      productId: validProductId,
+      cantidad: 1,
+      saleUnit: 'unit',
+    });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.saleUnit).toBe('unit');
+    }
+  });
+
+  it('accepts saleUnit = "package"', () => {
+    const result = OrderItemInputSchema.safeParse({
+      productId: validProductId,
+      cantidad: 2,
+      saleUnit: 'package',
+    });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.saleUnit).toBe('package');
+    }
+  });
+
+  it('rejects an invalid saleUnit value', () => {
+    const result = OrderItemInputSchema.safeParse({
+      productId: validProductId,
+      cantidad: 1,
+      saleUnit: 'bulk',
+    });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.flatten().fieldErrors.saleUnit).toBeDefined();
+    }
+  });
+
+  it('CreateOrderSchema propagates saleUnit through items array', () => {
+    const validStoreId = 'aaaabbbb-cccc-4ddd-8eee-ffff00001111';
+    const result = CreateOrderSchema.safeParse({
+      storeId: validStoreId,
+      items: [
+        { productId: validProductId, cantidad: 2, saleUnit: 'package' },
+        { productId: 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', cantidad: 5 }, // defaults to 'unit'
+      ],
+    });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.items[0].saleUnit).toBe('package');
+      expect(result.data.items[1].saleUnit).toBe('unit');
+    }
+  });
+});
+
+// ---------------------------------------------------------------------------
 // CreateOrderSchema — rejection
 // ---------------------------------------------------------------------------
 describe('CreateOrderSchema — rejection', () => {

@@ -465,3 +465,137 @@ describe('products — packaging columns (S1-T2)', () => {
     }
   });
 });
+
+// ---------------------------------------------------------------------------
+// S2-T2 — order_items packaging columns (REQ-2, Scenario 1.6)
+// RED until migration 20260627090100_order_items_packaging.sql is applied.
+// ---------------------------------------------------------------------------
+describe('order_items — packaging columns (S2-T2)', () => {
+  it('order_items table exposes sale_unit, units_per_package_snapshot, and base_units columns', async () => {
+    const { error } = await db
+      .from('order_items')
+      .select('id, sale_unit, units_per_package_snapshot, base_units')
+      .limit(0);
+    expect(error).toBeNull();
+  });
+
+  it('sale_unit defaults to "unit" for newly inserted order_items', async () => {
+    const tenantId = await insertTestTenant('oi-sale-unit-default');
+
+    try {
+      const { data: store } = await db
+        .from('stores')
+        .insert({ tenant_id: tenantId, nombre: '__s2t2_store__' })
+        .select('id')
+        .single();
+      const { data: product } = await db
+        .from('products')
+        .insert({ tenant_id: tenantId, nombre: '__s2t2_product__', precio_unitario: 5.0, stock_actual: 50 })
+        .select('id')
+        .single();
+      const { data: order } = await db
+        .from('orders')
+        .insert({ tenant_id: tenantId, store_id: store!.id, estado: 'pendiente' })
+        .select('id')
+        .single();
+
+      const { data: item, error } = await db
+        .from('order_items')
+        .insert({
+          order_id: order!.id,
+          tenant_id: tenantId,
+          product_id: product!.id,
+          cantidad: 2,
+          precio_unitario: 5.0,
+        })
+        .select('sale_unit, units_per_package_snapshot, base_units')
+        .single();
+
+      expect(error).toBeNull();
+      expect(item?.sale_unit).toBe('unit');
+      expect(item?.units_per_package_snapshot).toBe(1);
+      expect(item?.base_units).toBe(2); // GENERATED: cantidad (2) for unit sale
+    } finally {
+      await cleanupTenant(tenantId);
+    }
+  });
+
+  it('base_units GENERATED column equals cantidad * snapshot for package rows', async () => {
+    const tenantId = await insertTestTenant('oi-base-units-pkg');
+
+    try {
+      const { data: store } = await db
+        .from('stores')
+        .insert({ tenant_id: tenantId, nombre: '__s2t2_store_pkg__' })
+        .select('id')
+        .single();
+      const { data: product } = await db
+        .from('products')
+        .insert({ tenant_id: tenantId, nombre: '__s2t2_product_pkg__', precio_unitario: 5.0, stock_actual: 100 })
+        .select('id')
+        .single();
+      const { data: order } = await db
+        .from('orders')
+        .insert({ tenant_id: tenantId, store_id: store!.id, estado: 'pendiente' })
+        .select('id')
+        .single();
+
+      const cantidad = 3;
+      const snapshot = 30;
+      const { data: item, error } = await db
+        .from('order_items')
+        .insert({
+          order_id: order!.id,
+          tenant_id: tenantId,
+          product_id: product!.id,
+          cantidad,
+          precio_unitario: 150.0,
+          sale_unit: 'package',
+          units_per_package_snapshot: snapshot,
+        })
+        .select('base_units')
+        .single();
+
+      expect(error).toBeNull();
+      expect(item?.base_units).toBe(cantidad * snapshot); // 90
+    } finally {
+      await cleanupTenant(tenantId);
+    }
+  });
+
+  it('CHECK rejects invalid sale_unit values', async () => {
+    const tenantId = await insertTestTenant('oi-sale-unit-check');
+
+    try {
+      const { data: store } = await db
+        .from('stores')
+        .insert({ tenant_id: tenantId, nombre: '__s2t2_store_check__' })
+        .select('id')
+        .single();
+      const { data: product } = await db
+        .from('products')
+        .insert({ tenant_id: tenantId, nombre: '__s2t2_product_check__', precio_unitario: 5.0, stock_actual: 10 })
+        .select('id')
+        .single();
+      const { data: order } = await db
+        .from('orders')
+        .insert({ tenant_id: tenantId, store_id: store!.id, estado: 'pendiente' })
+        .select('id')
+        .single();
+
+      const { error } = await db.from('order_items').insert({
+        order_id: order!.id,
+        tenant_id: tenantId,
+        product_id: product!.id,
+        cantidad: 1,
+        precio_unitario: 5.0,
+        sale_unit: 'bulk', // not in ('unit', 'package')
+      });
+
+      expect(error).not.toBeNull();
+      expect(error?.code).toBe('23514'); // Postgres CHECK violation
+    } finally {
+      await cleanupTenant(tenantId);
+    }
+  });
+});
