@@ -444,26 +444,22 @@ describe('products — packaging columns (S1-T2)', () => {
     }
   });
 
-  it('accepts units_per_package without precio_paca (partial — DB allows it; RPC guards sell path)', async () => {
+  it('CHECK rejects units_per_package set without precio_paca (symmetric both-or-neither constraint)', async () => {
     const tenantId = await insertTestTenant('pkg-partial');
 
     try {
-      const { data, error } = await db
-        .from('products')
-        .insert({
-          tenant_id: tenantId,
-          nombre: '__pkg_partial__',
-          precio_unitario: 6.0,
-          stock_actual: 10,
-          units_per_package: 30,
-          precio_paca: null,
-        })
-        .select('units_per_package, precio_paca')
-        .single();
+      const { error } = await db.from('products').insert({
+        tenant_id: tenantId,
+        nombre: '__pkg_partial__',
+        precio_unitario: 6.0,
+        stock_actual: 10,
+        units_per_package: 30,
+        precio_paca: null,
+      });
 
-      expect(error).toBeNull();
-      expect(data?.units_per_package).toBe(30);
-      expect(data?.precio_paca).toBeNull();
+      // Must be rejected by the symmetric CHECK constraint
+      expect(error).not.toBeNull();
+      expect(error?.code).toBe('23514'); // Postgres CHECK violation
     } finally {
       await cleanupTenant(tenantId);
     }

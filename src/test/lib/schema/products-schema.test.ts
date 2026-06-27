@@ -240,6 +240,21 @@ describe('ProductInputSchema — pack fields (S1-T4)', () => {
     }
   });
 
+  // RED until symmetric both-or-neither refine is added (S1-T5 update)
+  it('rejects units_per_package set without precio_paca (symmetric both-or-neither refine)', () => {
+    const result = ProductInputSchema.safeParse({
+      ...base,
+      units_per_package: 30,
+      precio_paca: null,
+    });
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      const errors = result.error.flatten().fieldErrors;
+      expect(errors.units_per_package).toBeDefined();
+    }
+  });
+
   it('accepts a valid packaged product (both fields present)', () => {
     const result = ProductInputSchema.safeParse({
       ...base,

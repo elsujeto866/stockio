@@ -56,13 +56,25 @@ export const ProductInputSchema = z
       z.coerce.number().min(0, 'El precio de paca debe ser mayor o igual a 0').nullable()
     ),
   })
-  .refine(
-    (d) => d.precio_paca === null || d.units_per_package !== null,
-    {
-      message: 'Define las unidades por paca para asignar un precio de paca',
-      path: ['precio_paca'],
+  .superRefine((d, ctx) => {
+    const hasPack = d.units_per_package !== null;
+    const hasPrice = d.precio_paca !== null;
+
+    // Both-or-neither: reject when exactly one of the pair is set.
+    if (hasPack && !hasPrice) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Define el precio de paca cuando las unidades por paca están configuradas',
+        path: ['units_per_package'],
+      });
+    } else if (!hasPack && hasPrice) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Define las unidades por paca para asignar un precio de paca',
+        path: ['precio_paca'],
+      });
     }
-  );
+  });
 
 export type ProductInput = z.infer<typeof ProductInputSchema>;
 
