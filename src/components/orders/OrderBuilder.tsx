@@ -4,19 +4,22 @@
  * OrderBuilder — stateful Client component for creating new orders.
  *
  * State:
- *   selectedStoreId  — controls the store <select>
- *   lineItems[]      — [{productId, cantidad}] — one entry per product (deduped by productId)
+ *   selectedStoreId    — controls the store <select>
+ *   lineItems[]        — [{productId, cantidad, saleUnit}] — deduped by (productId, saleUnit)
+ *   selectedProductId  — controls the product selector
+ *   pendingSaleUnit    — the sale unit chosen in the add-row selector
  *
  * Behaviour:
- *   - Adding a product that is already in lineItems MERGES by summing cantidad.
- *   - Cantidad steppers are touch-target sized (≥44px).
- *   - Preview total is display-only (derived from product.precio_unitario × cantidad).
- *     Authoritative total comes from the DB after order creation.
+ *   - Adding a (productId, saleUnit) pair already in lineItems MERGES by summing cantidad.
+ *   - Same product as 'unit' and 'package' yields TWO independent lines (distinct economics).
+ *   - 'Paca' option is disabled when the product lacks units_per_package >= 2 or precio_paca.
+ *   - Preview total uses precio_paca for package lines, precio_unitario for unit lines.
  *   - Submit is disabled while pending OR when lineItems is empty.
- *   - Line items are serialised to a hidden JSON `items` FormData field.
+ *   - Line items are serialised to a hidden JSON `items` FormData field (includes saleUnit).
  *   - insufficientStock errors map productId → nombre from the `products` prop.
  *
- * Uses useActionState(createOrderAction) — mirrors ProductForm / StoreForm pattern.
+ * Pure module-level helpers (exported for unit testing without rendering):
+ *   buildDedupKey, computeLineSubtotal, isPackageAvailable
  */
 
 import { useActionState, useState, useMemo } from 'react';
@@ -26,15 +29,65 @@ import { createOrderAction } from '@/app/(app)/orders/actions';
 import type { ActionResult } from '@/app/(app)/orders/actions';
 import { formatCurrency } from '@/lib/format';
 
+// ---------------------------------------------------------------------------
+// Pure exported helpers (unit-testable without rendering)
+// ---------------------------------------------------------------------------
+
+/**
+ * Returns the dedup key for a line item.
+ * (productId, saleUnit) pairs are economically distinct — same product sold
+ * as a unit vs. a pack has different frozen prices and different base_units.
+ */
+export function buildDedupKey(productId: string, saleUnit: 'unit' | 'package'): string {
+  return `${productId}|${saleUnit}`;
+}
+
+/**
+ * Returns the display-only client-side subtotal for a line item.
+ * Package lines use precio_paca; unit lines use precio_unitario.
+ * Guards null precio_paca → returns 0 (UI should have disabled 'package' anyway).
+ */
+export function computeLineSubtotal(
+  product: Product,
+  saleUnit: 'unit' | 'package',
+  cantidad: number
+): number {
+  if (saleUnit === 'package') {
+    return (product.precio_paca ?? 0) * cantidad;
+  }
+  return product.precio_unitario * cantidad;
+}
+
+/**
+ * Returns true when a product can be sold by the pack:
+ * must have units_per_package >= 2 AND a non-null precio_paca.
+ */
+export function isPackageAvailable(product: Product): boolean {
+  return (
+    product.units_per_package != null &&
+    product.units_per_package >= 2 &&
+    product.precio_paca != null
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
+
 interface LineItem {
   productId: string;
   cantidad: number;
+  saleUnit: 'unit' | 'package';
 }
 
 interface Props {
   stores: Store[];
   products: Product[];
 }
+
+// ---------------------------------------------------------------------------
+// Sub-components
+// ---------------------------------------------------------------------------
 
 function FieldError({ messages }: { messages?: string[] }) {
   if (!messages?.length) return null;
@@ -48,6 +101,10 @@ function FieldError({ messages }: { messages?: string[] }) {
 const inputClass =
   'w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent';
 
+// ---------------------------------------------------------------------------
+// Component
+// ---------------------------------------------------------------------------
+
 export function OrderBuilder({ stores, products }: Props) {
   const [state, dispatch, isPending] = useActionState<ActionResult, FormData>(
     createOrderAction,
@@ -56,6 +113,7 @@ export function OrderBuilder({ stores, products }: Props) {
   const [selectedStoreId, setSelectedStoreId] = useState('');
   const [lineItems, setLineItems] = useState<LineItem[]>([]);
   const [selectedProductId, setSelectedProductId] = useState('');
+  const [pendingSaleUnit, setPendingSaleUnit] = useState<'unit' | 'package'>('unit');
 
   /** Fast product lookup by id. */
   const productMap = useMemo(
@@ -68,7 +126,8 @@ export function OrderBuilder({ stores, products }: Props) {
     () =>
       lineItems.reduce((sum, item) => {
         const product = productMap.get(item.productId);
-        return sum + (product ? product.precio_unitario * item.cantidad : 0);
+        if (!product) return sum;
+        return sum + computeLineSubtotal(product, item.saleUnit, item.cantidad);
       }, 0),
     [lineItems, productMap]
   );
@@ -91,10 +150,13 @@ export function OrderBuilder({ stores, products }: Props) {
 
   function addItem() {
     if (!selectedProductId) return;
+    const saleUnit = pendingSaleUnit;
     setLineItems((prev) => {
-      const existingIdx = prev.findIndex((i) => i.productId === selectedProductId);
+      const existingIdx = prev.findIndex(
+        (i) => buildDedupKey(i.productId, i.saleUnit) === buildDedupKey(selectedProductId, saleUnit)
+      );
       if (existingIdx >= 0) {
-        // Merge: sum cantidad rather than creating a duplicate row.
+        // Merge: increment cantidad for the matching (productId, saleUnit) pair.
         const updated = [...prev];
         updated[existingIdx] = {
           ...updated[existingIdx],
@@ -102,21 +164,35 @@ export function OrderBuilder({ stores, products }: Props) {
         };
         return updated;
       }
-      return [...prev, { productId: selectedProductId, cantidad: 1 }];
+      return [...prev, { productId: selectedProductId, cantidad: 1, saleUnit }];
     });
     setSelectedProductId('');
+    setPendingSaleUnit('unit');
   }
 
-  function removeItem(productId: string) {
-    setLineItems((prev) => prev.filter((i) => i.productId !== productId));
-  }
-
-  function updateCantidad(productId: string, cantidad: number) {
-    if (cantidad < 1) return;
+  function removeItem(productId: string, saleUnit: 'unit' | 'package') {
     setLineItems((prev) =>
-      prev.map((i) => (i.productId === productId ? { ...i, cantidad } : i))
+      prev.filter(
+        (i) => buildDedupKey(i.productId, i.saleUnit) !== buildDedupKey(productId, saleUnit)
+      )
     );
   }
+
+  function updateCantidad(productId: string, saleUnit: 'unit' | 'package', cantidad: number) {
+    if (cantidad < 1) return;
+    setLineItems((prev) =>
+      prev.map((i) =>
+        buildDedupKey(i.productId, i.saleUnit) === buildDedupKey(productId, saleUnit)
+          ? { ...i, cantidad }
+          : i
+      )
+    );
+  }
+
+  const selectedProduct = productMap.get(selectedProductId);
+  const selectedProductPackAvailable = selectedProduct
+    ? isPackageAvailable(selectedProduct)
+    : false;
 
   return (
     <form action={dispatch} className="space-y-6">
@@ -178,11 +254,14 @@ export function OrderBuilder({ stores, products }: Props) {
             Productos
           </h2>
 
-          {/* Product selector + Add button */}
-          <div className="flex gap-2">
+          {/* Product selector + sale unit + Add button */}
+          <div className="flex flex-wrap gap-2">
             <select
               value={selectedProductId}
-              onChange={(e) => setSelectedProductId(e.target.value)}
+              onChange={(e) => {
+                setSelectedProductId(e.target.value);
+                setPendingSaleUnit('unit');
+              }}
               className={`flex-1 ${inputClass} min-h-[44px]`}
               aria-label="Seleccionar un producto para agregar"
             >
@@ -190,9 +269,26 @@ export function OrderBuilder({ stores, products }: Props) {
               {products.map((p) => (
                 <option key={p.id} value={p.id}>
                   {p.nombre} — {formatCurrency(p.precio_unitario)}
+                  {p.precio_paca != null ? ` / Paca: ${formatCurrency(p.precio_paca)}` : ''}
                 </option>
               ))}
             </select>
+
+            {/* Sale unit selector — shown whenever a product is selected */}
+            {selectedProductId && (
+              <select
+                value={pendingSaleUnit}
+                onChange={(e) => setPendingSaleUnit(e.target.value as 'unit' | 'package')}
+                className={`${inputClass} min-h-[44px] w-36`}
+                aria-label="Tipo de venta"
+              >
+                <option value="unit">Unidad</option>
+                <option value="package" disabled={!selectedProductPackAvailable}>
+                  Paca
+                </option>
+              </select>
+            )}
+
             <button
               type="button"
               onClick={addItem}
@@ -212,20 +308,22 @@ export function OrderBuilder({ stores, products }: Props) {
                 {lineItems.map((item) => {
                   const product = productMap.get(item.productId);
                   const productName = product?.nombre ?? item.productId;
+                  const lineKey = buildDedupKey(item.productId, item.saleUnit);
+                  const saleUnitLabel = item.saleUnit === 'package' ? ' (Paca)' : '';
                   return (
                     <li
-                      key={item.productId}
+                      key={lineKey}
                       className="flex items-center gap-2 rounded-xl border border-gray-100 bg-cream p-3"
                     >
                       <span className="flex-1 text-sm font-medium text-gray-900 truncate">
-                        {productName}
+                        {productName}{saleUnitLabel}
                       </span>
 
                       {/* Quantity stepper */}
                       <div className="flex items-center gap-1">
                         <button
                           type="button"
-                          onClick={() => updateCantidad(item.productId, item.cantidad - 1)}
+                          onClick={() => updateCantidad(item.productId, item.saleUnit, item.cantidad - 1)}
                           disabled={item.cantidad <= 1}
                           className="inline-flex items-center justify-center w-11 h-11 rounded-xl border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-40 focus:outline-none focus:ring-2 focus:ring-brand"
                           aria-label={`Disminuir cantidad de ${productName}`}
@@ -240,7 +338,7 @@ export function OrderBuilder({ stores, products }: Props) {
                         </span>
                         <button
                           type="button"
-                          onClick={() => updateCantidad(item.productId, item.cantidad + 1)}
+                          onClick={() => updateCantidad(item.productId, item.saleUnit, item.cantidad + 1)}
                           className="inline-flex items-center justify-center w-11 h-11 rounded-xl border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-brand"
                           aria-label={`Aumentar cantidad de ${productName}`}
                         >
@@ -250,7 +348,7 @@ export function OrderBuilder({ stores, products }: Props) {
 
                       <button
                         type="button"
-                        onClick={() => removeItem(item.productId)}
+                        onClick={() => removeItem(item.productId, item.saleUnit)}
                         className="btn-danger px-3 py-2.5 text-sm"
                       >
                         Eliminar

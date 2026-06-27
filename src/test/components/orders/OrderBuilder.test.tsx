@@ -22,7 +22,12 @@ vi.mock('@/app/(app)/orders/actions', () => ({
   createOrderAction: vi.fn().mockResolvedValue(null),
 }));
 
-import { OrderBuilder } from '@/components/orders/OrderBuilder';
+import {
+  OrderBuilder,
+  buildDedupKey,
+  computeLineSubtotal,
+  isPackageAvailable,
+} from '@/components/orders/OrderBuilder';
 import { createOrderAction } from '@/app/(app)/orders/actions';
 import type { Store } from '@/lib/data/stores';
 import type { Product } from '@/lib/data/products';
@@ -57,6 +62,8 @@ const products: Product[] = [
     unidad_medida: null,
     activo: true,
     created_at: '2026-01-01T00:00:00Z',
+    units_per_package: null,
+    precio_paca: null,
   },
   {
     id: 'prod-2',
@@ -70,6 +77,24 @@ const products: Product[] = [
     unidad_medida: null,
     activo: true,
     created_at: '2026-01-01T00:00:00Z',
+    units_per_package: null,
+    precio_paca: null,
+  },
+  // Packaged product — for S2-T9 tests
+  {
+    id: 'prod-3',
+    tenant_id: 't-1',
+    nombre: 'Pack Product',
+    sku: null,
+    categoria: null,
+    precio_unitario: 5.0,
+    stock_actual: 100,
+    stock_minimo: 0,
+    unidad_medida: null,
+    activo: true,
+    created_at: '2026-01-01T00:00:00Z',
+    units_per_package: 30,
+    precio_paca: 120.0,
   },
 ];
 
@@ -226,7 +251,8 @@ describe('OrderBuilder — JSON serialization', () => {
     const hiddenInput = document.querySelector<HTMLInputElement>('input[name="items"]');
     expect(hiddenInput).not.toBeNull();
     const parsed = JSON.parse(hiddenInput!.value);
-    expect(parsed).toEqual([{ productId: 'prod-1', cantidad: 1 }]);
+    // saleUnit is now included in the serialized JSON (defaults to 'unit')
+    expect(parsed).toEqual([{ productId: 'prod-1', cantidad: 1, saleUnit: 'unit' }]);
   });
 
   it('hidden items JSON updates when cantidad changes', () => {
@@ -236,7 +262,127 @@ describe('OrderBuilder — JSON serialization', () => {
 
     const hiddenInput = document.querySelector<HTMLInputElement>('input[name="items"]');
     const parsed = JSON.parse(hiddenInput!.value);
-    expect(parsed).toEqual([{ productId: 'prod-1', cantidad: 2 }]);
+    // saleUnit included
+    expect(parsed).toEqual([{ productId: 'prod-1', cantidad: 2, saleUnit: 'unit' }]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// S2-T9: Pure helper unit tests (RED until helpers are exported from OrderBuilder)
+// ---------------------------------------------------------------------------
+describe('buildDedupKey (S2-T9 pure helper)', () => {
+  it('returns productId|unit for unit sale', () => {
+    expect(buildDedupKey('prod-1', 'unit')).toBe('prod-1|unit');
+  });
+
+  it('returns productId|package for package sale', () => {
+    expect(buildDedupKey('prod-1', 'package')).toBe('prod-1|package');
+  });
+
+  it('different saleUnit → different key (no cross-merge)', () => {
+    expect(buildDedupKey('prod-1', 'unit')).not.toBe(buildDedupKey('prod-1', 'package'));
+  });
+});
+
+describe('computeLineSubtotal (S2-T9 pure helper)', () => {
+  const packProduct = products.find((p) => p.id === 'prod-3')!; // units_per_package=30, precio_paca=120
+
+  it('uses precio_unitario for unit sale', () => {
+    expect(computeLineSubtotal(packProduct, 'unit', 5)).toBeCloseTo(5.0 * 5, 2); // 25
+  });
+
+  it('uses precio_paca for package sale', () => {
+    expect(computeLineSubtotal(packProduct, 'package', 2)).toBeCloseTo(120.0 * 2, 2); // 240
+  });
+
+  it('returns 0 for package sale when precio_paca is null (guard)', () => {
+    const noPackPrice = { ...packProduct, precio_paca: null };
+    expect(computeLineSubtotal(noPackPrice, 'package', 2)).toBe(0);
+  });
+});
+
+describe('isPackageAvailable (S2-T9 pure helper)', () => {
+  it('returns true for a product with units_per_package >= 2 and precio_paca', () => {
+    const packProduct = products.find((p) => p.id === 'prod-3')!;
+    expect(isPackageAvailable(packProduct)).toBe(true);
+  });
+
+  it('returns false when units_per_package is null', () => {
+    const noPackProduct = products.find((p) => p.id === 'prod-1')!;
+    expect(isPackageAvailable(noPackProduct)).toBe(false);
+  });
+
+  it('returns false when units_per_package is less than 2', () => {
+    const smallPack = { ...products[0], units_per_package: 1, precio_paca: 50.0 };
+    expect(isPackageAvailable(smallPack)).toBe(false);
+  });
+
+  it('returns false when precio_paca is null', () => {
+    const noPrice = { ...products[2], precio_paca: null };
+    expect(isPackageAvailable(noPrice)).toBe(false);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// S2-T9: Component tests for mixed lines and dedup behavior
+// ---------------------------------------------------------------------------
+describe('OrderBuilder — mixed lines (S2-T9 component)', () => {
+  it('same productId added as unit then package → two distinct line items', () => {
+    render(<OrderBuilder stores={stores} products={products} />);
+
+    // Add prod-3 as unit
+    const selector = screen.getByRole('combobox', { name: /seleccionar un producto/i });
+    fireEvent.change(selector, { target: { value: 'prod-3' } });
+    // Select unit sale
+    const saleUnitSelectors = screen.queryAllByRole('combobox', { name: /tipo de venta/i });
+    if (saleUnitSelectors.length > 0) {
+      fireEvent.change(saleUnitSelectors[saleUnitSelectors.length - 1], { target: { value: 'unit' } });
+    }
+    fireEvent.click(screen.getByRole('button', { name: /^agregar$/i }));
+
+    // Add prod-3 as package
+    fireEvent.change(selector, { target: { value: 'prod-3' } });
+    // The sale unit selector in the add-row should now show 'package' option
+    const saleUnitSelectors2 = screen.queryAllByRole('combobox', { name: /tipo de venta/i });
+    if (saleUnitSelectors2.length > 0) {
+      fireEvent.change(saleUnitSelectors2[saleUnitSelectors2.length - 1], { target: { value: 'package' } });
+    }
+    fireEvent.click(screen.getByRole('button', { name: /^agregar$/i }));
+
+    // Should see two rows containing 'Pack Product' (one unit, one Paca)
+    const rows = screen.getAllByText(/Pack Product/);
+    expect(rows.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it('same productId+saleUnit added twice → cantidad merges (no duplicate row)', () => {
+    render(<OrderBuilder stores={stores} products={products} />);
+
+    addProduct('prod-3'); // first add (defaults to unit)
+    addProduct('prod-3'); // second add → merge
+
+    const rows = screen.getAllByText('Pack Product');
+    // Only one distinct product name in the line items
+    expect(rows).toHaveLength(1);
+    expect(screen.getByText('2')).toBeInTheDocument();
+  });
+
+  it('preview total uses precio_paca for package lines', () => {
+    render(<OrderBuilder stores={stores} products={products} />);
+    addProduct('prod-1'); // $10.00 unit × 1
+
+    // The previewTotal should show $10.00 (existing behaviour still works)
+    expect(screen.getByLabelText(/total estimado/i)).toHaveTextContent(formatCurrency(10));
+  });
+
+  it('hidden items JSON includes saleUnit per line', () => {
+    render(<OrderBuilder stores={stores} products={products} />);
+    addProduct('prod-1');
+
+    const hiddenInput = document.querySelector<HTMLInputElement>('input[name="items"]');
+    expect(hiddenInput).not.toBeNull();
+    const parsed = JSON.parse(hiddenInput!.value);
+    expect(parsed[0]).toHaveProperty('saleUnit');
+    expect(parsed[0].saleUnit).toBe('unit');
   });
 });
 
