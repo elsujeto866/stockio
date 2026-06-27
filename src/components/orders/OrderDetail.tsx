@@ -88,25 +88,37 @@ export function OrderDetail({ order, invoiceId = null }: Props) {
           </h2>
 
           <ul className="space-y-0 divide-y divide-gray-50" aria-label="Artículos del pedido">
-            {order.items.map((item) => (
-              <li
-                key={item.id}
-                className="flex items-center gap-3 py-3 first:pt-0 last:pb-0"
-              >
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900 truncate">
-                    {item.product?.nombre ?? item.product_id}
-                  </p>
-                </div>
-                <div className="flex items-center gap-4 text-sm shrink-0">
-                  <span className="text-gray-500">×{item.cantidad}</span>
-                  <span className="text-gray-600">{formatCurrency(item.precio_unitario)}</span>
-                  <span className="font-semibold text-info min-w-[64px] text-right">
-                    {formatCurrency(item.subtotal)}
-                  </span>
-                </div>
-              </li>
-            ))}
+            {order.items.map((item) => {
+              const isPackage = item.sale_unit === 'package';
+              return (
+                <li
+                  key={item.id}
+                  className="flex items-center gap-3 py-3 first:pt-0 last:pb-0"
+                >
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-900 truncate">
+                      {item.product?.nombre ?? item.product_id}
+                    </p>
+                    {isPackage && (
+                      <p className="text-xs text-gray-500 mt-0.5">
+                        {item.cantidad} paca(s) × {item.units_per_package_snapshot} u
+                      </p>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-4 text-sm shrink-0">
+                    {isPackage ? (
+                      <span className="text-gray-500">{item.cantidad} paca(s)</span>
+                    ) : (
+                      <span className="text-gray-500">×{item.cantidad}</span>
+                    )}
+                    <span className="text-gray-600">{formatCurrency(item.precio_unitario)}</span>
+                    <span className="font-semibold text-info min-w-[64px] text-right">
+                      {formatCurrency(item.subtotal)}
+                    </span>
+                  </div>
+                </li>
+              );
+            })}
           </ul>
 
           {/* Authoritative total from DB */}

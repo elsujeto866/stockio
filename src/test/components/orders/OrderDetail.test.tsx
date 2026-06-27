@@ -80,6 +80,9 @@ const baseOrder: OrderDetailType = {
       cantidad: 3,
       precio_unitario: 20.00,
       subtotal: 60.00,
+      sale_unit: 'unit',
+      units_per_package_snapshot: 1,
+      base_units: 3,
       product: { nombre: 'Widget X' },
     },
     {
@@ -88,7 +91,40 @@ const baseOrder: OrderDetailType = {
       cantidad: 2,
       precio_unitario: 7.50,
       subtotal: 15.00,
+      sale_unit: 'unit',
+      units_per_package_snapshot: 1,
+      base_units: 2,
       product: { nombre: 'Gadget Y' },
+    },
+  ],
+};
+
+// Order with a package line (S2-T11)
+const packageOrder: OrderDetailType = {
+  ...baseOrder,
+  id: 'order-pkg',
+  items: [
+    {
+      id: 'item-pkg',
+      product_id: 'prod-3',
+      cantidad: 2,          // 2 packs
+      precio_unitario: 150.00, // frozen pack price
+      subtotal: 300.00,
+      sale_unit: 'package',
+      units_per_package_snapshot: 30,
+      base_units: 60,       // 2 × 30
+      product: { nombre: 'Arroz Kilo' },
+    },
+    {
+      id: 'item-unit',
+      product_id: 'prod-4',
+      cantidad: 5,
+      precio_unitario: 10.00,
+      subtotal: 50.00,
+      sale_unit: 'unit',
+      units_per_package_snapshot: 1,
+      base_units: 5,
+      product: { nombre: 'Azúcar' },
     },
   ],
 };
@@ -235,5 +271,34 @@ describe('OrderDetail — invoice section', () => {
     expect(
       screen.queryByRole('button', { name: /generar factura/i })
     ).not.toBeInTheDocument();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// S2-T11: Package line label rendering (REQ-2, Scenario 2.2)
+// RED until OrderDetail renders pack label for package lines.
+// ---------------------------------------------------------------------------
+describe('OrderDetail — package line labels (S2-T11)', () => {
+  it('renders pack label for package lines (paca(s) × snapshot u)', () => {
+    render(<OrderDetail order={packageOrder} />);
+    // Package line (2 packs × 30 u) should show a pack label
+    expect(screen.getByText(/paca.*30/i)).toBeInTheDocument();
+  });
+
+  it('does not render pack label for unit lines', () => {
+    render(<OrderDetail order={packageOrder} />);
+    // Unit line (Azúcar) should show the legacy × quantity format, no pack label
+    // The pack label (paca(s) × N u) should only appear for the Arroz Kilo package line
+    // We verify the sub-label "paca(s) × 30 u" is NOT present for the unit line.
+    // (The label "×5" should be present for Azúcar.)
+    expect(screen.getByText(/×5/)).toBeInTheDocument();
+    // The sub-label with "× 30 u" only appears for the Arroz Kilo package line
+    const packSubLabels = screen.queryAllByText(/paca\(s\) × \d+ u/i);
+    expect(packSubLabels.length).toBe(1); // only the Arroz Kilo package line
+  });
+
+  it('unit line still shows the legacy × quantity format', () => {
+    render(<OrderDetail order={packageOrder} />);
+    expect(screen.getByText(/×5/)).toBeInTheDocument();
   });
 });
