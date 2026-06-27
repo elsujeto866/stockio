@@ -201,6 +201,53 @@ export function ProductForm({ action, initialData }: Props) {
               <FieldError messages={state?.fieldErrors?.stock_minimo} />
             </div>
           </div>
+
+          {/* ── Pack fields (optional) ───────────────────────────── */}
+          <p className="text-xs text-gray-400">
+            Dejar vacío si el producto se vende solo por unidad.
+          </p>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <label
+                htmlFor="units_per_package"
+                className="block text-sm font-medium text-gray-700"
+              >
+                Unidades por paca
+              </label>
+              <input
+                id="units_per_package"
+                name="units_per_package"
+                type="number"
+                min="2"
+                step="1"
+                defaultValue={initialData?.units_per_package ?? ''}
+                className={inputClass}
+                placeholder="p. ej. 30"
+              />
+              <FieldError messages={state?.fieldErrors?.units_per_package} />
+            </div>
+
+            <div className="space-y-1">
+              <label
+                htmlFor="precio_paca"
+                className="block text-sm font-medium text-gray-700"
+              >
+                Precio de paca
+              </label>
+              <input
+                id="precio_paca"
+                name="precio_paca"
+                type="number"
+                step="0.01"
+                min="0"
+                defaultValue={initialData?.precio_paca ?? ''}
+                className={inputClass}
+                placeholder="0.00"
+              />
+              <FieldError messages={state?.fieldErrors?.precio_paca} />
+            </div>
+          </div>
         </div>
       </div>
 

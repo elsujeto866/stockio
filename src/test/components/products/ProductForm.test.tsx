@@ -33,6 +33,8 @@ const product: Product = {
   unidad_medida: 'litro',
   activo: true,
   created_at: '2026-01-01T00:00:00Z',
+  units_per_package: null,
+  precio_paca: null,
 };
 
 beforeEach(() => {
@@ -135,5 +137,95 @@ describe('ProductForm — error display', () => {
     });
 
     expect(screen.getByText('Something went wrong')).toBeInTheDocument();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Pack fields — S1-T7 (RED until S1-T8 implements the fields)
+// ---------------------------------------------------------------------------
+describe('ProductForm — pack fields (S1-T7)', () => {
+  it('renders Group B: units_per_package field', () => {
+    render(<ProductForm action={noop} />);
+    expect(screen.getByLabelText(/unidades por paca/i)).toBeInTheDocument();
+  });
+
+  it('renders Group B: precio_paca field', () => {
+    render(<ProductForm action={noop} />);
+    expect(screen.getByLabelText(/precio de paca/i)).toBeInTheDocument();
+  });
+
+  it('units_per_package input has type=number, min=2, step=1', () => {
+    render(<ProductForm action={noop} />);
+    const input = screen.getByLabelText(/unidades por paca/i) as HTMLInputElement;
+    expect(input.type).toBe('number');
+    expect(input.min).toBe('2');
+    expect(input.step).toBe('1');
+  });
+
+  it('precio_paca input has type=number, min=0, step=0.01', () => {
+    render(<ProductForm action={noop} />);
+    const input = screen.getByLabelText(/precio de paca/i) as HTMLInputElement;
+    expect(input.type).toBe('number');
+    expect(input.min).toBe('0');
+    expect(input.step).toBe('0.01');
+  });
+
+  it('pre-fills units_per_package from initialData', () => {
+    const packProduct: Product = {
+      ...product,
+      units_per_package: 30,
+      precio_paca: 150,
+    };
+    render(<ProductForm action={noop} initialData={packProduct} />);
+    expect(screen.getByDisplayValue('30')).toBeInTheDocument();
+  });
+
+  it('pre-fills precio_paca from initialData', () => {
+    const packProduct: Product = {
+      ...product,
+      units_per_package: 30,
+      precio_paca: 150,
+    };
+    render(<ProductForm action={noop} initialData={packProduct} />);
+    expect(screen.getByDisplayValue('150')).toBeInTheDocument();
+  });
+
+  it('displays fieldError for units_per_package when action returns that error', async () => {
+    const errAction = vi.fn().mockResolvedValue({
+      fieldErrors: { units_per_package: ['Las unidades por paca deben ser al menos 2'] },
+    } satisfies ActionResult);
+
+    const { container } = render(<ProductForm action={errAction} />);
+
+    await act(async () => {
+      fireEvent.submit(container.querySelector('form')!);
+    });
+
+    expect(
+      screen.getByText('Las unidades por paca deben ser al menos 2')
+    ).toBeInTheDocument();
+  });
+
+  it('displays fieldError for precio_paca when action returns that error', async () => {
+    const errAction = vi.fn().mockResolvedValue({
+      fieldErrors: { precio_paca: ['Define las unidades por paca para asignar un precio de paca'] },
+    } satisfies ActionResult);
+
+    const { container } = render(<ProductForm action={errAction} />);
+
+    await act(async () => {
+      fireEvent.submit(container.querySelector('form')!);
+    });
+
+    expect(
+      screen.getByText('Define las unidades por paca para asignar un precio de paca')
+    ).toBeInTheDocument();
+  });
+
+  it('renders helper text indicating pack fields are optional', () => {
+    render(<ProductForm action={noop} />);
+    expect(
+      screen.getByText(/dejar vacío si el producto se vende solo por unidad/i)
+    ).toBeInTheDocument();
   });
 });
