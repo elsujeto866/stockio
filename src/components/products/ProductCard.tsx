@@ -62,6 +62,15 @@ export function ProductCard({ product }: Props) {
           </div>
         </div>
 
+        {/* Pack chip — only for packaged products */}
+        {product.units_per_package != null && (
+          <div className="inline-flex items-center gap-1 rounded-full bg-amber-50 border border-amber-200 px-2.5 py-0.5 text-xs font-medium text-amber-700">
+            <span>Paca: {product.units_per_package} u</span>
+            <span>—</span>
+            <span>{formatCurrency(product.precio_paca ?? 0)}</span>
+          </div>
+        )}
+
         {/* Action row — touch-target sized buttons (min 44px) */}
         <div className="flex items-center gap-2 pt-1">
           <Link

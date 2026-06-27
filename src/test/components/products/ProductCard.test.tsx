@@ -53,6 +53,8 @@ const baseProduct = {
   unidad_medida: 'litro',
   activo: true,
   created_at: '2026-01-01T00:00:00Z',
+  units_per_package: null,
+  precio_paca: null,
 };
 
 describe('ProductCard', () => {
@@ -100,5 +102,43 @@ describe('ProductCard', () => {
     render(<ProductCard product={baseProduct} />);
     const adjustLink = screen.getByRole('link', { name: /ajustar/i });
     expect(adjustLink).toHaveAttribute('href', '/products/prod-1/adjust');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Pack chip — S1-T9 (RED until S1-T10 adds the conditional chip)
+// ---------------------------------------------------------------------------
+describe('ProductCard — pack chip (S1-T9)', () => {
+  it('does NOT render pack chip for a unit-only product (units_per_package = null)', () => {
+    render(<ProductCard product={baseProduct} />);
+    expect(screen.queryByText(/paca:/i)).not.toBeInTheDocument();
+  });
+
+  it('renders pack chip when units_per_package is set', () => {
+    render(
+      <ProductCard
+        product={{ ...baseProduct, units_per_package: 30, precio_paca: 150 }}
+      />
+    );
+    expect(screen.getByText(/paca:/i)).toBeInTheDocument();
+  });
+
+  it('pack chip includes the units_per_package value', () => {
+    render(
+      <ProductCard
+        product={{ ...baseProduct, units_per_package: 30, precio_paca: 150 }}
+      />
+    );
+    expect(screen.getByText(/30\s*u/i)).toBeInTheDocument();
+  });
+
+  it('pack chip includes formatted precio_paca', () => {
+    render(
+      <ProductCard
+        product={{ ...baseProduct, units_per_package: 30, precio_paca: 150 }}
+      />
+    );
+    // formatCurrency(150) → "$150.00"
+    expect(screen.getByText(/\$150\.00/)).toBeInTheDocument();
   });
 });
