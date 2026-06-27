@@ -173,6 +173,127 @@ describe('ProductInputSchema — rejection', () => {
 });
 
 // ---------------------------------------------------------------------------
+// ProductInputSchema — pack fields (S1-T4)
+// RED until S1-T5 adds units_per_package / precio_paca + emptyToNull + refine.
+// ---------------------------------------------------------------------------
+describe('ProductInputSchema — pack fields (S1-T4)', () => {
+  const base = {
+    nombre: 'Aceite',
+    precio_unitario: 6.0,
+    stock_actual: 100,
+    stock_minimo: 5,
+  };
+
+  it('empty string for units_per_package is treated as null (emptyToNull preprocess)', () => {
+    const result = ProductInputSchema.safeParse({
+      ...base,
+      units_per_package: '',
+      precio_paca: '',
+    });
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.units_per_package).toBeNull();
+      expect(result.data.precio_paca).toBeNull();
+    }
+  });
+
+  it('undefined units_per_package is treated as null', () => {
+    const result = ProductInputSchema.safeParse({
+      ...base,
+      units_per_package: undefined,
+      precio_paca: undefined,
+    });
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.units_per_package).toBeNull();
+    }
+  });
+
+  it('rejects units_per_package = 1 (min 2)', () => {
+    const result = ProductInputSchema.safeParse({
+      ...base,
+      units_per_package: 1,
+      precio_paca: 100,
+    });
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      const errors = result.error.flatten().fieldErrors;
+      expect(errors.units_per_package).toBeDefined();
+      expect(errors.units_per_package![0]).toMatch(/al menos 2/i);
+    }
+  });
+
+  it('rejects precio_paca set without units_per_package (cross-field refine)', () => {
+    const result = ProductInputSchema.safeParse({
+      ...base,
+      units_per_package: null,
+      precio_paca: 150,
+    });
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      const errors = result.error.flatten().fieldErrors;
+      expect(errors.precio_paca).toBeDefined();
+    }
+  });
+
+  it('accepts a valid packaged product (both fields present)', () => {
+    const result = ProductInputSchema.safeParse({
+      ...base,
+      units_per_package: 30,
+      precio_paca: 150.0,
+    });
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.units_per_package).toBe(30);
+      expect(result.data.precio_paca).toBe(150.0);
+    }
+  });
+
+  it('accepts unit-only product (both fields null)', () => {
+    const result = ProductInputSchema.safeParse({
+      ...base,
+      units_per_package: null,
+      precio_paca: null,
+    });
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.units_per_package).toBeNull();
+      expect(result.data.precio_paca).toBeNull();
+    }
+  });
+
+  it('accepts unit-only product when pack fields are absent entirely', () => {
+    const result = ProductInputSchema.safeParse({ ...base });
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.units_per_package).toBeNull();
+      expect(result.data.precio_paca).toBeNull();
+    }
+  });
+
+  it('coerces string "30" for units_per_package to integer 30', () => {
+    const result = ProductInputSchema.safeParse({
+      ...base,
+      units_per_package: '30',
+      precio_paca: '150.00',
+    });
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.units_per_package).toBe(30);
+      expect(result.data.precio_paca).toBe(150.0);
+    }
+  });
+});
+
+// ---------------------------------------------------------------------------
 // StockAdjustSchema
 // ---------------------------------------------------------------------------
 describe('StockAdjustSchema', () => {
