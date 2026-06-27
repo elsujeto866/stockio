@@ -199,12 +199,15 @@ describe('createProduct', () => {
       stock_actual: 50,
       stock_minimo: 5,
       unidad_medida: 'kg',
+      cost_price: 8.00,
     });
 
     expect(product.id).toBeDefined();
     expect(product.nombre).toBe(`Prod CRUD ${UNIQUE}`);
     expect(product.activo).toBe(true);
     expect(product.tenant_id).toBeDefined();
+    // S3-T14: cost_price round-trips to DB
+    expect(product.cost_price).toBe(8.00);
 
     productId = product.id;
   });
@@ -254,6 +257,25 @@ describe('updateProduct', () => {
     const product = await getProduct(clientA, productId);
     expect(product!.nombre).toBe(`Prod CRUD Updated ${UNIQUE}`);
     expect(product!.precio_unitario).toBe(14.99);
+  });
+
+  // S3-T14: cost_price update and NULL clear
+  it('clears cost_price to null on update (S3-T14)', async () => {
+    const cleared = await updateProduct(clientA, productId, {
+      nombre: `Prod CRUD Updated ${UNIQUE}`,
+      sku: `SKU-UPD-${UNIQUE}`,
+      categoria: 'Test Updated',
+      precio_unitario: 14.99,
+      stock_actual: 55,
+      stock_minimo: 8,
+      unidad_medida: 'unidad',
+      cost_price: null,
+    });
+
+    expect(cleared.cost_price).toBeNull();
+
+    const fetched = await getProduct(clientA, productId);
+    expect(fetched!.cost_price).toBeNull();
   });
 });
 
@@ -356,5 +378,17 @@ describe('deleteProduct (soft delete)', () => {
     expect(error).toBeNull();
     expect(items).toHaveLength(1);
     expect(items![0].product_id).toBe(productId);
+  });
+
+  // S3-T14 regression: cost_price must NOT appear on order_items
+  it('order_items do not have a cost_price column (S3-T14 regression guard)', async () => {
+    const { data: items, error } = await admin
+      .from('order_items')
+      .select('*')
+      .eq('order_id', orderId);
+    expect(error).toBeNull();
+    expect(items).toHaveLength(1);
+    // cost_price should NOT be a key on order_items
+    expect(items![0]).not.toHaveProperty('cost_price');
   });
 });
