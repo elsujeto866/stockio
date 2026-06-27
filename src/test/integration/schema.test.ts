@@ -343,3 +343,129 @@ describe('profiles.rol CHECK constraint', () => {
     expect(error).toBeNull();
   });
 });
+
+// ---------------------------------------------------------------------------
+// S1-T2 — Products packaging columns (REQ-1, Scenarios 1.2/1.3/1.4/1.6)
+// RED until migration 20260627090000_products_packaging.sql is applied.
+// ---------------------------------------------------------------------------
+describe('products — packaging columns (S1-T2)', () => {
+  it('products table exposes units_per_package and precio_paca columns', async () => {
+    const { error } = await db
+      .from('products')
+      .select('id, units_per_package, precio_paca')
+      .limit(0);
+    expect(error).toBeNull();
+  });
+
+  it('newly inserted product defaults units_per_package and precio_paca to NULL', async () => {
+    const tenantId = await insertTestTenant('pkg-defaults');
+
+    try {
+      const { data, error } = await db
+        .from('products')
+        .insert({
+          tenant_id: tenantId,
+          nombre: '__pkg_default__',
+          precio_unitario: 5.0,
+          stock_actual: 10,
+        })
+        .select('units_per_package, precio_paca')
+        .single();
+
+      expect(error).toBeNull();
+      expect(data?.units_per_package).toBeNull();
+      expect(data?.precio_paca).toBeNull();
+    } finally {
+      await cleanupTenant(tenantId);
+    }
+  });
+
+  it('CHECK rejects units_per_package = 1 (must be >= 2 when not null)', async () => {
+    const tenantId = await insertTestTenant('pkg-check-upp');
+
+    try {
+      const { error } = await db.from('products').insert({
+        tenant_id: tenantId,
+        nombre: '__pkg_upp1__',
+        precio_unitario: 5.0,
+        stock_actual: 10,
+        units_per_package: 1,
+      });
+
+      expect(error).not.toBeNull();
+      expect(error?.code).toBe('23514'); // Postgres CHECK violation
+    } finally {
+      await cleanupTenant(tenantId);
+    }
+  });
+
+  it('CHECK rejects precio_paca set without units_per_package (cross-field constraint)', async () => {
+    const tenantId = await insertTestTenant('pkg-check-cross');
+
+    try {
+      const { error } = await db.from('products').insert({
+        tenant_id: tenantId,
+        nombre: '__pkg_cross__',
+        precio_unitario: 5.0,
+        stock_actual: 10,
+        precio_paca: 150.0,
+        units_per_package: null,
+      });
+
+      expect(error).not.toBeNull();
+      expect(error?.code).toBe('23514');
+    } finally {
+      await cleanupTenant(tenantId);
+    }
+  });
+
+  it('accepts a fully packaged product (units_per_package >= 2, precio_paca not null)', async () => {
+    const tenantId = await insertTestTenant('pkg-valid');
+
+    try {
+      const { data, error } = await db
+        .from('products')
+        .insert({
+          tenant_id: tenantId,
+          nombre: '__pkg_valid__',
+          precio_unitario: 6.0,
+          stock_actual: 100,
+          units_per_package: 30,
+          precio_paca: 150.0,
+        })
+        .select('units_per_package, precio_paca')
+        .single();
+
+      expect(error).toBeNull();
+      expect(data?.units_per_package).toBe(30);
+      expect(Number(data?.precio_paca)).toBeCloseTo(150.0, 2);
+    } finally {
+      await cleanupTenant(tenantId);
+    }
+  });
+
+  it('accepts units_per_package without precio_paca (partial — DB allows it; RPC guards sell path)', async () => {
+    const tenantId = await insertTestTenant('pkg-partial');
+
+    try {
+      const { data, error } = await db
+        .from('products')
+        .insert({
+          tenant_id: tenantId,
+          nombre: '__pkg_partial__',
+          precio_unitario: 6.0,
+          stock_actual: 10,
+          units_per_package: 30,
+          precio_paca: null,
+        })
+        .select('units_per_package, precio_paca')
+        .single();
+
+      expect(error).toBeNull();
+      expect(data?.units_per_package).toBe(30);
+      expect(data?.precio_paca).toBeNull();
+    } finally {
+      await cleanupTenant(tenantId);
+    }
+  });
+});
