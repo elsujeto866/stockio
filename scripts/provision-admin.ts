@@ -33,6 +33,24 @@ import { readFileSync, existsSync } from 'fs';
 import { join } from 'path';
 
 // ---------------------------------------------------------------------------
+// WebSocket stub — Node < 22 has no native WebSocket; supabase-js initializes a
+// RealtimeClient on construction which throws without one. This script never
+// uses realtime, so provide a no-op transport (same pattern as e2e/global-setup.ts).
+// ---------------------------------------------------------------------------
+class _NoopWebSocket extends EventTarget {
+  static CONNECTING = 0;
+  static OPEN = 1;
+  static CLOSING = 2;
+  static CLOSED = 3;
+  readyState = _NoopWebSocket.CLOSED;
+  constructor(_url: string, _protocols?: string | string[]) {
+    super();
+  }
+  send(_data: unknown) {}
+  close(_code?: number, _reason?: string) {}
+}
+
+// ---------------------------------------------------------------------------
 // Load .env.local into process.env
 // Same approach as vitest.config.mts — existing env vars take precedence
 // so CI systems can override without touching the file.
@@ -110,6 +128,7 @@ async function main(): Promise<void> {
 
   const admin = createClient(url, secretKey, {
     auth: { autoRefreshToken: false, persistSession: false },
+    realtime: { transport: _NoopWebSocket as never },
   });
 
   console.log(`\nProvisioning tenant "${tenant}" with admin "${email}"...\n`);
