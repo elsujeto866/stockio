@@ -81,11 +81,11 @@ export function PurchaseBuilder({ suppliers, products }: Props) {
   function addItem() {
     if (!selectedProductId) return;
     setLineItems((prev) => {
-      // Do not merge duplicate products — each add creates a distinct row
-      // (OrderBuilder merges, PurchaseBuilder keeps separate because costo differs)
+      // Merge duplicate products into a single row: re-adding the same product
+      // increments its cantidad and keeps the already-entered costo_unitario.
       const existingIdx = prev.findIndex((i) => i.productId === selectedProductId);
       if (existingIdx >= 0) {
-        // If same product already exists, increment cantidad and keep costo
+        // Same product already in the list — bump cantidad, preserve costo
         const updated = [...prev];
         updated[existingIdx] = {
           ...updated[existingIdx],
