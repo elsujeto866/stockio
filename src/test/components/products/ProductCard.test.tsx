@@ -55,6 +55,7 @@ const baseProduct = {
   created_at: '2026-01-01T00:00:00Z',
   units_per_package: null,
   precio_paca: null,
+  cost_price: null,
 };
 
 describe('ProductCard', () => {
@@ -106,6 +107,77 @@ describe('ProductCard', () => {
 });
 
 // ---------------------------------------------------------------------------
+// Margin display — S3-T12 (RED until S3-T13 adds margin rendering)
+// ---------------------------------------------------------------------------
+describe('ProductCard — margin display (S3-T12)', () => {
+  it('shows unit margin amount and percent when cost_price is set (positive margin)', () => {
+    render(
+      <ProductCard product={{ ...baseProduct, precio_unitario: 10, cost_price: 6 }} />
+    );
+    // amount = 4, percent = 40.0%
+    expect(screen.getByText(/4\.00/)).toBeInTheDocument();
+    expect(screen.getByText(/40\.0%/)).toBeInTheDocument();
+  });
+
+  it('shows "—" for unit margin when cost_price is null', () => {
+    render(
+      <ProductCard product={{ ...baseProduct, cost_price: null }} />
+    );
+    expect(screen.getByTestId('unit-margin-null')).toBeInTheDocument();
+  });
+
+  it('shows negative margin amount and percent with danger styling when cost > price', () => {
+    const { container } = render(
+      <ProductCard product={{ ...baseProduct, precio_unitario: 8, cost_price: 10 }} />
+    );
+    // amount = -2 → formatCurrency(-2) = "-$2.00", percent = -25.0%
+    const marginSpan = container.querySelector('.text-danger');
+    expect(marginSpan).toBeInTheDocument();
+    expect(marginSpan!.textContent).toMatch(/-25\.0%/);
+  });
+
+  it('shows pack margin when all pack data is present (positive pack margin)', () => {
+    render(
+      <ProductCard
+        product={{
+          ...baseProduct,
+          precio_unitario: 6,
+          cost_price: 5,
+          units_per_package: 10,
+          precio_paca: 60,
+        }}
+      />
+    );
+    // pack amount = 60 - 5*10 = 10 → formatCurrency(10) = "$10.00", percent = 16.7%
+    const packMarginEl = screen.getByTestId('pack-margin-value');
+    expect(packMarginEl.textContent).toMatch(/\$10\.00/);
+    expect(packMarginEl.textContent).toMatch(/16\.7%/);
+  });
+
+  it('shows "—" for pack margin when cost_price is null but pack data exists', () => {
+    render(
+      <ProductCard
+        product={{
+          ...baseProduct,
+          cost_price: null,
+          units_per_package: 10,
+          precio_paca: 60,
+        }}
+      />
+    );
+    expect(screen.getByTestId('pack-margin-null')).toBeInTheDocument();
+  });
+
+  it('does NOT render pack margin section when units_per_package is null', () => {
+    render(
+      <ProductCard product={{ ...baseProduct, units_per_package: null, cost_price: 5 }} />
+    );
+    expect(screen.queryByTestId('pack-margin-null')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('pack-margin-value')).not.toBeInTheDocument();
+  });
+});
+
+// ---------------------------------------------------------------------------
 // Pack chip — S1-T9 (RED until S1-T10 adds the conditional chip)
 // ---------------------------------------------------------------------------
 describe('ProductCard — pack chip (S1-T9)', () => {
@@ -120,7 +192,7 @@ describe('ProductCard — pack chip (S1-T9)', () => {
         product={{ ...baseProduct, units_per_package: 30, precio_paca: 150 }}
       />
     );
-    expect(screen.getByText(/paca:/i)).toBeInTheDocument();
+    expect(screen.getByTestId('pack-chip')).toBeInTheDocument();
   });
 
   it('pack chip includes the units_per_package value', () => {

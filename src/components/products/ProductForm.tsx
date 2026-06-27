@@ -158,6 +158,26 @@ export function ProductForm({ action, initialData }: Props) {
             <FieldError messages={state?.fieldErrors?.precio_unitario} />
           </div>
 
+          <div className="space-y-1">
+            <label
+              htmlFor="cost_price"
+              className="block text-sm font-medium text-gray-700"
+            >
+              Costo unitario
+            </label>
+            <input
+              id="cost_price"
+              name="cost_price"
+              type="number"
+              step="0.01"
+              min="0"
+              defaultValue={initialData?.cost_price ?? ''}
+              className={inputClass}
+              placeholder="0.00"
+            />
+            <FieldError messages={state?.fieldErrors?.cost_price} />
+          </div>
+
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
               <label

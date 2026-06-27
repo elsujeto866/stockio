@@ -14,13 +14,17 @@ import Link from 'next/link';
 import type { Product } from '@/lib/data/products';
 import { LowStockBadge } from './LowStockBadge';
 import { deleteProductAction } from '@/app/(app)/products/actions';
-import { formatCurrency } from '@/lib/format';
+import { formatCurrency, formatPercent } from '@/lib/format';
+import { computeUnitMargin, computePackMargin } from '@/lib/domain/margin';
 
 interface Props {
   product: Product;
 }
 
 export function ProductCard({ product }: Props) {
+  const unitMargin = computeUnitMargin(product);
+  const packMargin = computePackMargin(product);
+
   return (
     <div className="rounded-2xl bg-white shadow-sm border border-gray-100 overflow-hidden">
       {/* Thin brand accent stripe */}
@@ -62,12 +66,49 @@ export function ProductCard({ product }: Props) {
           </div>
         </div>
 
+        {/* Unit margin row */}
+        <div className="flex items-center gap-4 text-sm">
+          <div>
+            <span className="text-gray-500">Margen u.: </span>
+            {unitMargin.amount == null ? (
+              <span data-testid="unit-margin-null" className="font-medium text-gray-400">—</span>
+            ) : (
+              <span
+                className={unitMargin.amount < 0 ? 'font-semibold text-danger' : 'font-semibold text-success'}
+              >
+                {formatCurrency(unitMargin.amount)}
+                {unitMargin.percent != null && ` (${formatPercent(unitMargin.percent)})`}
+              </span>
+            )}
+          </div>
+        </div>
+
         {/* Pack chip — only for packaged products */}
         {product.units_per_package != null && (
-          <div className="inline-flex items-center gap-1 rounded-full bg-amber-50 border border-amber-200 px-2.5 py-0.5 text-xs font-medium text-amber-700">
+          <div data-testid="pack-chip" className="inline-flex items-center gap-1 rounded-full bg-amber-50 border border-amber-200 px-2.5 py-0.5 text-xs font-medium text-amber-700">
             <span>Paca: {product.units_per_package} u</span>
             <span>—</span>
             <span>{formatCurrency(product.precio_paca ?? 0)}</span>
+          </div>
+        )}
+
+        {/* Pack margin — only for packaged products */}
+        {product.units_per_package != null && (
+          <div className="flex items-center gap-4 text-sm">
+            <div>
+              <span className="text-gray-500">Mg. paca </span>
+              {packMargin.amount == null ? (
+                <span data-testid="pack-margin-null" className="font-medium text-gray-400">—</span>
+              ) : (
+                <span
+                  data-testid="pack-margin-value"
+                  className={packMargin.amount < 0 ? 'font-semibold text-danger' : 'font-semibold text-success'}
+                >
+                  {formatCurrency(packMargin.amount)}
+                  {packMargin.percent != null && ` (${formatPercent(packMargin.percent)})`}
+                </span>
+              )}
+            </div>
           </div>
         )}
 

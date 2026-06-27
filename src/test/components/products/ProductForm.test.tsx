@@ -229,3 +229,63 @@ describe('ProductForm — pack fields (S1-T7)', () => {
     ).toBeInTheDocument();
   });
 });
+
+// ---------------------------------------------------------------------------
+// Cost price field — S3-T10 (RED until S3-T11 adds the input)
+// ---------------------------------------------------------------------------
+describe('ProductForm — cost price field (S3-T10)', () => {
+  it('renders a "Costo unitario" input', () => {
+    render(<ProductForm action={noop} />);
+    expect(screen.getByLabelText(/costo unitario/i)).toBeInTheDocument();
+  });
+
+  it('cost_price input has name="cost_price"', () => {
+    render(<ProductForm action={noop} />);
+    const input = screen.getByLabelText(/costo unitario/i) as HTMLInputElement;
+    expect(input.name).toBe('cost_price');
+  });
+
+  it('cost_price input has type=number, step=0.01, min=0', () => {
+    render(<ProductForm action={noop} />);
+    const input = screen.getByLabelText(/costo unitario/i) as HTMLInputElement;
+    expect(input.type).toBe('number');
+    expect(input.step).toBe('0.01');
+    expect(input.min).toBe('0');
+  });
+
+  it('cost_price input is NOT required', () => {
+    render(<ProductForm action={noop} />);
+    const input = screen.getByLabelText(/costo unitario/i) as HTMLInputElement;
+    expect(input.required).toBe(false);
+  });
+
+  it('pre-fills cost_price from initialData when editing', () => {
+    const productWithCost: Product = { ...product, cost_price: 10.0 };
+    render(<ProductForm action={noop} initialData={productWithCost} />);
+    const input = screen.getByLabelText(/costo unitario/i) as HTMLInputElement;
+    expect(input.value).toBe('10');
+  });
+
+  it('cost_price input is empty when initialData.cost_price is null', () => {
+    const productNoCost: Product = { ...product, cost_price: null };
+    render(<ProductForm action={noop} initialData={productNoCost} />);
+    const input = screen.getByLabelText(/costo unitario/i) as HTMLInputElement;
+    expect(input.value).toBe('');
+  });
+
+  it('displays fieldError for cost_price when action returns that error', async () => {
+    const errAction = vi.fn().mockResolvedValue({
+      fieldErrors: { cost_price: ['El costo debe ser mayor o igual a 0'] },
+    } satisfies ActionResult);
+
+    const { container } = render(<ProductForm action={errAction} />);
+
+    await act(async () => {
+      fireEvent.submit(container.querySelector('form')!);
+    });
+
+    expect(
+      screen.getByText('El costo debe ser mayor o igual a 0')
+    ).toBeInTheDocument();
+  });
+});
