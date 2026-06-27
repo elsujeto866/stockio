@@ -8,6 +8,9 @@ export interface OrderItem {
   cantidad: number;
   precio_unitario: number;
   subtotal: number;
+  sale_unit: 'unit' | 'package';
+  units_per_package_snapshot: number;
+  base_units: number;
 }
 
 export interface Order {
@@ -35,6 +38,12 @@ export interface OrderItemWithProduct {
   cantidad: number;
   precio_unitario: number;
   subtotal: number;
+  /** 'unit' or 'package' — frozen at order creation time. */
+  sale_unit: 'unit' | 'package';
+  /** Number of base units per package — 1 for unit sales. */
+  units_per_package_snapshot: number;
+  /** Total base units in this line (= cantidad × snapshot for package; = cantidad for unit). */
+  base_units: number;
   product: { nombre: string } | null;
 }
 
@@ -55,7 +64,7 @@ export interface OrderDetail extends Order {
 
 export interface CreateOrderInput {
   storeId: string;
-  items: Array<{ productId: string; cantidad: number }>;
+  items: Array<{ productId: string; cantidad: number; saleUnit: 'unit' | 'package' }>;
   notas?: string;
 }
 
@@ -144,7 +153,8 @@ export async function getOrder(
     .select(
       'id, tenant_id, store_id, fecha, estado, total, notas, created_at, ' +
       'store:stores(nombre), ' +
-      'items:order_items(id, product_id, cantidad, precio_unitario, subtotal, product:products(nombre))'
+      'items:order_items(id, product_id, cantidad, precio_unitario, subtotal, ' +
+        'sale_unit, units_per_package_snapshot, base_units, product:products(nombre))'
     )
     .eq('id', id)
     .single();
@@ -211,6 +221,7 @@ export async function createOrder(
     p_items: input.items.map((item) => ({
       product_id: item.productId,
       cantidad: item.cantidad,
+      sale_unit: item.saleUnit,
     })),
     p_notas: input.notas ?? null,
   });

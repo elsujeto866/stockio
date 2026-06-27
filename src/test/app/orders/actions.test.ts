@@ -74,7 +74,8 @@ describe('createOrderAction', () => {
       mockClient,
       expect.objectContaining({
         storeId: STORE_UUID,
-        items: [{ productId: PRODUCT_UUID_A, cantidad: 2 }],
+        // saleUnit is now threaded through (defaults to 'unit' when not provided in FormData)
+        items: [{ productId: PRODUCT_UUID_A, cantidad: 2, saleUnit: 'unit' }],
       })
     );
     expect(revalidatePath).toHaveBeenCalledWith('/orders');

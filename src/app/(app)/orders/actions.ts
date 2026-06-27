@@ -71,6 +71,7 @@ export async function createOrderAction(
       items: parsed.data.items.map((item) => ({
         productId: item.productId,
         cantidad: item.cantidad,
+        saleUnit: item.saleUnit,
       })),
       notas: parsed.data.notas ?? undefined,
     });

@@ -29,7 +29,7 @@
 
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { getOrder, getOrders, markDelivered, OrderNotDeliverableError } from '@/lib/data/orders';
+import { getOrder, getOrders, markDelivered, OrderNotDeliverableError, createOrder } from '@/lib/data/orders';
 
 // ---------------------------------------------------------------------------
 // WebSocket stub — prevents real-time WS connections in test environment
@@ -374,6 +374,66 @@ describe('getOrders — filters', () => {
     expect(returnedIds).toContain(orderStoreA2Late);
     expect(returnedIds).not.toContain(orderStoreA2Early);
     expect(returnedIds).not.toContain(orderStoreA1);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// S2-T7: createOrder/getOrder seam — saleUnit round-trip (REQ-2, REQ-3)
+// RED until: migration applied (columns exist) + data layer updated (saleUnit threaded).
+// ---------------------------------------------------------------------------
+describe('createOrder/getOrder seam — saleUnit round-trip (S2-T7)', () => {
+  it('createOrder passes saleUnit=package through and getOrder returns sale_unit + snapshot + base_units', async () => {
+    // Create a packaged product via admin
+    const { data: packProduct, error: ppErr } = await admin
+      .from('products')
+      .insert({
+        tenant_id: tenantAId,
+        nombre: `__seam_pack_${UNIQUE}__`,
+        precio_unitario: 5.0,
+        precio_paca: 120.0,
+        units_per_package: 24,
+        stock_actual: 200,
+      })
+      .select('id')
+      .single();
+    if (ppErr) throw new Error(`seam pack product: ${ppErr.message}`);
+    const packProductId = packProduct.id;
+
+    // Create order via data seam with saleUnit='package'
+    const cantidadPacks = 3;
+    const orderId = await createOrder(clientA, {
+      storeId: storeAId,
+      items: [{ productId: packProductId, cantidad: cantidadPacks, saleUnit: 'package' }],
+      notas: `seam S2T7 ${UNIQUE}`,
+    });
+    expect(orderId).toBeTruthy();
+
+    // getOrder should return the new fields
+    const detail = await getOrder(clientA, orderId);
+    expect(detail).not.toBeNull();
+    expect(detail!.items).toHaveLength(1);
+    const item = detail!.items[0];
+    expect(item.sale_unit).toBe('package');
+    expect(item.units_per_package_snapshot).toBe(24);
+    expect(item.base_units).toBe(cantidadPacks * 24); // 72
+    expect(Number(item.precio_unitario)).toBeCloseTo(120.0, 2); // frozen = precio_paca
+  });
+
+  it('createOrder with saleUnit=unit sets sale_unit="unit" and base_units=cantidad', async () => {
+    const orderId = await createOrder(clientA, {
+      storeId: storeAId,
+      items: [{ productId: productAId, cantidad: 4, saleUnit: 'unit' }],
+      notas: `seam S2T7 unit ${UNIQUE}`,
+    });
+    expect(orderId).toBeTruthy();
+
+    const detail = await getOrder(clientA, orderId);
+    expect(detail).not.toBeNull();
+    expect(detail!.items).toHaveLength(1);
+    const item = detail!.items[0];
+    expect(item.sale_unit).toBe('unit');
+    expect(item.units_per_package_snapshot).toBe(1);
+    expect(item.base_units).toBe(4);
   });
 });
 
