@@ -61,7 +61,13 @@ export interface PurchaseDetail extends Purchase {
 export interface CreatePurchaseInput {
   supplierId: string;
   fecha?: string;
-  items: Array<{ productId: string; cantidad: number; costoUnitario: number }>;
+  items: Array<{
+    productId: string;
+    cantidad: number;
+    costoUnitario: number;
+    /** Per-line expiry date override. undefined = not provided; null = explicit no-expiry. */
+    expiryDate?: string | null;
+  }>;
   notas?: string;
 }
 
@@ -148,11 +154,19 @@ export async function createPurchase(
 ): Promise<string> {
   const { data, error } = await supabase.rpc('create_purchase', {
     p_supplier_id: input.supplierId,
-    p_items: input.items.map((i) => ({
-      product_id: i.productId,
-      cantidad: i.cantidad,
-      costo_unitario: i.costoUnitario,
-    })),
+    p_items: input.items.map((i) => {
+      const item: Record<string, unknown> = {
+        product_id: i.productId,
+        cantidad: i.cantidad,
+        costo_unitario: i.costoUnitario,
+      };
+      // Only include expiry_date when the caller supplied it (even as null).
+      // Omitting the key lets the RPC fall back to shelf_life_days computation.
+      if (i.expiryDate !== undefined) {
+        item.expiry_date = i.expiryDate;
+      }
+      return item;
+    }),
     p_fecha: input.fecha ?? null,
     p_notas: input.notas ?? null,
   });
