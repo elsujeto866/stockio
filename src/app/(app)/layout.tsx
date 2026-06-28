@@ -1,9 +1,9 @@
-import Link from 'next/link';
 import { requireUser } from '@/lib/auth/get-user';
 import { createClient } from '@/lib/supabase/server';
 import { getCurrentProfile } from '@/lib/data/profiles';
 import { NavSignOutButton } from '@/components/NavSignOutButton';
 import { UserBadge } from '@/components/UserBadge';
+import { NavLinks } from '@/components/layout/NavLinks';
 
 /**
  * Protected shell layout for all (app) routes.
@@ -45,48 +45,7 @@ export default async function AppLayout({
 
           {/* Nav links: wrap instead of overflowing on narrow (mobile) screens */}
           <div className="flex flex-wrap items-center gap-x-5 gap-y-1 pb-2.5">
-            <Link
-              href="/dashboard"
-              className="text-sm font-medium text-white/85 hover:text-white transition-colors"
-            >
-              Inicio
-            </Link>
-            <Link
-              href="/products"
-              className="text-sm font-medium text-white/85 hover:text-white transition-colors"
-            >
-              Productos
-            </Link>
-            <Link
-              href="/stores"
-              className="text-sm font-medium text-white/85 hover:text-white transition-colors"
-            >
-              Tiendas
-            </Link>
-            <Link
-              href="/orders"
-              className="text-sm font-medium text-white/85 hover:text-white transition-colors"
-            >
-              Pedidos
-            </Link>
-            <Link
-              href="/suppliers"
-              className="text-sm font-medium text-white/85 hover:text-white transition-colors"
-            >
-              Proveedores
-            </Link>
-            <Link
-              href="/purchases"
-              className="text-sm font-medium text-white/85 hover:text-white transition-colors"
-            >
-              Compras
-            </Link>
-            <Link
-              href="/invoices"
-              className="text-sm font-medium text-white/85 hover:text-white transition-colors"
-            >
-              Facturas
-            </Link>
+            <NavLinks />
           </div>
         </div>
       </nav>
