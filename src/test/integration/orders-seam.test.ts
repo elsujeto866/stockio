@@ -191,6 +191,16 @@ beforeAll(async () => {
   if (pAProductErr) throw new Error(`product A: ${pAProductErr.message}`);
   productAId = pA.id;
 
+  // Seed lot for productA so FEFO create_order can consume stock (invariant: SUM(lots)=stock_actual)
+  const { error: lotAErr } = await admin.from('lots').insert({
+    tenant_id: tenantAId,
+    product_id: productAId,
+    lot_type: 'adjustment',
+    quantity: 100,
+    received_date: new Date().toISOString().split('T')[0],
+  });
+  if (lotAErr) throw new Error(`product A lot insert: ${lotAErr.message}`);
+
   // Authenticate both clients
   clientA = createBrowserStyleClient();
   const { error: signInAErr } = await clientA.auth.signInWithPassword({
@@ -398,6 +408,16 @@ describe('createOrder/getOrder seam — saleUnit round-trip (S2-T7)', () => {
       .single();
     if (ppErr) throw new Error(`seam pack product: ${ppErr.message}`);
     const packProductId = packProduct.id;
+
+    // Seed lot so FEFO create_order can consume stock (invariant: SUM(lots)=stock_actual)
+    const { error: ppLotErr } = await admin.from('lots').insert({
+      tenant_id: tenantAId,
+      product_id: packProductId,
+      lot_type: 'adjustment',
+      quantity: 200,
+      received_date: new Date().toISOString().split('T')[0],
+    });
+    if (ppLotErr) throw new Error(`seam pack lot: ${ppLotErr.message}`);
 
     // Create order via data seam with saleUnit='package'
     const cantidadPacks = 3;

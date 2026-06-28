@@ -162,6 +162,17 @@ beforeAll(async () => {
   if (pProdErr) throw new Error(`product insert failed: ${pProdErr.message}`);
   productId = p.id;
 
+  // Seed lot for unit product so FEFO create_order can consume stock (invariant: SUM(lots)=stock_actual)
+  const seedDate = new Date().toISOString().split('T')[0];
+  const { error: lotPErr } = await admin.from('lots').insert({
+    tenant_id: tenantId,
+    product_id: productId,
+    lot_type: 'adjustment',
+    quantity: initialStock,
+    received_date: seedDate,
+  });
+  if (lotPErr) throw new Error(`product lot insert failed: ${lotPErr.message}`);
+
   // Packaged product (S2-T3): units_per_package=30, precio_paca=150
   packInitialStock = 100;
   const { data: packP, error: packPErr } = await admin
@@ -179,6 +190,16 @@ beforeAll(async () => {
   if (packPErr) throw new Error(`pack product insert failed: ${packPErr.message}`);
   packProductId = packP.id;
 
+  // Seed lot for pack product
+  const { error: lotPackErr } = await admin.from('lots').insert({
+    tenant_id: tenantId,
+    product_id: packProductId,
+    lot_type: 'adjustment',
+    quantity: packInitialStock,
+    received_date: seedDate,
+  });
+  if (lotPackErr) throw new Error(`pack product lot insert failed: ${lotPackErr.message}`);
+
   // Unit-only product (S2-T3 NULL guard): no pack columns
   const { data: unitOnlyP, error: unitOnlyPErr } = await admin
     .from('products')
@@ -192,6 +213,16 @@ beforeAll(async () => {
     .single();
   if (unitOnlyPErr) throw new Error(`unit-only product insert failed: ${unitOnlyPErr.message}`);
   unitOnlyProductId = unitOnlyP.id;
+
+  // Seed lot for unit-only product
+  const { error: lotUnitOnlyErr } = await admin.from('lots').insert({
+    tenant_id: tenantId,
+    product_id: unitOnlyProductId,
+    lot_type: 'adjustment',
+    quantity: 50,
+    received_date: seedDate,
+  });
+  if (lotUnitOnlyErr) throw new Error(`unit-only product lot insert failed: ${lotUnitOnlyErr.message}`);
 });
 
 // ---------------------------------------------------------------------------
@@ -444,8 +475,16 @@ describe('create_order + cancel_order — packaging (S2-T3)', () => {
       .single();
     expect(Number(order?.total)).toBeCloseTo(PACK_PRICE * cantidadPacks, 2); // 300.00
 
-    // Restore stock for subsequent tests
+    // Restore stock + lots for subsequent tests (FEFO invariant: SUM(lots)=stock_actual)
     await admin.from('products').update({ stock_actual: stockBefore }).eq('id', packProductId);
+    await admin.from('lots').delete().eq('product_id', packProductId).eq('tenant_id', tenantId);
+    await admin.from('lots').insert({
+      tenant_id: tenantId,
+      product_id: packProductId,
+      lot_type: 'adjustment',
+      quantity: stockBefore,
+      received_date: new Date().toISOString().split('T')[0],
+    });
 
     await client.auth.signOut();
   });
@@ -499,8 +538,16 @@ describe('create_order + cancel_order — packaging (S2-T3)', () => {
     expect(Number(packageLine?.precio_unitario)).toBeCloseTo(PACK_PRICE, 2);
     expect(Number(unitLine?.precio_unitario)).toBeCloseTo(PACK_UNIT_PRICE, 2);
 
-    // Restore
+    // Restore stock + lots for subsequent tests (FEFO invariant: SUM(lots)=stock_actual)
     await admin.from('products').update({ stock_actual: stockBefore }).eq('id', packProductId);
+    await admin.from('lots').delete().eq('product_id', packProductId).eq('tenant_id', tenantId);
+    await admin.from('lots').insert({
+      tenant_id: tenantId,
+      product_id: packProductId,
+      lot_type: 'adjustment',
+      quantity: stockBefore,
+      received_date: new Date().toISOString().split('T')[0],
+    });
 
     await client.auth.signOut();
   });

@@ -160,20 +160,28 @@ describe('cancel_purchase RPC', () => {
     });
     // stock is now 7
 
-    // Now manually reduce stock back to 1 (simulating sales)
-    await admin.from('products').update({ stock_actual: 1 }).eq('id', productId);
+    // Simulate that 4 of the 5 purchase units were consumed by orders (FEFO partial consumption).
+    // Set the purchase lot to remaining=1 (< added=5), which triggers the FEFO pre-check guard.
+    // Also update stock_actual to maintain the invariant: SUM(lots) = stock_actual.
+    await admin.from('lots').update({ quantity: 1 })
+      .eq('purchase_id', purchaseId).eq('tenant_id', tenantAId);
+    await admin.from('products').update({ stock_actual: 3 }).eq('id', productId);
+    // stock_actual=3 = initial_2 (no lots seeded) + remaining_purchase_lot=1 (but we align to 3
+    // because 2 initial units had no lots and FEFO would have consumed: initial=2 + purchase=5 - 4sold=3)
 
     const err = await cancelPurchase(client, purchaseId).then(() => null).catch((e: unknown) => e);
     expect(err).toBeDefined();
     const msg = (err as { message?: string }).message ?? String(err);
-    expect(msg).toMatch(/Cannot cancel purchase: product .+ stock would go negative \(current: 1, purchase: 5\)/i);
+    // FEFO cancel_purchase (migration 100200) raises "already partially/fully sold" when
+    // purchase lots are partially consumed (remaining < added).
+    expect(msg).toMatch(/Cannot cancel purchase: product .+ already partially\/fully sold/i);
 
     // Verify no mutation occurred
     const { data: purchase } = await admin.from('purchases').select('estado').eq('id', purchaseId).single();
     expect(purchase!.estado).toBe('recibido');
 
     const { data: product } = await admin.from('products').select('stock_actual').eq('id', productId).single();
-    expect(Number(product!.stock_actual)).toBe(1);
+    expect(Number(product!.stock_actual)).toBe(3); // unchanged after rejected cancel
 
     await client.auth.signOut();
   });
