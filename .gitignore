@@ -39,6 +39,10 @@ yarn-error.log*
 # supabase
 supabase/.temp/
 
+# claude code — local secrets (Supabase tokens, etc.) and transient agent state, never commit
+.claude/settings.local.json
+.claude/worktrees/
+
 # playwright
 test-results/
 playwright-report/
