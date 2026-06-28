@@ -263,40 +263,47 @@ describe('cost_price — data layer (S3-T7)', () => {
 // ---------------------------------------------------------------------------
 // adjustStock
 // ---------------------------------------------------------------------------
+// adjustStock now delegates to the adjust_stock SECURITY DEFINER RPC (S4-T17).
+// These tests verify the RPC is called correctly and errors are mapped.
+// The read-then-update behavior was replaced by the RPC (see data/__tests__/products.test.ts
+// for the full RPC unit test suite).
 describe('adjustStock', () => {
-  it('sends stock_actual = current + positive delta in the update payload', async () => {
+  it('calls adjust_stock RPC and returns the product row', async () => {
     const updatedProduct = { ...baseProduct, stock_actual: 105 };
     const supabase = createMockSupabaseClient({
-      tables: { products: [baseProduct] },
-      updateResult: updatedProduct,
+      rpcs: {
+        adjust_stock: () => ({ data: updatedProduct, error: null }),
+      },
     });
 
     const result = await adjustStock(supabase, 'prod-1', 5);
 
-    const payload = supabase.__captured.updatePayload as Record<string, unknown>;
-    expect(payload.stock_actual).toBe(105); // 100 + 5
     expect(result.stock_actual).toBe(105);
   });
 
-  it('sends stock_actual = current + negative delta in the update payload', async () => {
-    const updatedProduct = { ...baseProduct, stock_actual: 97 };
+  it('calls adjust_stock RPC with negative delta', async () => {
+    let capturedArgs: Record<string, unknown> | null = null;
     const supabase = createMockSupabaseClient({
-      tables: { products: [baseProduct] },
-      updateResult: updatedProduct,
+      rpcs: {
+        adjust_stock: (args) => {
+          capturedArgs = args;
+          return { data: { ...baseProduct, stock_actual: 97 }, error: null };
+        },
+      },
     });
 
     await adjustStock(supabase, 'prod-1', -3);
 
-    const payload = supabase.__captured.updatePayload as Record<string, unknown>;
-    expect(payload.stock_actual).toBe(97); // 100 - 3
+    expect(capturedArgs!.p_delta).toBe(-3);
   });
 
-  it('throws StockUnderflowError when DB CHECK rejects with code 23514', async () => {
+  it('throws StockUnderflowError when RPC returns errcode 23514', async () => {
     const supabase = createMockSupabaseClient({
-      tables: { products: [baseProduct] },
-      mutationError: {
-        message: 'new row violates check constraint "products_stock_actual_check"',
-        code: '23514',
+      rpcs: {
+        adjust_stock: () => ({
+          data: null,
+          error: { message: 'Stock cannot go below zero', code: '23514' },
+        }),
       },
     });
 
@@ -305,25 +312,38 @@ describe('adjustStock', () => {
 
   it('wraps StockUnderflowError as an Error instance', async () => {
     const supabase = createMockSupabaseClient({
-      tables: { products: [baseProduct] },
-      mutationError: { message: 'check constraint', code: '23514' },
+      rpcs: {
+        adjust_stock: () => ({
+          data: null,
+          error: { message: 'check constraint', code: '23514' },
+        }),
+      },
     });
 
     await expect(adjustStock(supabase, 'prod-1', -200)).rejects.toBeInstanceOf(StockUnderflowError);
   });
 
-  it('does NOT throw StockUnderflowError for non-23514 DB errors', async () => {
+  it('does NOT throw StockUnderflowError for non-23514 RPC errors', async () => {
     const supabase = createMockSupabaseClient({
-      tables: { products: [baseProduct] },
-      mutationError: { message: 'permission denied', code: '42501' },
+      rpcs: {
+        adjust_stock: () => ({
+          data: null,
+          error: { message: 'permission denied', code: '42501' },
+        }),
+      },
     });
 
     await expect(adjustStock(supabase, 'prod-1', -5)).rejects.not.toBeInstanceOf(StockUnderflowError);
   });
 
-  it('throws when product is not found', async () => {
+  it('throws when RPC returns a generic error', async () => {
     const supabase = createMockSupabaseClient({
-      tables: { products: [] }, // empty — getProduct returns null
+      rpcs: {
+        adjust_stock: () => ({
+          data: null,
+          error: { message: 'Product not found', code: 'PGRST116' },
+        }),
+      },
     });
 
     await expect(adjustStock(supabase, 'nonexistent', 5)).rejects.toThrow();

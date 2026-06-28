@@ -170,32 +170,26 @@ export async function deleteProduct(
 }
 
 /**
- * Adjusts stock_actual by delta (signed integer).
- * Reads the current product, computes the next value, then updates.
+ * Adjusts stock_actual by delta (signed integer) via the adjust_stock SECURITY DEFINER RPC.
  *
- * The DB CHECK constraint (stock_actual >= 0) is the floor:
- * if delta would push stock below 0, Postgres raises code 23514 and the
- * update is rejected atomically — we map that to StockUnderflowError (R5).
+ * Positive delta: creates an 'adjustment' lot + increments stock_actual.
+ * Negative delta: FEFO-consumes lots + decrements stock_actual.
+ * Zero delta: no-op (RPC returns the unchanged product row).
  *
- * Concurrency note: read-then-update is accepted for single-admin MVP.
- * A FOR UPDATE RPC is the documented upgrade path if concurrent edits arise.
+ * The RPC raises errcode 23514 when the negative delta would push stock below 0.
+ * We map that to StockUnderflowError (D6 — keeps existing error mapping unchanged).
+ *
+ * Returns: the updated Product row (D7 — single round-trip, no re-fetch needed).
  */
 export async function adjustStock(
   supabase: SupabaseClient,
   productId: string,
   delta: number
 ): Promise<Product> {
-  const product = await getProduct(supabase, productId);
-  if (!product) throw new Error(`Product not found: ${productId}`);
-
-  const next = product.stock_actual + delta;
-
-  const { data, error } = await supabase
-    .from('products')
-    .update({ stock_actual: next })
-    .eq('id', productId)
-    .select(SELECT_COLS)
-    .single();
+  const { data, error } = await supabase.rpc('adjust_stock', {
+    p_product_id: productId,
+    p_delta: delta,
+  });
 
   if (error) {
     if (error.code === '23514') {
