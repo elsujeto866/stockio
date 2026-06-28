@@ -1,6 +1,9 @@
 import Link from 'next/link';
 import { requireUser } from '@/lib/auth/get-user';
+import { createClient } from '@/lib/supabase/server';
+import { getCurrentProfile } from '@/lib/data/profiles';
 import { NavSignOutButton } from '@/components/NavSignOutButton';
+import { UserBadge } from '@/components/UserBadge';
 
 /**
  * Protected shell layout for all (app) routes.
@@ -16,19 +19,28 @@ export default async function AppLayout({
 }: {
   children: React.ReactNode;
 }) {
-  await requireUser();
+  const user = await requireUser();
+  const supabase = await createClient();
+  const profile = await getCurrentProfile(supabase);
 
   return (
     <div className="min-h-screen bg-cream">
       <nav className="bg-brand shadow-md">
         <div className="max-w-2xl mx-auto px-4">
-          {/* Top row: wordmark + sign-out, always visible on every width */}
-          <div className="flex items-center justify-between h-14">
+          {/* Top row: wordmark + user identity + sign-out, always visible */}
+          <div className="flex items-center justify-between h-14 gap-3">
             <span className="font-bold text-white text-lg tracking-tight">
               🛒 Stockio
             </span>
-            {/* type="button" avoids [type=submit] collision with content forms */}
-            <NavSignOutButton />
+            <div className="flex items-center gap-4">
+              <UserBadge
+                name={profile?.nombre ?? null}
+                email={user.email ?? ''}
+                rol={profile?.rol ?? null}
+              />
+              {/* type="button" avoids [type=submit] collision with content forms */}
+              <NavSignOutButton />
+            </div>
           </div>
 
           {/* Nav links: wrap instead of overflowing on narrow (mobile) screens */}

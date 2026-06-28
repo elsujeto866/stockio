@@ -15,7 +15,7 @@ import { PeriodTotalsWidget } from '@/components/dashboard/PeriodTotalsWidget';
  * (auth.spec.ts signs out via that selector from the dashboard).
  */
 export default async function DashboardPage() {
-  const user = await requireUser();
+  await requireUser();
   const supabase = await createClient();
   const { lowStockProducts, recentOrders, periodOrders, period } =
     await getDashboardData(supabase);
@@ -24,12 +24,6 @@ export default async function DashboardPage() {
     <main className="min-h-screen bg-cream">
       <div className="max-w-2xl mx-auto px-4 py-8 space-y-6">
         <h1 className="text-2xl font-bold text-gray-900">Inicio</h1>
-
-        {/* User chip */}
-        <div className="rounded-xl bg-brand-50 border border-orange-200 p-4">
-          <p className="text-xs text-brand font-medium">Conectado como</p>
-          <p className="mt-0.5 text-sm font-semibold text-gray-900">{user.email}</p>
-        </div>
 
         <PeriodTotalsWidget
           orders={periodOrders}
