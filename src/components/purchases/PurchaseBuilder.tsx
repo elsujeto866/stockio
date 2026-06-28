@@ -24,11 +24,14 @@ import type { Product } from '@/lib/data/products';
 import { createPurchaseAction } from '@/app/(app)/purchases/actions';
 import type { ActionResult } from '@/app/(app)/purchases/actions';
 import { formatCurrency } from '@/lib/format';
+import { computeExpiryDate } from '@/lib/domain/expiry';
 
 interface LineItem {
   productId: string;
   cantidad: number;
   costoUnitario: number;
+  /** Per-line expiry date override. Empty string = no override (use shelf_life_days). */
+  expiryDate: string;
 }
 
 interface Props {
@@ -80,12 +83,13 @@ export function PurchaseBuilder({ suppliers, products }: Props) {
 
   function addItem() {
     if (!selectedProductId) return;
+    const product = productMap.get(selectedProductId);
     setLineItems((prev) => {
       // Merge duplicate products into a single row: re-adding the same product
       // increments its cantidad and keeps the already-entered costo_unitario.
       const existingIdx = prev.findIndex((i) => i.productId === selectedProductId);
       if (existingIdx >= 0) {
-        // Same product already in the list — bump cantidad, preserve costo
+        // Same product already in the list — bump cantidad, preserve costo and expiry
         const updated = [...prev];
         updated[existingIdx] = {
           ...updated[existingIdx],
@@ -93,7 +97,11 @@ export function PurchaseBuilder({ suppliers, products }: Props) {
         };
         return updated;
       }
-      return [...prev, { productId: selectedProductId, cantidad: 1, costoUnitario: 0 }];
+      // Prefill expiryDate from product.shelf_life_days + today (REQ-1, D2).
+      // Empty string means no override entered yet; operator can edit the date field.
+      const today = new Date().toISOString().split('T')[0];
+      const prefilled = computeExpiryDate(today, product?.shelf_life_days ?? null);
+      return [...prev, { productId: selectedProductId, cantidad: 1, costoUnitario: 0, expiryDate: prefilled ?? '' }];
     });
     setSelectedProductId('');
   }
@@ -116,9 +124,16 @@ export function PurchaseBuilder({ suppliers, products }: Props) {
     );
   }
 
+  function updateExpiryDate(productId: string, value: string) {
+    setLineItems((prev) =>
+      prev.map((i) => (i.productId === productId ? { ...i, expiryDate: value } : i))
+    );
+  }
+
   return (
     <form action={dispatch} className="space-y-6">
-      {/* Hidden JSON field — line items serialised for the Server Action. */}
+      {/* Hidden JSON field — line items serialised for the Server Action.
+          expiryDate included per line; empty string = operator did not set an override. */}
       <input type="hidden" name="items" value={JSON.stringify(lineItems)} />
 
       {/* ── Purchase header fields ─────────────────────────────────── */}
@@ -247,6 +262,24 @@ export function PurchaseBuilder({ suppliers, products }: Props) {
                           onChange={(e) => updateCosto(item.productId, e.target.value)}
                           className="w-24 rounded-lg border border-gray-300 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand"
                           aria-label={`Costo unitario de ${productName}`}
+                        />
+                      </div>
+
+                      {/* Per-line expiry date input (REQ-1) */}
+                      <div className="flex flex-col items-start gap-0.5">
+                        <label
+                          htmlFor={`expiry-${item.productId}`}
+                          className="text-xs text-gray-500"
+                        >
+                          Vencimiento
+                        </label>
+                        <input
+                          id={`expiry-${item.productId}`}
+                          type="date"
+                          value={item.expiryDate}
+                          onChange={(e) => updateExpiryDate(item.productId, e.target.value)}
+                          className="rounded-lg border border-gray-300 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand"
+                          aria-label={`Fecha de vencimiento de ${productName}`}
                         />
                       </div>
 

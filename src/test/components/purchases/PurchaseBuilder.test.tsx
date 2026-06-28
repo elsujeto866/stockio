@@ -76,6 +76,8 @@ const products: Product[] = [
     units_per_package: null,
     precio_paca: null,
     cost_price: null,
+    shelf_life_days: null,
+    expiry_alert_days: 30,
   },
   {
     id: 'prod-2',
@@ -92,6 +94,8 @@ const products: Product[] = [
     units_per_package: null,
     precio_paca: null,
     cost_price: null,
+    shelf_life_days: null,
+    expiry_alert_days: 30,
   },
 ];
 
@@ -241,7 +245,8 @@ describe('PurchaseBuilder — hidden items JSON', () => {
     const hiddenInput = document.querySelector<HTMLInputElement>('input[name="items"]');
     expect(hiddenInput).not.toBeNull();
     const parsed = JSON.parse(hiddenInput!.value);
-    expect(parsed).toEqual([{ productId: 'prod-1', cantidad: 1, costoUnitario: 2.50 }]);
+    // expiryDate is now included in item JSON ('' when product has no shelf_life_days)
+    expect(parsed).toEqual([{ productId: 'prod-1', cantidad: 1, costoUnitario: 2.50, expiryDate: '' }]);
   });
 
   it('hidden items JSON updates when costoUnitario changes', () => {

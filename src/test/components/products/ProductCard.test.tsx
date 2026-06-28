@@ -56,6 +56,8 @@ const baseProduct = {
   units_per_package: null,
   precio_paca: null,
   cost_price: null,
+  shelf_life_days: null,
+  expiry_alert_days: 30,
 };
 
 describe('ProductCard', () => {

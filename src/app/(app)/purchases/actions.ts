@@ -73,6 +73,8 @@ export async function createPurchaseAction(
         productId: item.productId,
         cantidad: item.cantidad,
         costoUnitario: item.costoUnitario,
+        // Pass through expiryDate if present (null = explicit no-expiry; undefined = omit key → RPC uses shelf_life_days)
+        ...(item.expiryDate !== undefined ? { expiryDate: item.expiryDate } : {}),
       })),
       notas: parsed.data.notas ?? undefined,
     });

@@ -65,6 +65,8 @@ const products: Product[] = [
     units_per_package: null,
     precio_paca: null,
     cost_price: null,
+    shelf_life_days: null,
+    expiry_alert_days: 30,
   },
   {
     id: 'prod-2',
@@ -81,6 +83,8 @@ const products: Product[] = [
     units_per_package: null,
     precio_paca: null,
     cost_price: null,
+    shelf_life_days: null,
+    expiry_alert_days: 30,
   },
   // Packaged product — for S2-T9 tests
   {
@@ -98,6 +102,8 @@ const products: Product[] = [
     units_per_package: 30,
     precio_paca: 120.0,
     cost_price: null,
+    shelf_life_days: null,
+    expiry_alert_days: 30,
   },
 ];
 
