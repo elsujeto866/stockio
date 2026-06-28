@@ -87,55 +87,58 @@ test.describe('Expiry Batches — product fields', () => {
 // ---------------------------------------------------------------------------
 // EXPIRY-S2: Product detail page shows lot list
 // ---------------------------------------------------------------------------
-test.describe('Expiry Batches — product detail (requires migration)', () => {
+test.describe('Expiry Batches — product detail', () => {
   test('EXPIRY-S2: product detail page exists and shows lot list section', async ({ page }) => {
     await login(page);
 
-    // Find the product we created in EXPIRY-S1 (or any product)
+    // Find the product created by EXPIRY-S1 on the products list page.
+    // ProductCard renders product names as plain text (not links), so we locate
+    // the <li> by its text content and extract the "Editar" link href to get
+    // the product ID, then navigate to the detail page directly.
     await page.goto('/products');
 
-    // Click on a product to navigate to detail
-    const productLinks = page.getByRole('link', { name: /E2E Expiry/i });
-    const count = await productLinks.count();
+    const productLi = page.locator('li').filter({ hasText: PRODUCT_NAME });
+    const count = await productLi.count();
 
     if (count === 0) {
-      // Product may not be found — skip gracefully
-      test.skip(true, 'No E2E product found — run EXPIRY-S1 first or products list lacks detail links');
-      return;
+      throw new Error(
+        `Product "${PRODUCT_NAME}" not found on /products — EXPIRY-S1 must run and succeed before this test`
+      );
     }
 
-    await productLinks.first().click();
+    // editHref = /products/{id}/edit — strip /edit to get the detail URL
+    const editLink = productLi.first().getByRole('link', { name: 'Editar' });
+    const editHref = await editLink.getAttribute('href');
+    const detailUrl = editHref!.replace('/edit', '');
+    await page.goto(detailUrl);
 
     // The URL should be /products/{id}
     await expect(page).toHaveURL(/\/products\/[a-z0-9-]+$/);
 
-    // Lot list section should be visible
+    // Lot list section must be visible (REQ-6)
     await expect(page.getByText(/lotes de inventario/i)).toBeVisible();
   });
 });
 
 // ---------------------------------------------------------------------------
-// EXPIRY-S3: Purchase creates lot with expiry badge (requires migration 100200)
+// EXPIRY-S3: Purchase builder shows per-line expiry date input
 // ---------------------------------------------------------------------------
-test.describe('Expiry Batches — purchase lot creation (requires migration)', () => {
+test.describe('Expiry Batches — purchase lot creation', () => {
   test('EXPIRY-S3: purchase builder shows expiryDate input per line', async ({ page }) => {
     await login(page);
 
     await page.goto('/purchases/new');
 
-    // Check for product search/select
-    const productSearchOrSelect = page.getByRole('combobox').or(page.getByPlaceholder(/buscar/i)).first();
-    const isVisible = await productSearchOrSelect.isVisible();
+    // Product selector must be present — fail loudly if the page is unreachable
+    const productSelect = page.getByLabel('Seleccionar un producto para agregar');
+    await expect(productSelect).toBeVisible();
 
-    if (!isVisible) {
-      test.skip(true, 'Purchase builder not reachable — skip');
-      return;
-    }
+    // Select the product created by EXPIRY-S1 and add it as a purchase line
+    await productSelect.selectOption({ label: PRODUCT_NAME });
+    await page.getByRole('button', { name: 'Agregar' }).click();
 
-    // The expiry date input should be present per line after adding a product
-    // (This verifies REQ-1 UI surface)
-    // We don't submit the purchase here to avoid creating real data,
-    // just confirm the UI element presence.
-    await expect(page.getByText(/compra/i)).toBeVisible();
+    // Per-line expiry date input must render (REQ-1).
+    // The input carries aria-label="Fecha de vencimiento de {productName}".
+    await expect(page.getByLabel(/Fecha de vencimiento de/i)).toBeVisible();
   });
 });
