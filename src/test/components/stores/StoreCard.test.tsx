@@ -89,9 +89,15 @@ describe('StoreCard', () => {
     expect(screen.queryByText(/\+54 11 1234-5678/)).not.toBeInTheDocument();
   });
 
+  it('contains a store detail link pointing to /stores/[id]', () => {
+    render(<StoreCard store={baseStore} />);
+    const detailLink = screen.getByRole('link', { name: /ver saldo/i });
+    expect(detailLink).toHaveAttribute('href', '/stores/store-1');
+  });
+
   it('contains an edit link pointing to /stores/[id]/edit', () => {
     render(<StoreCard store={baseStore} />);
-    const editLink = screen.getByRole('link', { name: /edit/i });
+    const editLink = screen.getByRole('link', { name: /editar/i });
     expect(editLink).toHaveAttribute('href', '/stores/store-1/edit');
   });
 

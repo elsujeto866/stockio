@@ -42,7 +42,6 @@ vi.mock('@/app/(app)/orders/actions', () => ({
 
 vi.mock('@/app/(app)/invoices/actions', () => ({
   createInvoiceAction: vi.fn(),
-  setPaymentStatusAction: vi.fn(),
 }));
 
 // GenerateInvoiceButton is a 'use client' component tested separately.

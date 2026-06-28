@@ -57,6 +57,12 @@ export function StoreCard({ store }: Props) {
         {/* Action row — touch-target sized buttons (min 44px) */}
         <div className="flex items-center gap-2 pt-1">
           <Link
+            href={`/stores/${store.id}`}
+            className="btn-primary px-3 py-2.5 text-sm"
+          >
+            Ver saldo
+          </Link>
+          <Link
             href={`/stores/${store.id}/edit`}
             className="btn-secondary px-3 py-2.5 text-sm"
           >

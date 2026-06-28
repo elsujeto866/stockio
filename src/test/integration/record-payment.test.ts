@@ -484,3 +484,62 @@ describe('S9-2: cross-tenant isolation via record_payment RPC (AR-T16)', () => {
     expect(payments ?? []).toHaveLength(0);
   });
 });
+
+// ---------------------------------------------------------------------------
+// W3: create_invoice must anchor due_date to fecha_emision, not order.fecha
+// ---------------------------------------------------------------------------
+describe('W3: due_date = fecha_emision + terms (not order.fecha + terms)', () => {
+  it('invoice created after a backdated order anchors due_date to current_date', async () => {
+    // Seed a fresh product+lot so this test is fully isolated from S2-x payments
+    const prodW3Id = await seedLotAndProduct(
+      tenantId,
+      `__ar_product_w3_${UNIQUE}__`,
+      5
+    );
+
+    const userClient = await getUserClient();
+
+    // create_order sets fecha = current_date
+    const { data: orderId, error: oErr } = await userClient.rpc('create_order', {
+      p_store_id: storeId,
+      p_items: [{ product_id: prodW3Id, cantidad: 1 }],
+      p_notas: `W3 anchor test ${UNIQUE}`,
+    });
+    if (oErr) throw new Error(`create_order W3 failed: ${oErr.message}`);
+
+    // Admin: backdate order by 7 days so order.fecha ≠ current_date
+    const backdated = new Date();
+    backdated.setUTCDate(backdated.getUTCDate() - 7);
+    const backdatedStr = backdated.toISOString().split('T')[0];
+    const { error: updateErr } = await admin
+      .from('orders')
+      .update({ fecha: backdatedStr })
+      .eq('id', orderId as string);
+    if (updateErr) throw new Error(`backdate order failed: ${updateErr.message}`);
+
+    // Create invoice today — fecha_emision = current_date
+    const { data: invId, error: invErr } = await userClient.rpc('create_invoice', {
+      p_order_id: orderId,
+    });
+    if (invErr) throw new Error(`create_invoice W3 failed: ${invErr.message}`);
+
+    const { data: inv } = await admin
+      .from('invoices')
+      .select('fecha_emision, due_date')
+      .eq('id', invId as string)
+      .single();
+
+    expect(inv?.due_date).not.toBeNull();
+
+    const emisionDate = new Date(inv!.fecha_emision + 'T00:00:00Z');
+    const dueDate    = new Date(inv!.due_date!      + 'T00:00:00Z');
+    const diff = Math.round((dueDate.getTime() - emisionDate.getTime()) / 86_400_000);
+
+    // due_date MUST equal fecha_emision + 30 (REQ-1 compliance)
+    expect(diff).toBe(30);
+
+    // Prove anchor is NOT order.fecha: wrong due_date would be backdated + 30 (7 days earlier)
+    const wrongDueMs = new Date(backdatedStr + 'T00:00:00Z').getTime() + 30 * 86_400_000;
+    expect(dueDate.getTime()).not.toBe(wrongDueMs);
+  });
+});
