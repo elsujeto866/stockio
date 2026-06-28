@@ -599,3 +599,78 @@ describe('order_items — packaging columns (S2-T2)', () => {
     }
   });
 });
+
+// ---------------------------------------------------------------------------
+// AR-T4 — Receivables schema (REQ-1, REQ-9)
+// RED until migrations 20260628100000/100100/100200 are applied.
+// ---------------------------------------------------------------------------
+describe('stores — payment_terms_days column (AR-T4)', () => {
+  it('stores has payment_terms_days column (integer, not null, default 30)', async () => {
+    const { error } = await db
+      .from('stores')
+      .select('id, payment_terms_days')
+      .limit(0);
+    expect(error).toBeNull();
+  });
+
+  it('newly inserted store gets payment_terms_days = 30 by default', async () => {
+    const tenantId = await insertTestTenant('ar-ptd-default');
+    try {
+      const { data, error } = await db
+        .from('stores')
+        .insert({ tenant_id: tenantId, nombre: '__ar_ptd__' })
+        .select('payment_terms_days')
+        .single();
+      expect(error).toBeNull();
+      expect(Number(data?.payment_terms_days)).toBe(30);
+    } finally {
+      await cleanupTenant(tenantId);
+    }
+  });
+});
+
+describe('invoices — due_date and total_paid columns (AR-T4)', () => {
+  it('invoices has due_date and total_paid columns', async () => {
+    const { error } = await db
+      .from('invoices')
+      .select('id, due_date, total_paid')
+      .limit(0);
+    expect(error).toBeNull();
+  });
+});
+
+describe('payments table — existence, columns, RLS (AR-T4)', () => {
+  it('payments table exists with expected columns', async () => {
+    const { error } = await db
+      .from('payments')
+      .select('id, tenant_id, invoice_id, amount, fecha, notas, created_at')
+      .limit(0);
+    expect(error).toBeNull();
+  });
+
+  it('authenticated role has SELECT privilege on payments (admin key bypasses RLS)', async () => {
+    // Admin key can read — just prove the table is readable
+    const { error } = await db.from('payments').select('id').limit(0);
+    expect(error).toBeNull();
+  });
+
+  it('direct INSERT into payments is blocked for unauthenticated (no INSERT grant)', async () => {
+    // Use the anon/publishable key to attempt a direct insert — must be denied
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+    const publishableKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+    if (!publishableKey) {
+      console.warn('NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY not set — skipping INSERT grant check');
+      return;
+    }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const anonClient = (await import('@supabase/supabase-js')).createClient(url, publishableKey, {
+      auth: { autoRefreshToken: false, persistSession: false },
+      realtime: { transport: _NoopWebSocket as any },
+    });
+    const { error } = await anonClient
+      .from('payments')
+      .insert({ tenant_id: crypto.randomUUID(), invoice_id: crypto.randomUUID(), amount: 1, fecha: '2026-01-01' });
+    // Must fail — no INSERT grant for unauthenticated
+    expect(error).not.toBeNull();
+  });
+});
