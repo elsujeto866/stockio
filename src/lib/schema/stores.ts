@@ -4,8 +4,8 @@
  * Pure — no I/O, no side effects.
  * Safe to import in Server Actions and unit tests without a DB connection.
  *
- * Stores have no numeric fields — no z.coerce.number() is used.
- * All optional fields transform empty/null/undefined to null for DB storage.
+ * All optional string fields transform empty/null/undefined to null for DB storage.
+ * payment_terms_days uses z.coerce so FormData strings are coerced to integers.
  */
 
 import { z } from 'zod';
@@ -27,6 +27,7 @@ export const StoreInputSchema = z.object({
     .optional()
     .nullable()
     .transform((v) => v || null),
+  payment_terms_days: z.coerce.number().int().min(0).default(30),
 });
 
 export type StoreInput = z.infer<typeof StoreInputSchema>;

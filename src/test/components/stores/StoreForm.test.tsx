@@ -84,6 +84,24 @@ describe('StoreForm — create vs edit mode', () => {
     render(<StoreForm action={noop} initialData={store} />);
     expect(screen.getByDisplayValue('Juan Pérez')).toBeInTheDocument();
   });
+
+  it('renders the payment_terms_days field', () => {
+    render(<StoreForm action={noop} />);
+    // label contains "días" or "plazo" (case-insensitive)
+    expect(screen.getByLabelText(/d[ií]as|plazo/i)).toBeInTheDocument();
+  });
+
+  it('pre-fills payment_terms_days from initialData', () => {
+    const storeWith45Days = { ...store, payment_terms_days: 45 };
+    render(<StoreForm action={noop} initialData={storeWith45Days} />);
+    expect(screen.getByDisplayValue('45')).toBeInTheDocument();
+  });
+
+  it('defaults payment_terms_days to 30 in create mode', () => {
+    render(<StoreForm action={noop} />);
+    const input = screen.getByLabelText(/d[ií]as|plazo/i) as HTMLInputElement;
+    expect(input.value).toBe('30');
+  });
 });
 
 // ---------------------------------------------------------------------------

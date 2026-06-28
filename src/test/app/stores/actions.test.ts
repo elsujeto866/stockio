@@ -52,6 +52,7 @@ beforeEach(() => {
 function validStoreFormData(): FormData {
   const fd = new FormData();
   fd.set('nombre', 'Almacén Central');
+  fd.set('payment_terms_days', '45');
   return fd;
 }
 
@@ -79,7 +80,7 @@ describe('createStoreAction', () => {
 
     expect(createStore).toHaveBeenCalledWith(
       mockClient,
-      expect.objectContaining({ nombre: 'Almacén Central', contacto: 'Juan Pérez' })
+      expect.objectContaining({ nombre: 'Almacén Central', contacto: 'Juan Pérez', payment_terms_days: 45 })
     );
     expect(revalidatePath).toHaveBeenCalledWith('/stores');
     expect(redirect).toHaveBeenCalledWith('/stores');
@@ -155,7 +156,7 @@ describe('updateStoreAction', () => {
     expect(updateStore).toHaveBeenCalledWith(
       mockClient,
       'store-1',
-      expect.objectContaining({ nombre: 'Depósito Norte' })
+      expect.objectContaining({ nombre: 'Depósito Norte', payment_terms_days: 45 })
     );
     expect(revalidatePath).toHaveBeenCalledWith('/stores');
     expect(redirect).toHaveBeenCalledWith('/stores');

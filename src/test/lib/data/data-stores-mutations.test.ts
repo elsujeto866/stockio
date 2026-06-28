@@ -23,6 +23,7 @@ const baseStore = {
   telefono: '555-5678',
   activo: true,
   created_at: '2026-01-01T00:00:00Z',
+  payment_terms_days: 30,
 };
 
 const validInput = {
@@ -30,6 +31,7 @@ const validInput = {
   contacto: '555-1234',
   direccion: 'Av. Principal 123',
   telefono: '555-5678',
+  payment_terms_days: 45,
 };
 
 // ---------------------------------------------------------------------------
@@ -53,7 +55,7 @@ describe('createStore', () => {
     expect(validInput).not.toHaveProperty('tenant_id');
   });
 
-  it('insert payload contains the expected fields', async () => {
+  it('insert payload contains the expected fields including payment_terms_days', async () => {
     const supabase = createMockSupabaseClient({
       insertResult: baseStore,
       rpcs: {
@@ -67,6 +69,7 @@ describe('createStore', () => {
     expect(payload.nombre).toBe('Tienda Centro');
     expect(payload.contacto).toBe('555-1234');
     expect(payload.direccion).toBe('Av. Principal 123');
+    expect(payload.payment_terms_days).toBe(45);
   });
 
   it('returns the created store from the DB result', async () => {
@@ -110,7 +113,7 @@ describe('createStore', () => {
 // updateStore
 // ---------------------------------------------------------------------------
 describe('updateStore', () => {
-  it('sends the correct update payload (no tenant_id)', async () => {
+  it('sends the correct update payload (no tenant_id, includes payment_terms_days)', async () => {
     const updated = { ...baseStore, nombre: 'Updated Name' };
     const supabase = createMockSupabaseClient({
       tables: { stores: [baseStore] },
@@ -122,6 +125,7 @@ describe('updateStore', () => {
     const payload = supabase.__captured.updatePayload as Record<string, unknown>;
     expect(payload.nombre).toBe('Updated Name');
     expect(payload).not.toHaveProperty('tenant_id');
+    expect(payload.payment_terms_days).toBe(45);
   });
 
   it('returns the updated store', async () => {

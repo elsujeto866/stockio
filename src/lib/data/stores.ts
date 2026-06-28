@@ -22,6 +22,7 @@ export interface StoreInput {
   contacto?: string | null;
   direccion?: string | null;
   telefono?: string | null;
+  payment_terms_days?: number;
 }
 
 // ---------------------------------------------------------------------------

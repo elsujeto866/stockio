@@ -141,3 +141,45 @@ describe('StoreInputSchema — rejection', () => {
     }
   });
 });
+
+// ---------------------------------------------------------------------------
+// StoreInputSchema — payment_terms_days
+// ---------------------------------------------------------------------------
+describe('StoreInputSchema — payment_terms_days', () => {
+  it('coerces the string "45" to the number 45', () => {
+    const result = StoreInputSchema.safeParse({ nombre: 'X', payment_terms_days: '45' });
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.payment_terms_days).toBe(45);
+    }
+  });
+
+  it('defaults to 30 when payment_terms_days is absent', () => {
+    const result = StoreInputSchema.safeParse({ nombre: 'X' });
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.payment_terms_days).toBe(30);
+    }
+  });
+
+  it('rejects a negative value', () => {
+    const result = StoreInputSchema.safeParse({ nombre: 'X', payment_terms_days: -1 });
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      const errors = result.error.flatten().fieldErrors;
+      expect(errors.payment_terms_days).toBeDefined();
+    }
+  });
+
+  it('accepts 0 (immediate payment)', () => {
+    const result = StoreInputSchema.safeParse({ nombre: 'X', payment_terms_days: 0 });
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.payment_terms_days).toBe(0);
+    }
+  });
+});

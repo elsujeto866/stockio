@@ -127,6 +127,25 @@ export function StoreForm({ action, initialData }: Props) {
             />
             <FieldError messages={state?.fieldErrors?.telefono} />
           </div>
+
+          {/* payment_terms_days */}
+          <div className="space-y-1">
+            <label
+              htmlFor="payment_terms_days"
+              className="block text-sm font-medium text-gray-700"
+            >
+              Plazo de pago (días)
+            </label>
+            <input
+              id="payment_terms_days"
+              name="payment_terms_days"
+              type="number"
+              min="0"
+              defaultValue={initialData?.payment_terms_days ?? 30}
+              className={inputClass}
+            />
+            <FieldError messages={state?.fieldErrors?.payment_terms_days} />
+          </div>
         </div>
       </div>
 
