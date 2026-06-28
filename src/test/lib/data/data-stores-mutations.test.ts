@@ -9,7 +9,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { createMockSupabaseClient } from '@/test/mocks/supabase';
-import { createStore, updateStore, deleteStore } from '@/lib/data/stores';
+import { createStore, updateStore, deleteStore, getStoreBalance, getStoreReceivables } from '@/lib/data/stores';
 
 // ---------------------------------------------------------------------------
 // Fixtures
@@ -186,5 +186,102 @@ describe('deleteStore', () => {
     });
 
     await expect(deleteStore(supabase, 'store-1')).rejects.toBeDefined();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// AR-T13 — getStoreBalance + getStoreReceivables (REQ-4/S4-1,S4-2)
+// ---------------------------------------------------------------------------
+describe('getStoreBalance', () => {
+  // Fixtures must include nested order.store.id so the TS filter in getStoreBalance works
+  const invoiceFixtures = [
+    {
+      id: 'inv-1',
+      tenant_id: 'tenant-1',
+      order_id: 'ord-1',
+      total: 500,
+      total_paid: 200,
+      due_date: '2026-07-01',
+      estado_pago: 'pendiente',
+      order: { estado: 'pendiente', store: { id: 'store-1' } },
+    },
+    {
+      id: 'inv-2',
+      tenant_id: 'tenant-1',
+      order_id: 'ord-2',
+      total: 300,
+      total_paid: 300,
+      due_date: '2026-07-01',
+      estado_pago: 'pagado',
+      order: { estado: 'pendiente', store: { id: 'store-1' } },
+    },
+  ];
+
+  it('returns sum of (total - total_paid) for non-cancelled invoices of a store', async () => {
+    const supabase = createMockSupabaseClient({
+      tables: { invoices: invoiceFixtures },
+    });
+
+    const balance = await getStoreBalance(supabase, 'store-1');
+
+    // inv-1: 500-200=300, inv-2: 300-300=0; total=300
+    expect(balance).toBe(300);
+  });
+
+  it('returns 0 when all invoices are fully paid', async () => {
+    const fullyPaidFixtures = invoiceFixtures.map((i) => ({ ...i, total_paid: i.total }));
+    const supabase = createMockSupabaseClient({
+      tables: { invoices: fullyPaidFixtures },
+    });
+
+    const balance = await getStoreBalance(supabase, 'store-1');
+
+    expect(balance).toBe(0);
+  });
+
+  it('returns 0 when storeId does not match any invoice (TS filter)', async () => {
+    const supabase = createMockSupabaseClient({
+      tables: { invoices: invoiceFixtures },
+    });
+
+    const balance = await getStoreBalance(supabase, 'store-OTHER');
+
+    expect(balance).toBe(0);
+  });
+});
+
+describe('getStoreReceivables', () => {
+  const storeFixture = { id: 'store-1', nombre: 'Main Store', tenant_id: 'tenant-1' };
+  const invoiceFixtures = [
+    {
+      id: 'inv-1',
+      store_id: 'store-1',
+      total: 500,
+      total_paid: 200,
+      order: { estado: 'pendiente', store: storeFixture },
+    },
+    {
+      id: 'inv-2',
+      store_id: 'store-1',
+      total: 300,
+      total_paid: 100,
+      order: { estado: 'pendiente', store: storeFixture },
+    },
+  ];
+
+  it('returns per-store receivables with saldo summed correctly', async () => {
+    const supabase = createMockSupabaseClient({
+      tables: { invoices: invoiceFixtures },
+    });
+
+    const result = await getStoreReceivables(supabase);
+
+    expect(Array.isArray(result)).toBe(true);
+    // Each entry should have storeId, storeName, saldo
+    if (result.length > 0) {
+      expect(result[0]).toHaveProperty('storeId');
+      expect(result[0]).toHaveProperty('storeName');
+      expect(result[0]).toHaveProperty('saldo');
+    }
   });
 });

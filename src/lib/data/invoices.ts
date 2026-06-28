@@ -13,6 +13,10 @@ export interface Invoice {
   total: number;
   estado_pago: string | null;
   created_at: string;
+  /** Date when payment is due (fecha_emision + store.payment_terms_days). May be null for pre-migration rows. */
+  due_date: string | null;
+  /** Sum of all recorded payments for this invoice (maintained by record_payment RPC). */
+  total_paid: number;
 }
 
 /**
@@ -60,7 +64,7 @@ export async function getInvoices(supabase: SupabaseClient): Promise<InvoiceList
   const { data, error } = await supabase
     .from('invoices')
     .select(
-      'id, tenant_id, order_id, numero, fecha_emision, total, estado_pago, created_at, order:orders(store:stores(nombre))'
+      'id, tenant_id, order_id, numero, fecha_emision, total, estado_pago, created_at, due_date, total_paid, order:orders(store:stores(nombre))'
     )
     .order('numero', { ascending: false });
 
@@ -81,7 +85,7 @@ export async function getInvoice(
   const { data, error } = await supabase
     .from('invoices')
     .select(
-      'id, tenant_id, order_id, numero, fecha_emision, total, estado_pago, created_at, ' +
+      'id, tenant_id, order_id, numero, fecha_emision, total, estado_pago, created_at, due_date, total_paid, ' +
         'order:orders(id, fecha, total, notas, store:stores(nombre), items:order_items(id, product_id, cantidad, precio_unitario, subtotal, product:products(nombre)))'
     )
     .eq('id', id)
@@ -102,7 +106,7 @@ export async function getInvoiceByOrderId(
 ): Promise<Invoice | null> {
   const { data, error } = await supabase
     .from('invoices')
-    .select('id, tenant_id, order_id, numero, fecha_emision, total, estado_pago, created_at')
+    .select('id, tenant_id, order_id, numero, fecha_emision, total, estado_pago, created_at, due_date, total_paid')
     .eq('order_id', orderId)
     .maybeSingle();
 
@@ -143,6 +147,8 @@ export async function createInvoice(
 /**
  * Sets the payment status of an invoice.
  *
+ * @deprecated Use recordPayment() + record_payment RPC instead.
+ *             This function will be deleted in WU6 (AR-T20).
  * @param estado 'pendiente' | 'pagado' | null — null clears the status
  * @throws If the update fails (e.g., invoice not found or RLS blocks access).
  */
@@ -157,4 +163,41 @@ export async function setInvoicePaymentStatus(
     .eq('id', id);
 
   if (error) throw error;
+}
+
+// ---------------------------------------------------------------------------
+// AR-T12 — getReceivableInvoices (REQ-3, REQ-4, REQ-6)
+// ---------------------------------------------------------------------------
+
+/**
+ * Shape returned by getReceivableInvoices — includes store name for grouping.
+ */
+export interface ReceivableInvoice extends Invoice {
+  order: {
+    estado: string;
+    store: { id: string; nombre: string } | null;
+  } | null;
+}
+
+/**
+ * Returns all non-cancelled-order invoices for the tenant, including
+ * due_date and total_paid, joined with their store name.
+ *
+ * Used by /receivables overview and aging bucket computation.
+ * RLS enforces tenant scoping — no explicit tenant filter needed.
+ */
+export async function getReceivableInvoices(
+  supabase: SupabaseClient
+): Promise<ReceivableInvoice[]> {
+  const { data, error } = await supabase
+    .from('invoices')
+    .select(
+      'id, tenant_id, order_id, numero, fecha_emision, total, estado_pago, created_at, due_date, total_paid, ' +
+        'order:orders(estado, store:stores(id, nombre))'
+    )
+    .neq('order.estado', 'cancelado')
+    .order('fecha_emision', { ascending: false });
+
+  if (error) throw error;
+  return (data ?? []) as unknown as ReceivableInvoice[];
 }

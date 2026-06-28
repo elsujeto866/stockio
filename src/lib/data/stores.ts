@@ -9,6 +9,8 @@ export interface Store {
   telefono: string | null;
   activo: boolean;
   created_at: string;
+  /** Days after invoice issue date when payment is due. Default 30. */
+  payment_terms_days: number;
 }
 
 /**
@@ -26,7 +28,7 @@ export interface StoreInput {
 // Column list — shared by all queries and mutations to avoid drift
 // ---------------------------------------------------------------------------
 const SELECT_COLS =
-  'id, tenant_id, nombre, contacto, direccion, telefono, activo, created_at';
+  'id, tenant_id, nombre, contacto, direccion, telefono, activo, created_at, payment_terms_days';
 
 // ---------------------------------------------------------------------------
 // Queries
@@ -129,4 +131,90 @@ export async function deleteStore(
     .eq('id', id);
 
   if (error) throw error;
+}
+
+// ---------------------------------------------------------------------------
+// AR-T14 — Receivables: getStoreBalance + getStoreReceivables (REQ-4)
+// ---------------------------------------------------------------------------
+
+export interface StoreReceivable {
+  storeId: string;
+  storeName: string;
+  saldo: number;
+}
+
+/**
+ * Returns the total outstanding balance for a single store.
+ *
+ * outstanding = SUM(total - total_paid) over non-cancelled-order invoices.
+ * Fetches all non-cancelled invoices with store info and filters in TypeScript
+ * (consistent with getStoreReceivables aggregation pattern).
+ * RLS enforces tenant scoping — no explicit filter needed.
+ */
+export async function getStoreBalance(
+  supabase: SupabaseClient,
+  storeId: string
+): Promise<number> {
+  const { data, error } = await supabase
+    .from('invoices')
+    .select('total, total_paid, order:orders!inner(estado, store:stores!inner(id))')
+    .neq('order.estado', 'cancelado');
+
+  if (error) throw error;
+
+  const rows = (data ?? []) as Array<{
+    total: number;
+    total_paid: number;
+    order: { store: { id: string } | null } | null;
+  }>;
+
+  return rows
+    .filter((row) => row.order?.store?.id === storeId)
+    .reduce((sum, row) => {
+      return Math.round((sum + Math.max(0, Number(row.total) - Number(row.total_paid))) * 100) / 100;
+    }, 0);
+}
+
+/**
+ * Returns per-store outstanding balances for all stores in the tenant.
+ *
+ * Aggregates SUM(total - total_paid) per store, excluding cancelled-order invoices.
+ * RLS enforces tenant scoping.
+ */
+export async function getStoreReceivables(
+  supabase: SupabaseClient
+): Promise<StoreReceivable[]> {
+  // Fetch all non-cancelled invoices with their store info
+  const { data, error } = await supabase
+    .from('invoices')
+    .select('total, total_paid, order:orders!inner(estado, store:stores(id, nombre))')
+    .neq('order.estado', 'cancelado');
+
+  if (error) throw error;
+
+  // Aggregate in TypeScript, mirroring existing nested-select style
+  const accumulator = new Map<string, { storeName: string; saldo: number }>();
+
+  for (const row of (data ?? []) as Array<{
+    total: number;
+    total_paid: number;
+    order: { store: { id: string; nombre: string } | null } | null;
+  }>) {
+    const store = row.order?.store;
+    if (!store) continue;
+
+    const outstanding = Math.max(0, Number(row.total) - Number(row.total_paid));
+    const existing = accumulator.get(store.id);
+    if (existing) {
+      existing.saldo = Math.round((existing.saldo + outstanding) * 100) / 100;
+    } else {
+      accumulator.set(store.id, { storeName: store.nombre, saldo: Math.round(outstanding * 100) / 100 });
+    }
+  }
+
+  return Array.from(accumulator.entries()).map(([storeId, { storeName, saldo }]) => ({
+    storeId,
+    storeName,
+    saldo,
+  }));
 }
