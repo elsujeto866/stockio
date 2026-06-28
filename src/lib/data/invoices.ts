@@ -144,27 +144,6 @@ export async function createInvoice(
   return data as string;
 }
 
-/**
- * Sets the payment status of an invoice.
- *
- * @deprecated Use recordPayment() + record_payment RPC instead.
- *             This function will be deleted in WU6 (AR-T20).
- * @param estado 'pendiente' | 'pagado' | null — null clears the status
- * @throws If the update fails (e.g., invoice not found or RLS blocks access).
- */
-export async function setInvoicePaymentStatus(
-  supabase: SupabaseClient,
-  id: string,
-  estado: 'pendiente' | 'pagado' | null
-): Promise<void> {
-  const { error } = await supabase
-    .from('invoices')
-    .update({ estado_pago: estado })
-    .eq('id', id);
-
-  if (error) throw error;
-}
-
 // ---------------------------------------------------------------------------
 // AR-T12 — getReceivableInvoices (REQ-3, REQ-4, REQ-6)
 // ---------------------------------------------------------------------------

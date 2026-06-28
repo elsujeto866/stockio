@@ -5,7 +5,6 @@ import {
   getInvoice,
   getInvoiceByOrderId,
   createInvoice,
-  setInvoicePaymentStatus,
   getReceivableInvoices,
 } from '@/lib/data/invoices';
 
@@ -302,57 +301,7 @@ describe('getReceivableInvoices', () => {
   });
 });
 
-// ---------------------------------------------------------------------------
-// setInvoicePaymentStatus
-// ---------------------------------------------------------------------------
-describe('setInvoicePaymentStatus', () => {
-  it('calls update with estado_pago: "pagado" on the correct invoice id', async () => {
-    const supabase = createMockSupabaseClient({
-      tables: { invoices: [sampleInvoice] },
-    });
-
-    await setInvoicePaymentStatus(supabase, 'invoice-1', 'pagado');
-
-    expect(supabase.__captured.updatePayload).toEqual({ estado_pago: 'pagado' });
-  });
-
-  it('calls update with estado_pago: "pendiente"', async () => {
-    const supabase = createMockSupabaseClient({
-      tables: { invoices: [sampleInvoice] },
-    });
-
-    await setInvoicePaymentStatus(supabase, 'invoice-1', 'pendiente');
-
-    expect(supabase.__captured.updatePayload).toEqual({ estado_pago: 'pendiente' });
-  });
-
-  it('calls update with estado_pago: null to clear status', async () => {
-    const supabase = createMockSupabaseClient({
-      tables: { invoices: [sampleInvoice] },
-    });
-
-    await setInvoicePaymentStatus(supabase, 'invoice-1', null);
-
-    expect(supabase.__captured.updatePayload).toEqual({ estado_pago: null });
-  });
-
-  it('resolves without throwing on success', async () => {
-    const supabase = createMockSupabaseClient({
-      tables: { invoices: [sampleInvoice] },
-    });
-
-    await expect(
-      setInvoicePaymentStatus(supabase, 'invoice-1', 'pagado')
-    ).resolves.toBeUndefined();
-  });
-
-  it('throws when the update returns an error', async () => {
-    const supabase = createMockSupabaseClient({
-      mutationError: { message: 'RLS policy violation', code: '42501' },
-    });
-
-    await expect(
-      setInvoicePaymentStatus(supabase, 'invoice-1', 'pagado')
-    ).rejects.toMatchObject({ message: 'RLS policy violation' });
-  });
-});
+// AR-T20: setInvoicePaymentStatus has been retired (deleted from invoices.ts).
+// All payment status transitions now happen exclusively via the record_payment RPC.
+// See: src/lib/data/payments.ts, src/app/(app)/invoices/actions.ts (recordPaymentAction).
+// Guard test in WU7 (AR-T29) asserts zero direct UPDATE estado_pago outside migrations.

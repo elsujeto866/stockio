@@ -1,13 +1,20 @@
 /**
  * Unit tests for invoice Server Actions.
  *
+ * AR-T19: Rewrites this file to:
+ *   - REMOVE all setPaymentStatusAction / setInvoicePaymentStatus tests
+ *   - ADD tests for new recordPaymentAction
+ *
  * Verifies:
  *   createInvoiceAction — success redirect; Zod fieldErrors;
  *     "Cancelled orders cannot be invoiced" → friendly error;
  *     "Invoice already exists" → friendly error;
  *     "not found" → friendly error;
  *     requireUser is called.
- *   setPaymentStatusAction — calls setInvoicePaymentStatus + revalidates + redirects.
+ *   recordPaymentAction — valid form → calls recordPayment, revalidatePath, redirect;
+ *     OverpaymentError → returns error state (no redirect);
+ *     CancelledOrderPaymentError → returns error state;
+ *     zero amount rejected by Zod before RPC call.
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
@@ -18,17 +25,29 @@ vi.mock('@/lib/supabase/server', () => ({ createClient: vi.fn() }));
 vi.mock('@/lib/auth/get-user', () => ({ requireUser: vi.fn() }));
 vi.mock('@/lib/data/invoices', () => ({
   createInvoice: vi.fn(),
-  setInvoicePaymentStatus: vi.fn(),
 }));
+vi.mock('@/lib/data/payments', async (importOriginal) => {
+  // Keep error classes real so instanceof checks in actions work
+  const actual = await importOriginal<typeof import('@/lib/data/payments')>();
+  return {
+    ...actual,
+    recordPayment: vi.fn(),
+  };
+});
 
 import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 import { requireUser } from '@/lib/auth/get-user';
-import { createInvoice, setInvoicePaymentStatus } from '@/lib/data/invoices';
+import { createInvoice } from '@/lib/data/invoices';
+import {
+  recordPayment,
+  OverpaymentError,
+  CancelledOrderPaymentError,
+} from '@/lib/data/payments';
 import {
   createInvoiceAction,
-  setPaymentStatusAction,
+  recordPaymentAction,
 } from '@/app/(app)/invoices/actions';
 import type { User } from '@supabase/supabase-js';
 
@@ -52,6 +71,14 @@ beforeEach(() => {
 function validInvoiceFormData(): FormData {
   const fd = new FormData();
   fd.set('orderId', ORDER_UUID);
+  return fd;
+}
+
+function validPaymentFormData(amount = '300'): FormData {
+  const fd = new FormData();
+  fd.set('invoiceId', INVOICE_UUID);
+  fd.set('amount', amount);
+  fd.set('fecha', '2026-06-28');
   return fd;
 }
 
@@ -90,7 +117,6 @@ describe('createInvoiceAction', () => {
 
   it('returns fieldErrors when orderId is missing', async () => {
     const fd = new FormData();
-    // orderId not set
 
     const result = await createInvoiceAction(null, fd);
 
@@ -98,7 +124,7 @@ describe('createInvoiceAction', () => {
     expect(createInvoice).not.toHaveBeenCalled();
   });
 
-  it('returns friendly error when order is cancelled (Postgrest plain object, not Error)', async () => {
+  it('returns friendly error when order is cancelled', async () => {
     vi.mocked(createInvoice).mockRejectedValue({
       message: 'Cancelled orders cannot be invoiced',
     });
@@ -147,44 +173,77 @@ describe('createInvoiceAction', () => {
 });
 
 // ---------------------------------------------------------------------------
-// setPaymentStatusAction
+// recordPaymentAction (AR-T19)
 // ---------------------------------------------------------------------------
-describe('setPaymentStatusAction', () => {
-  it('calls setInvoicePaymentStatus with pagado and redirects', async () => {
-    vi.mocked(setInvoicePaymentStatus).mockResolvedValue(undefined);
+describe('recordPaymentAction', () => {
+  it('calls recordPayment with correct args and redirects on success', async () => {
+    vi.mocked(recordPayment).mockResolvedValue(undefined);
 
-    const fd = new FormData();
-    fd.set('id', INVOICE_UUID);
-    fd.set('estado', 'pagado');
+    await recordPaymentAction(null, validPaymentFormData());
 
-    await setPaymentStatusAction(fd);
-
-    expect(setInvoicePaymentStatus).toHaveBeenCalledWith(mockClient, INVOICE_UUID, 'pagado');
+    expect(recordPayment).toHaveBeenCalledWith(
+      mockClient,
+      expect.objectContaining({
+        invoiceId: INVOICE_UUID,
+        amount: 300,
+      })
+    );
     expect(revalidatePath).toHaveBeenCalledWith(`/invoices/${INVOICE_UUID}`);
     expect(redirect).toHaveBeenCalledWith(`/invoices/${INVOICE_UUID}`);
   });
 
-  it('calls setInvoicePaymentStatus with pendiente', async () => {
-    vi.mocked(setInvoicePaymentStatus).mockResolvedValue(undefined);
+  it('returns error state on OverpaymentError (no redirect)', async () => {
+    vi.mocked(recordPayment).mockRejectedValue(
+      new OverpaymentError('Payment exceeds outstanding balance: outstanding 200, attempted 300')
+    );
 
-    const fd = new FormData();
-    fd.set('id', INVOICE_UUID);
-    fd.set('estado', 'pendiente');
+    const result = await recordPaymentAction(null, validPaymentFormData());
 
-    await setPaymentStatusAction(fd);
-
-    expect(setInvoicePaymentStatus).toHaveBeenCalledWith(mockClient, INVOICE_UUID, 'pendiente');
+    expect(result).toHaveProperty('error');
+    expect((result as { error: string }).error).toMatch(/excede|balance|pago/i);
+    expect(redirect).not.toHaveBeenCalled();
   });
 
-  it('calls setInvoicePaymentStatus with null when estado is not set', async () => {
-    vi.mocked(setInvoicePaymentStatus).mockResolvedValue(undefined);
+  it('returns error state on CancelledOrderPaymentError (no redirect)', async () => {
+    vi.mocked(recordPayment).mockRejectedValue(
+      new CancelledOrderPaymentError('Cannot record payment on a cancelled order')
+    );
 
+    const result = await recordPaymentAction(null, validPaymentFormData());
+
+    expect(result).toHaveProperty('error');
+    expect((result as { error: string }).error).toMatch(/cancelado/i);
+    expect(redirect).not.toHaveBeenCalled();
+  });
+
+  it('returns fieldErrors when amount=0 (Zod blocks before RPC call)', async () => {
     const fd = new FormData();
-    fd.set('id', INVOICE_UUID);
-    // estado not set → formData.get returns null → treated as null
+    fd.set('invoiceId', INVOICE_UUID);
+    fd.set('amount', '0');
 
-    await setPaymentStatusAction(fd);
+    const result = await recordPaymentAction(null, fd);
 
-    expect(setInvoicePaymentStatus).toHaveBeenCalledWith(mockClient, INVOICE_UUID, null);
+    expect(result).toHaveProperty('fieldErrors');
+    expect(recordPayment).not.toHaveBeenCalled();
+    expect(redirect).not.toHaveBeenCalled();
+  });
+
+  it('returns fieldErrors when invoiceId is not a valid UUID', async () => {
+    const fd = new FormData();
+    fd.set('invoiceId', 'not-uuid');
+    fd.set('amount', '100');
+
+    const result = await recordPaymentAction(null, fd);
+
+    expect(result).toHaveProperty('fieldErrors');
+    expect(recordPayment).not.toHaveBeenCalled();
+  });
+
+  it('calls requireUser to guard the action', async () => {
+    vi.mocked(recordPayment).mockResolvedValue(undefined);
+
+    await recordPaymentAction(null, validPaymentFormData());
+
+    expect(requireUser).toHaveBeenCalledOnce();
   });
 });

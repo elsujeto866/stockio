@@ -4,11 +4,19 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { requireUser } from '@/lib/auth/get-user';
-import { CreateInvoiceSchema, SetPaymentSchema } from '@/lib/schema/invoices';
-import { createInvoice, setInvoicePaymentStatus } from '@/lib/data/invoices';
+import { CreateInvoiceSchema } from '@/lib/schema/invoices';
+import { RecordPaymentSchema } from '@/lib/schema/payments';
+import { createInvoice } from '@/lib/data/invoices';
+import {
+  recordPayment,
+  OverpaymentError,
+  CancelledOrderPaymentError,
+  InvalidPaymentAmountError,
+  InvoiceNotFoundError,
+} from '@/lib/data/payments';
 
 /**
- * Shared return type for createInvoiceAction (useActionState).
+ * Shared return type for actions that use useActionState.
  *
  * null  → no error yet (initial state / after redirect)
  * {...} → validation or runtime error to display in the form
@@ -41,8 +49,6 @@ export async function createInvoiceAction(
   try {
     invoiceId = await createInvoice(supabase, parsed.data.orderId);
   } catch (err) {
-    // Supabase throws PostgrestError (plain object, not Error instance).
-    // Access .message directly before falling back to String(err).
     const msg = (err as { message?: string }).message ?? String(err);
 
     if (msg.includes('Cancelled orders cannot be invoiced')) {
@@ -62,26 +68,53 @@ export async function createInvoiceAction(
 }
 
 // ---------------------------------------------------------------------------
-// setPaymentStatusAction — plain form action (no useActionState needed)
+// recordPaymentAction — AR-T20 (replaces the retired setPaymentStatusAction)
+//
+// Single write path for total_paid / estado_pago — delegates to
+// the record_payment SECURITY DEFINER RPC via the payments data layer.
 // ---------------------------------------------------------------------------
-export async function setPaymentStatusAction(formData: FormData): Promise<void> {
+export async function recordPaymentAction(
+  _prevState: ActionResult,
+  formData: FormData
+): Promise<ActionResult> {
   const supabase = await createClient();
   await requireUser();
 
-  const id = formData.get('id') as string | null;
-  const estadoRaw = formData.get('estado') as string | null;
-  // Empty string is treated as null (clears status)
-  const estado = estadoRaw === '' ? null : estadoRaw;
+  const raw = {
+    invoiceId: formData.get('invoiceId') as string | null,
+    amount: formData.get('amount') as string | null,
+    fecha: formData.get('fecha') as string | null,
+    notas: formData.get('notas') as string | null,
+  };
 
-  const parsed = SetPaymentSchema.safeParse({ id, estado });
-  if (!parsed.success) return;
+  const parsed = RecordPaymentSchema.safeParse(raw);
+  if (!parsed.success) {
+    return {
+      fieldErrors: parsed.error.flatten().fieldErrors as Record<string, string[]>,
+    };
+  }
 
-  await setInvoicePaymentStatus(
-    supabase,
-    parsed.data.id,
-    parsed.data.estado ?? null
-  );
+  const { invoiceId, amount, fecha, notas } = parsed.data;
 
-  revalidatePath(`/invoices/${parsed.data.id}`);
-  redirect(`/invoices/${parsed.data.id}`);
+  try {
+    await recordPayment(supabase, { invoiceId, amount, fecha, notas });
+  } catch (err) {
+    if (err instanceof OverpaymentError) {
+      return { error: 'El abono excede el saldo pendiente de la factura.' };
+    }
+    if (err instanceof CancelledOrderPaymentError) {
+      return { error: 'No se puede registrar un pago en un pedido cancelado.' };
+    }
+    if (err instanceof InvalidPaymentAmountError) {
+      return { error: 'El monto del abono debe ser mayor a cero.' };
+    }
+    if (err instanceof InvoiceNotFoundError) {
+      return { error: 'Factura no encontrada.' };
+    }
+    const msg = (err as { message?: string }).message ?? String(err);
+    return { error: msg };
+  }
+
+  revalidatePath(`/invoices/${invoiceId}`);
+  redirect(`/invoices/${invoiceId}`);
 }
