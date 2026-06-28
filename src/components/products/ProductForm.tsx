@@ -222,6 +222,52 @@ export function ProductForm({ action, initialData }: Props) {
             </div>
           </div>
 
+          {/* ── Expiry fields (REQ-7) ────────────────────────────── */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <label
+                htmlFor="shelf_life_days"
+                className="block text-sm font-medium text-gray-700"
+              >
+                Vida útil (días)
+              </label>
+              <input
+                id="shelf_life_days"
+                name="shelf_life_days"
+                type="number"
+                min="1"
+                step="1"
+                defaultValue={initialData?.shelf_life_days ?? ''}
+                className={inputClass}
+                placeholder="e.g. 90, 180, 270"
+              />
+              <p className="text-xs text-gray-400">
+                Dejar vacío si no se conoce la vida útil.
+              </p>
+              <FieldError messages={state?.fieldErrors?.shelf_life_days} />
+            </div>
+
+            <div className="space-y-1">
+              <label
+                htmlFor="expiry_alert_days"
+                className="block text-sm font-medium text-gray-700"
+              >
+                Alerta de vencimiento (días)
+              </label>
+              <input
+                id="expiry_alert_days"
+                name="expiry_alert_days"
+                type="number"
+                min="1"
+                step="1"
+                defaultValue={initialData?.expiry_alert_days ?? 30}
+                className={inputClass}
+                placeholder="30"
+              />
+              <FieldError messages={state?.fieldErrors?.expiry_alert_days} />
+            </div>
+          </div>
+
           {/* ── Pack fields (optional) ───────────────────────────── */}
           <p className="text-xs text-gray-400">
             Dejar vacío si el producto se vende solo por unidad.

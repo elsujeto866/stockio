@@ -180,7 +180,8 @@ describe('ProductForm — pack fields (S1-T7)', () => {
       precio_paca: 150,
     };
     render(<ProductForm action={noop} initialData={packProduct} />);
-    expect(screen.getByDisplayValue('30')).toBeInTheDocument();
+    const unitsInput = screen.getByLabelText(/unidades por paca/i) as HTMLInputElement;
+    expect(unitsInput.value).toBe('30');
   });
 
   it('pre-fills precio_paca from initialData', () => {
