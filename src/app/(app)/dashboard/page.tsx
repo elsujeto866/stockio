@@ -54,7 +54,7 @@ export default async function DashboardPage() {
 
   return (
     <main className="min-h-screen bg-cream">
-      <div className="max-w-2xl mx-auto px-4 py-8 space-y-6">
+      <div className="max-w-5xl mx-auto px-4 py-8 space-y-6">
         <h1 className="text-2xl font-bold text-gray-900">Inicio</h1>
 
         <BackfillNotice show={showBackfillNotice} />
@@ -65,9 +65,10 @@ export default async function DashboardPage() {
           period={period}
         />
 
-        <LowStockWidget products={lowStockProducts} />
-
-        <ExpiringSoonWidget summary={expirySummary} />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <LowStockWidget products={lowStockProducts} />
+          <ExpiringSoonWidget summary={expirySummary} />
+        </div>
 
         <RecentOrdersWidget orders={recentOrders} />
       </div>

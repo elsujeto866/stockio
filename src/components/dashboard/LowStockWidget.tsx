@@ -9,6 +9,7 @@
 
 import Link from 'next/link';
 import type { Product } from '@/lib/data/products';
+import { WidgetCard } from '@/components/dashboard/WidgetCard';
 
 interface Props {
   products: Product[];
@@ -16,7 +17,7 @@ interface Props {
 
 export function LowStockWidget({ products }: Props) {
   return (
-    <div className="rounded-2xl bg-white shadow-sm border border-gray-100 overflow-hidden">
+    <WidgetCard>
       {/* Danger red header */}
       <div className="bg-danger px-6 py-4 flex items-center justify-between">
         <h2 className="font-bold text-white">⚠️ Stock bajo</h2>
@@ -46,6 +47,6 @@ export function LowStockWidget({ products }: Props) {
           </ul>
         )}
       </div>
-    </div>
+    </WidgetCard>
   );
 }

@@ -13,6 +13,7 @@
 import type { OrderListItem } from '@/lib/data/orders';
 import { sumOrderTotals, countNonCancelledOrders } from '@/lib/domain/dashboard';
 import { formatCurrency } from '@/lib/format';
+import { WidgetCard } from '@/components/dashboard/WidgetCard';
 
 interface Props {
   orders: OrderListItem[];
@@ -25,7 +26,7 @@ export function PeriodTotalsWidget({ orders, lowStockCount, period }: Props) {
   const orderCount = countNonCancelledOrders(orders);
 
   return (
-    <div className="rounded-2xl bg-white shadow-sm border border-gray-100 overflow-hidden">
+    <WidgetCard>
       {/* Success green header */}
       <div className="bg-success px-6 py-4 flex items-center justify-between">
         <h2 className="font-bold text-white">💰 Totales del mes</h2>
@@ -50,6 +51,6 @@ export function PeriodTotalsWidget({ orders, lowStockCount, period }: Props) {
           </div>
         </div>
       </div>
-    </div>
+    </WidgetCard>
   );
 }

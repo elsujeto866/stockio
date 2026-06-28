@@ -11,6 +11,7 @@
 
 import Link from 'next/link';
 import type { ExpiringSoonSummary } from '@/lib/data/lots';
+import { WidgetCard } from '@/components/dashboard/WidgetCard';
 
 interface Props {
   summary: ExpiringSoonSummary;
@@ -21,7 +22,7 @@ export function ExpiringSoonWidget({ summary }: Props) {
   const hasAlerts = expiredCount > 0 || expiringSoonCount > 0;
 
   return (
-    <div className="rounded-2xl bg-white shadow-sm border border-gray-100 overflow-hidden">
+    <WidgetCard>
       {/* Amber header */}
       <div className="bg-warning px-6 py-4">
         <h2 className="font-bold text-white">Lotes por vencer</h2>
@@ -69,6 +70,6 @@ export function ExpiringSoonWidget({ summary }: Props) {
           </ul>
         )}
       </div>
-    </div>
+    </WidgetCard>
   );
 }

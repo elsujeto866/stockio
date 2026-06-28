@@ -13,6 +13,7 @@
 import Link from 'next/link';
 import type { OrderListItem } from '@/lib/data/orders';
 import { formatCurrency, formatDate } from '@/lib/format';
+import { WidgetCard } from '@/components/dashboard/WidgetCard';
 
 interface Props {
   orders: OrderListItem[];
@@ -35,7 +36,7 @@ const ESTADO_BADGE: Record<string, { label: string; className: string }> = {
 
 export function RecentOrdersWidget({ orders }: Props) {
   return (
-    <div className="rounded-2xl bg-white shadow-sm border border-gray-100 overflow-hidden">
+    <WidgetCard>
       {/* Info blue header */}
       <div className="bg-info px-6 py-4">
         <h2 className="font-bold text-white">📦 Pedidos recientes</h2>
@@ -82,6 +83,6 @@ export function RecentOrdersWidget({ orders }: Props) {
           </ul>
         )}
       </div>
-    </div>
+    </WidgetCard>
   );
 }
