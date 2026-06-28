@@ -662,9 +662,9 @@ describe('payments table — existence, columns, RLS (AR-T4)', () => {
       console.warn('NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY not set — skipping INSERT grant check');
       return;
     }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const anonClient = (await import('@supabase/supabase-js')).createClient(url, publishableKey, {
       auth: { autoRefreshToken: false, persistSession: false },
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       realtime: { transport: _NoopWebSocket as any },
     });
     const { error } = await anonClient

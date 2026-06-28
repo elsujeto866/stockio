@@ -29,6 +29,7 @@ const store: Store = {
   telefono: '+54 11 1234-5678',
   activo: true,
   created_at: '2026-01-01T00:00:00Z',
+  payment_terms_days: 30,
 };
 
 beforeEach(() => {

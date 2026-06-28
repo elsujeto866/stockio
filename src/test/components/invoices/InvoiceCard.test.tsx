@@ -47,6 +47,8 @@ const baseInvoice: InvoiceListItem = {
   total: 150.00,
   estado_pago: 'pendiente',
   created_at: '2026-06-25T10:00:00Z',
+  due_date: null,
+  total_paid: 0,
   order: { store: { nombre: 'Almacén Norte' } },
 };
 

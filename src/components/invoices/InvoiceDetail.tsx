@@ -5,13 +5,14 @@
  *  - Numero (prominent header), store nombre, fecha_emision, estado_pago badge
  *  - Frozen line items with product nombre × cantidad × precio_unitario = subtotal
  *  - Authoritative invoice.total
- *  - Payment toggle form (setPaymentStatusAction) to flip pendiente ↔ pagado
+ *
+ * Payment recording is handled by the AbonoForm on the invoice page.
+ * Direct payment-status toggle was retired in AR (WU6/AR-T20).
  *
  * Mobile-first layout, consistent with OrderDetail.
  */
 
 import type { InvoiceDetail as InvoiceDetailType } from '@/lib/data/invoices';
-import { setPaymentStatusAction } from '@/app/(app)/invoices/actions';
 import { formatCurrency, formatDate } from '@/lib/format';
 
 interface Props {
@@ -41,11 +42,6 @@ export function InvoiceDetail({ invoice }: Props) {
         className: 'bg-gray-200 text-gray-700',
       })
     : UNPAID_BADGE;
-
-  // Payment toggle: if currently pagado → offer pendiente, else offer pagado
-  const nextEstado = invoice.estado_pago === 'pagado' ? 'pendiente' : 'pagado';
-  const toggleLabel =
-    invoice.estado_pago === 'pagado' ? 'Marcar como pendiente' : 'Marcar como pagada';
 
   const items = invoice.order?.items ?? [];
 
@@ -117,19 +113,6 @@ export function InvoiceDetail({ invoice }: Props) {
         </div>
       </div>
 
-      {/* ── Payment toggle ───────────────────────────────────────── */}
-      <div>
-        <form action={setPaymentStatusAction}>
-          <input type="hidden" name="id" value={invoice.id} />
-          <input type="hidden" name="estado" value={nextEstado} />
-          <button
-            type="submit"
-            className="btn-secondary"
-          >
-            {toggleLabel}
-          </button>
-        </form>
-      </div>
     </div>
   );
 }

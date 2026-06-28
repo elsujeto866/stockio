@@ -162,7 +162,7 @@ export async function getStoreBalance(
 
   if (error) throw error;
 
-  const rows = (data ?? []) as Array<{
+  const rows = (data ?? []) as unknown as Array<{
     total: number;
     total_paid: number;
     order: { store: { id: string } | null } | null;
@@ -195,7 +195,7 @@ export async function getStoreReceivables(
   // Aggregate in TypeScript, mirroring existing nested-select style
   const accumulator = new Map<string, { storeName: string; saldo: number }>();
 
-  for (const row of (data ?? []) as Array<{
+  for (const row of (data ?? []) as unknown as Array<{
     total: number;
     total_paid: number;
     order: { store: { id: string; nombre: string } | null } | null;

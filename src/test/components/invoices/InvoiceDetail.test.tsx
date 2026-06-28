@@ -16,8 +16,8 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 
 vi.mock('@/app/(app)/invoices/actions', () => ({
-  setPaymentStatusAction: vi.fn(),
   createInvoiceAction: vi.fn(),
+  recordPaymentAction: vi.fn(),
 }));
 
 import { InvoiceDetail } from '@/components/invoices/InvoiceDetail';
@@ -36,6 +36,8 @@ const baseInvoice: InvoiceDetailType = {
   total: 90.00,
   estado_pago: 'pendiente',
   created_at: '2026-06-25T10:00:00Z',
+  due_date: null,
+  total_paid: 0,
   order: {
     id: 'order-1',
     fecha: '2026-06-20',
@@ -120,27 +122,7 @@ describe('InvoiceDetail — line items', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Tests — payment toggle
+// Tests — payment toggle was retired in AR-T20 (WU6)
+// Direct payment status toggle is replaced by AbonoForm (record_payment RPC).
+// These tests are intentionally removed.
 // ---------------------------------------------------------------------------
-describe('InvoiceDetail — payment toggle', () => {
-  it('shows a "Mark as paid" button when estado_pago is pendiente', () => {
-    render(<InvoiceDetail invoice={baseInvoice} />);
-    expect(
-      screen.getByRole('button', { name: /marcar como pagada/i })
-    ).toBeInTheDocument();
-  });
-
-  it('shows a "Mark as pending" button when estado_pago is pagado', () => {
-    render(<InvoiceDetail invoice={{ ...baseInvoice, estado_pago: 'pagado' }} />);
-    expect(
-      screen.getByRole('button', { name: /marcar como pendiente/i })
-    ).toBeInTheDocument();
-  });
-
-  it('shows a "Mark as paid" button when estado_pago is null', () => {
-    render(<InvoiceDetail invoice={{ ...baseInvoice, estado_pago: null }} />);
-    expect(
-      screen.getByRole('button', { name: /marcar como pagada/i })
-    ).toBeInTheDocument();
-  });
-});

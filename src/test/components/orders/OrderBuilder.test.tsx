@@ -46,6 +46,7 @@ const stores: Store[] = [
     telefono: null,
     activo: true,
     created_at: '2026-01-01T00:00:00Z',
+    payment_terms_days: 30,
   },
 ];
 
