@@ -9,14 +9,23 @@
  * Dismissed state is persisted in localStorage (per-user, per-device).
  * Key: 'stockio:backfill-notice-dismissed'
  *
- * Does NOT auto-hide on dismiss — operator must take action or explicitly dismiss.
+ * Lazy useState initializer reads localStorage on the client; server always
+ * returns false (not dismissed). A brief flash is acceptable because this notice
+ * targets operators with existing legacy data, not first-time users.
  */
 
-'use client';
-
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 
 const STORAGE_KEY = 'stockio:backfill-notice-dismissed';
+
+function readDismissed(): boolean {
+  if (typeof window === 'undefined') return false;
+  try {
+    return localStorage.getItem(STORAGE_KEY) === 'true';
+  } catch {
+    return false;
+  }
+}
 
 interface Props {
   /** Whether backfill lots (adjustment + null expiry) exist for the current tenant. */
@@ -24,19 +33,9 @@ interface Props {
 }
 
 export function BackfillNotice({ show }: Props) {
-  const [dismissed, setDismissed] = useState<boolean | null>(null);
-
-  useEffect(() => {
-    try {
-      setDismissed(localStorage.getItem(STORAGE_KEY) === 'true');
-    } catch {
-      setDismissed(false);
-    }
-  }, []);
+  const [dismissed, setDismissed] = useState<boolean>(readDismissed);
 
   if (!show || dismissed) return null;
-  // null = not yet read from localStorage (avoid flash)
-  if (dismissed === null) return null;
 
   function handleDismiss() {
     try {
