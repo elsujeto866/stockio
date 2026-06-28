@@ -59,6 +59,16 @@ export const ProductInputSchema = z
       emptyToNull,
       z.coerce.number().min(0, 'El costo debe ser mayor o igual a 0').nullable()
     ),
+    shelf_life_days: z.preprocess(
+      emptyToNull,
+      z.coerce.number().int().positive('La vida útil debe ser un número positivo').nullable()
+    ),
+    // expiry_alert_days: NOT NULL DEFAULT 30. Empty string or omitted → 30.
+    // Uses emptyToUndefined (not emptyToNull) so that .default(30) activates for blank fields.
+    expiry_alert_days: z.preprocess(
+      (v) => (v === '' || v === undefined || v === null ? undefined : v),
+      z.coerce.number().int().positive('Los días de alerta deben ser un número positivo').default(30)
+    ),
   })
   .superRefine((d, ctx) => {
     const hasPack = d.units_per_package !== null;

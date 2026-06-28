@@ -26,6 +26,12 @@ export const PurchaseItemInputSchema = z.object({
   productId: z.string().uuid('Product ID must be a valid UUID'),
   cantidad: z.coerce.number().int().min(1, 'La cantidad debe ser al menos 1'),
   costoUnitario: z.coerce.number().min(0, 'El costo debe ser >= 0'),
+  /** Per-line expiry date override. Empty string → null (no override). */
+  expiryDate: z
+    .string()
+    .nullable()
+    .optional()
+    .transform((v) => (v === '' ? null : v)),
 });
 
 export const CreatePurchaseSchema = z.object({

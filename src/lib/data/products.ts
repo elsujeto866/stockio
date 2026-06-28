@@ -18,6 +18,10 @@ export interface Product {
   precio_paca: number | null;
   /** Manual reference unit cost. NULL = cost unset → margin unknown. */
   cost_price: number | null;
+  /** Days product is valid after receipt. NULL = no shelf-life set; expiry must be entered manually. */
+  shelf_life_days: number | null;
+  /** Days before expiry to classify the lot as "expiring soon". NOT NULL DEFAULT 30. */
+  expiry_alert_days: number;
 }
 
 /**
@@ -35,6 +39,8 @@ export interface ProductInput {
   units_per_package?: number | null;
   precio_paca?: number | null;
   cost_price?: number | null;
+  shelf_life_days?: number | null;
+  expiry_alert_days?: number;
 }
 
 /**
@@ -57,7 +63,7 @@ export class StockUnderflowError extends Error {
 // Column list — shared by all queries and mutations to avoid drift
 // ---------------------------------------------------------------------------
 const SELECT_COLS =
-  'id, tenant_id, nombre, sku, categoria, precio_unitario, stock_actual, stock_minimo, unidad_medida, activo, created_at, units_per_package, precio_paca, cost_price';
+  'id, tenant_id, nombre, sku, categoria, precio_unitario, stock_actual, stock_minimo, unidad_medida, activo, created_at, units_per_package, precio_paca, cost_price, shelf_life_days, expiry_alert_days';
 
 // ---------------------------------------------------------------------------
 // Queries
