@@ -9,7 +9,7 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import { requireUser } from '@/lib/auth/get-user';
-import { getProduct } from '@/lib/data/products';
+import { getProduct, getSignedUrls } from '@/lib/data/products';
 import { ProductForm } from '@/components/products/ProductForm';
 import { updateProductAction } from '@/app/(app)/products/actions';
 
@@ -21,9 +21,22 @@ export default async function EditProductPage({ params }: Props) {
   await requireUser();
   const { id } = await params;
   const supabase = await createClient();
-  const product = await getProduct(supabase, id);
+
+  const [product, { data: tenantId }] = await Promise.all([
+    getProduct(supabase, id),
+    supabase.rpc('get_tenant_id'),
+  ]);
 
   if (!product) notFound();
+
+  // Resolve existing photo signed URL for the edit form preview
+  const photoUrlMap = await getSignedUrls(
+    supabase,
+    product.image_path ? [product.image_path] : []
+  );
+  const initialImageUrl = product.image_path
+    ? (photoUrlMap.get(product.image_path) ?? null)
+    : null;
 
   return (
     <main className="min-h-screen bg-cream">
@@ -38,7 +51,12 @@ export default async function EditProductPage({ params }: Props) {
           <h1 className="text-2xl font-bold text-gray-900">Editar producto</h1>
         </div>
 
-        <ProductForm action={updateProductAction} initialData={product} />
+        <ProductForm
+          action={updateProductAction}
+          initialData={product}
+          tenantId={tenantId ?? undefined}
+          initialImageUrl={initialImageUrl}
+        />
       </div>
     </main>
   );

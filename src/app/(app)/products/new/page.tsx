@@ -6,12 +6,15 @@
  */
 
 import Link from 'next/link';
+import { createClient } from '@/lib/supabase/server';
 import { requireUser } from '@/lib/auth/get-user';
 import { ProductForm } from '@/components/products/ProductForm';
 import { createProductAction } from '@/app/(app)/products/actions';
 
 export default async function NewProductPage() {
   await requireUser();
+  const supabase = await createClient();
+  const { data: tenantId } = await supabase.rpc('get_tenant_id');
 
   return (
     <main className="min-h-screen bg-cream">
@@ -26,7 +29,10 @@ export default async function NewProductPage() {
           <h1 className="text-2xl font-bold text-gray-900">Nuevo producto</h1>
         </div>
 
-        <ProductForm action={createProductAction} />
+        <ProductForm
+          action={createProductAction}
+          tenantId={tenantId ?? undefined}
+        />
       </div>
     </main>
   );

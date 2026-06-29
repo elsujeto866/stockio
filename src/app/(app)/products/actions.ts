@@ -40,8 +40,12 @@ export async function createProductAction(
     };
   }
 
+  // D1: read client-generated UUID from formData and pass as explicit row id.
+  // image_path already flows through parsed.data via the schema.
+  const id = formData.get('id') as string | undefined || undefined;
+
   try {
-    await createProduct(supabase, parsed.data);
+    await createProduct(supabase, { ...parsed.data, id });
   } catch (err) {
     return { error: (err as { message?: string }).message ?? String(err) };
   }
