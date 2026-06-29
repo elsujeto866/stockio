@@ -1,11 +1,22 @@
 /**
  * Product Photos E2E tests — PP-T20 / PP-T28.
  *
- * REQ-1 (S1-1), REQ-4 (S4-1), REQ-5 (S5-1, S5-3).
+ * REQ-1 (S1-1), REQ-4 (S4-1), REQ-5 (S5-1, S5-3, S5-4).
  *
  * Scenarios:
- *   PHOTO-S1: create product with photo → thumbnail visible in catalog
- *   PHOTO-S2: add photo product to order → thumbnail on order line row
+ *   PHOTO-S1: create product with photo → thumbnail visible in catalog (S5-1)
+ *   PHOTO-S2: add photo product to order → real <img> on order line row (S5-3)
+ *   PHOTO-S3: add photo product to purchase → real <img> on purchase line row (S5-4)
+ *
+ * S5-2 (product detail, size=240) is covered by ProductThumbnail unit tests:
+ *   the detail page resolves image_path → getSignedUrls → ProductThumbnail(url, size=240).
+ *   The product catalog card has no navigation link to the detail page, so asserting it
+ *   end-to-end would require an additional navigation helper with no marginal value over
+ *   the unit test that already covers the same code path.
+ *
+ * Serial dependency: PHOTO-S2 and PHOTO-S3 depend on PHOTO-S1 having persisted the
+ * photo product to the shared test-tenant DB. The describe block is configured as serial
+ * so S1 always precedes S2 and S3. If S1 fails, S2/S3 hard-fail (no soft fallback).
  *
  * Uses the throwaway test tenant provisioned by e2e/global-setup.ts.
  * Cleanup: global-teardown deletes the entire throwaway tenant → all rows cascade.
@@ -46,10 +57,45 @@ async function login(page: Page): Promise<void> {
   await expect(page).toHaveURL('/dashboard');
 }
 
+/**
+ * Select a <select> option whose text CONTAINS partialText.
+ * Hard-fails (throws) if no matching option is found — never falls back to another option.
+ *
+ * Necessary for the order selector where option labels include a price suffix
+ * (e.g. "My Product — $15.00") so we can't predict the exact label up front,
+ * but we know the product name is unique within the test tenant.
+ */
+async function selectOptionByPartialText(
+  page: Page,
+  selectLocator: ReturnType<Page['locator']>,
+  partialText: string,
+  timeoutMs = 10000
+): Promise<void> {
+  // Wait until an option containing the partial text is attached to the DOM.
+  await expect(
+    selectLocator.locator('option', { hasText: partialText })
+  ).toBeAttached({ timeout: timeoutMs });
+
+  const allTexts = await selectLocator.locator('option').allTextContents();
+  const match = allTexts.find((t) => t.includes(partialText));
+  if (!match) {
+    throw new Error(
+      `selectOptionByPartialText: no option containing "${partialText}" found.\n` +
+      `Available options: ${JSON.stringify(allTexts)}`
+    );
+  }
+  await selectLocator.selectOption({ label: match.trim() });
+}
+
 // ---------------------------------------------------------------------------
-// PHOTO-S1: create product with photo → thumbnail appears in catalog
+// Test suite — serial so S2/S3 always run after S1 has persisted the product
 // ---------------------------------------------------------------------------
 test.describe('Product Photos', () => {
+  test.describe.configure({ mode: 'serial' });
+
+  // -------------------------------------------------------------------------
+  // PHOTO-S1: create product with photo → thumbnail in catalog
+  // -------------------------------------------------------------------------
   test('PHOTO-S1: upload photo on create → thumbnail visible in catalog (S5-1)', async ({ page }) => {
     await login(page);
 
@@ -90,55 +136,81 @@ test.describe('Product Photos', () => {
     expect(src).not.toBe('');
   });
 
-  test('PHOTO-S2: add photo product to order → thumbnail area renders on order line row (S5-3)', async ({ page }) => {
+  // -------------------------------------------------------------------------
+  // PHOTO-S2: add photo product to order → real <img> on order line row (S5-3)
+  // -------------------------------------------------------------------------
+  test('PHOTO-S2: add photo product to order → real thumbnail on order line row (S5-3)', async ({ page }) => {
     await login(page);
 
     // Navigate to new order
     await page.goto('/orders/new');
 
-    // Find the product selector
+    // Product selector (OrderBuilder)
     const productSelect = page.locator('select[aria-label="Seleccionar un producto para agregar"]');
     await expect(productSelect).toBeVisible({ timeout: 10000 });
 
-    // Try to select the PRODUCT_NAME created in S1; fall back to first available option.
-    // This makes S2 resilient even when tests run in isolation.
-    const optionCount = await productSelect.locator('option').count();
-    // count includes the placeholder "" option, so > 1 means at least one real product
-    if (optionCount > 1) {
-      // Find the photo product specifically, or fall back to first non-empty option
-      const options = await productSelect.locator('option').allTextContents();
-      const photoOption = options.find((t) => t.includes(PRODUCT_NAME));
-      if (photoOption) {
-        await productSelect.selectOption({ label: photoOption.trim() });
-      } else {
-        // No photo product yet — pick the first real product to at least test the row renders
-        const firstReal = options.find((t) => t.trim() !== '');
-        if (firstReal) await productSelect.selectOption({ label: firstReal.trim() });
-      }
-    }
+    // Deterministically select the photo product created in PHOTO-S1.
+    // OrderBuilder option text: "{nombre} — {formatCurrency(precio_unitario)}"
+    // — we match by partial text (PRODUCT_NAME) since we don't predict the price format.
+    // Hard-fails if the product is not found; no fallback to "first real product".
+    await selectOptionByPartialText(page, productSelect, PRODUCT_NAME);
 
     // Click "Agregar" to add the line item
     await page.click('button:has-text("Agregar")');
 
-    // The added-line row (ul[aria-label="Order items"]) must be visible
+    // The order-line items list must appear
     const lineItems = page.locator('ul[aria-label="Order items"]');
     await expect(lineItems).toBeVisible({ timeout: 5000 });
 
-    // Each line item must contain a ProductThumbnail — either an <img> (photo product)
-    // or the aria-hidden placeholder <div> (product without photo).
-    // Assert the li itself is visible and contains either img or div.shrink-0.
+    // Assert UNCONDITIONALLY that a real <img> with a signed URL renders on the line row.
+    // ProductThumbnail renders <Image unoptimized> when url is truthy; with unoptimized,
+    // Next.js emits a plain <img> with the original signed storage URL (?token=...).
+    // There is NO if/else escape hatch: if the img is absent, this test must FAIL.
     const firstRow = lineItems.locator('li').first();
     await expect(firstRow).toBeVisible({ timeout: 5000 });
 
-    // If the photo product from S1 was selected, assert real <img> with a signed URL
-    const hasImg = await firstRow.locator('img').count();
-    if (hasImg > 0) {
-      const src = await firstRow.locator('img').first().getAttribute('src');
-      expect(src).toBeTruthy();
-    } else {
-      // Placeholder div rendered — ProductThumbnail is present, just no photo
-      const placeholder = firstRow.locator('div[aria-hidden]');
-      await expect(placeholder).toBeVisible({ timeout: 2000 });
-    }
+    const thumbnailImg = firstRow.locator('img');
+    await expect(thumbnailImg).toBeVisible({ timeout: 5000 });
+    const src = await thumbnailImg.getAttribute('src');
+    expect(src).toBeTruthy();
+    expect(src).not.toBe('');
+  });
+
+  // -------------------------------------------------------------------------
+  // PHOTO-S3: add photo product to purchase → real <img> on purchase line row (S5-4)
+  // -------------------------------------------------------------------------
+  test('PHOTO-S3: add photo product to purchase → real thumbnail on purchase line row (S5-4)', async ({ page }) => {
+    await login(page);
+
+    // Navigate to new purchase
+    await page.goto('/purchases/new');
+
+    // Product selector (PurchaseBuilder)
+    const productSelect = page.locator('select[aria-label="Seleccionar un producto para agregar"]');
+    await expect(productSelect).toBeVisible({ timeout: 10000 });
+
+    // PurchaseBuilder option text is just "{nombre}" — partial text match still used
+    // for consistency and to guard against future option-label changes.
+    // Hard-fails if the product is not found; no fallback.
+    await selectOptionByPartialText(page, productSelect, PRODUCT_NAME);
+
+    // Click "Agregar" to add the line item
+    await page.click('button:has-text("Agregar")');
+
+    // The purchase-line items list must appear
+    const purchaseItems = page.locator('ul[aria-label="Purchase items"]');
+    await expect(purchaseItems).toBeVisible({ timeout: 5000 });
+
+    // Assert UNCONDITIONALLY that a real <img> with a signed URL renders on the line row.
+    // Same guarantee as PHOTO-S2: ProductThumbnail(url=signedUrl) → <img> with src.
+    // No if/else: a missing or placeholder img is a test failure.
+    const firstRow = purchaseItems.locator('li').first();
+    await expect(firstRow).toBeVisible({ timeout: 5000 });
+
+    const thumbnailImg = firstRow.locator('img');
+    await expect(thumbnailImg).toBeVisible({ timeout: 5000 });
+    const src = await thumbnailImg.getAttribute('src');
+    expect(src).toBeTruthy();
+    expect(src).not.toBe('');
   });
 });
