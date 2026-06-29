@@ -36,7 +36,7 @@ export function CatalogCategorySection({
         .filter(Boolean)
         .join(' ')}
     >
-      <h2 className="text-lg font-semibold text-brand border-b border-gray-200 pb-1">
+      <h2 className="text-lg font-semibold text-brand print:text-black border-b border-gray-200 pb-1">
         {categoria}
       </h2>
 

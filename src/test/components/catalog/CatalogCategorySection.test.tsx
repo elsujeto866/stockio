@@ -130,3 +130,18 @@ describe('CatalogCategorySection — print:break-before-page', () => {
     expect(section?.className).toContain('print:break-before-page');
   });
 });
+
+describe('CatalogCategorySection — print:text-black on heading', () => {
+  it('category h2 carries print:text-black so headings are dark when printed', () => {
+    render(
+      <CatalogCategorySection
+        categoria="Galletas"
+        products={products}
+        photoUrls={emptyPhotoUrls}
+        isFirst={true}
+      />
+    );
+    const heading = screen.getByRole('heading', { name: 'Galletas' });
+    expect(heading.className).toContain('print:text-black');
+  });
+});

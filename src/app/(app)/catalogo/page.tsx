@@ -48,7 +48,7 @@ export default async function CatalogoPage() {
   }
 
   return (
-    <main className="min-h-screen bg-cream print:bg-white">
+    <main className="min-h-screen print:min-h-0 bg-cream print:bg-white">
       <div className="max-w-5xl mx-auto px-4 py-8 space-y-8">
         <h1 className="text-2xl font-bold text-gray-900 print:text-xl">Catálogo</h1>
 
