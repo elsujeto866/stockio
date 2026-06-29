@@ -34,6 +34,10 @@ interface NavSection {
   items: NavItem[];
 }
 
+// Procurement (COMPRAS) is hidden for now — the business only receives products to sell.
+// Flip to true to restore Proveedores + Compras in the nav.
+const SHOW_COMPRAS = false;
+
 const SECTIONS: NavSection[] = [
   {
     title: 'GENERAL',
@@ -177,7 +181,7 @@ export function Sidebar({ mobileOpen, onClose }: SidebarProps) {
         {/* Navigation                                                        */}
         {/* ---------------------------------------------------------------- */}
         <nav aria-label="Navegación principal" className="flex-1 overflow-y-auto py-3">
-          {SECTIONS.map((section) => (
+          {SECTIONS.filter((s) => s.title !== 'COMPRAS' || SHOW_COMPRAS).map((section) => (
             <div key={section.title} className="mb-2">
               {/* Section heading — hidden in rail mode */}
               {!collapsed ? (

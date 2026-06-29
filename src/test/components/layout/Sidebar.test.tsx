@@ -2,14 +2,17 @@
  * Unit tests for Sidebar (WU1 — client island).
  *
  * Covers:
- *  - Structural: section titles GENERAL / COMPRAS / VENTAS, nav aria-label
- *  - Links: all 8 links render with correct hrefs and labels
+ *  - Structural: section titles GENERAL / VENTAS render; COMPRAS is hidden
+ *    (SHOW_COMPRAS flag is false — procurement not active)
+ *  - Links: 6 links render (Proveedores + Compras absent while flag is off)
  *  - Active state: aria-current="page" on matching link, absent on others,
  *    startsWith matching for sub-routes
  *  - Collapse toggle: aria-expanded flips, labels change, localStorage persists,
  *    section titles hidden when collapsed, state restored on mount
  *  - Mobile overlay: backdrop visible when mobileOpen=true, hidden otherwise,
  *    backdrop click / Escape key / link click all call onClose
+ *  - SHOW_COMPRAS flag: when off, COMPRAS title + its two links are absent;
+ *    GENERAL and VENTAS sections remain intact
  *
  * Migrates and supersedes NavLinks.test.tsx — NavLinks has been removed.
  *
@@ -84,9 +87,9 @@ describe('Sidebar — structure', () => {
     expect(screen.getByText('GENERAL')).toBeInTheDocument();
   });
 
-  it('renders section title COMPRAS', () => {
+  it('does NOT render section title COMPRAS (SHOW_COMPRAS flag is off)', () => {
     render(<Sidebar mobileOpen={false} onClose={vi.fn()} />);
-    expect(screen.getByText('COMPRAS')).toBeInTheDocument();
+    expect(screen.queryByText('COMPRAS')).not.toBeInTheDocument();
   });
 
   it('renders section title VENTAS', () => {
@@ -107,17 +110,22 @@ describe('Sidebar — structure', () => {
 // -----------------------------------------------------------------------
 
 describe('Sidebar — links', () => {
-  it('renders all 8 nav links with correct hrefs and labels', () => {
+  it('renders 6 nav links (GENERAL + VENTAS only) while SHOW_COMPRAS is off', () => {
     render(<Sidebar mobileOpen={false} onClose={vi.fn()} />);
 
+    // GENERAL section — always visible
     expect(screen.getByRole('link', { name: /inicio/i })).toHaveAttribute('href', '/dashboard');
     expect(screen.getByRole('link', { name: /productos/i })).toHaveAttribute('href', '/products');
-    expect(screen.getByRole('link', { name: /proveedores/i })).toHaveAttribute('href', '/suppliers');
-    expect(screen.getByRole('link', { name: /^compras$/i })).toHaveAttribute('href', '/purchases');
+
+    // VENTAS section — always visible
     expect(screen.getByRole('link', { name: /tiendas/i })).toHaveAttribute('href', '/stores');
     expect(screen.getByRole('link', { name: /pedidos/i })).toHaveAttribute('href', '/orders');
     expect(screen.getByRole('link', { name: /facturas/i })).toHaveAttribute('href', '/invoices');
     expect(screen.getByRole('link', { name: /cobrar/i })).toHaveAttribute('href', '/receivables');
+
+    // COMPRAS links must be absent while flag is off
+    expect(screen.queryByRole('link', { name: /proveedores/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /^compras$/i })).not.toBeInTheDocument();
   });
 });
 
@@ -244,5 +252,42 @@ describe('Sidebar — mobile overlay', () => {
     render(<Sidebar mobileOpen={true} onClose={onClose} />);
     fireEvent.click(screen.getByRole('link', { name: /inicio/i }));
     expect(onClose).toHaveBeenCalled();
+  });
+});
+
+// -----------------------------------------------------------------------
+// SHOW_COMPRAS flag behaviour
+// -----------------------------------------------------------------------
+
+describe('Sidebar — SHOW_COMPRAS flag off (default)', () => {
+  it('hides the COMPRAS section title', () => {
+    render(<Sidebar mobileOpen={false} onClose={vi.fn()} />);
+    expect(screen.queryByText('COMPRAS')).not.toBeInTheDocument();
+  });
+
+  it('hides the Proveedores link', () => {
+    render(<Sidebar mobileOpen={false} onClose={vi.fn()} />);
+    expect(screen.queryByRole('link', { name: /proveedores/i })).not.toBeInTheDocument();
+  });
+
+  it('hides the Compras link', () => {
+    render(<Sidebar mobileOpen={false} onClose={vi.fn()} />);
+    expect(screen.queryByRole('link', { name: /^compras$/i })).not.toBeInTheDocument();
+  });
+
+  it('still renders GENERAL section with Inicio and Productos', () => {
+    render(<Sidebar mobileOpen={false} onClose={vi.fn()} />);
+    expect(screen.getByText('GENERAL')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /inicio/i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /productos/i })).toBeInTheDocument();
+  });
+
+  it('still renders VENTAS section with all four links', () => {
+    render(<Sidebar mobileOpen={false} onClose={vi.fn()} />);
+    expect(screen.getByText('VENTAS')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /tiendas/i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /pedidos/i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /facturas/i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /cobrar/i })).toBeInTheDocument();
   });
 });
