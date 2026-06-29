@@ -63,37 +63,39 @@ test.describe('Purchases management', () => {
     const firstSupplierId = await supplierOptions[1].getAttribute('value');
     await supplierSelect.selectOption(firstSupplierId!);
 
-    // Get product names before creating purchase (for stock comparison)
-    await page.goto('/products');
-    const firstProductRow = page.locator('article, li').first();
-    const firstProductName = await firstProductRow.textContent().catch(() => null);
-
     // Back to new purchase
     await page.goto('/purchases/new');
     await supplierSelect.selectOption(firstSupplierId!);
 
-    // Add first product
-    const productSelector = page.getByRole('combobox', { name: /seleccionar un producto/i });
-    const productOptions = await productSelector.locator('option').all();
-    if (productOptions.length < 2) {
+    // Open ProductPicker for first product
+    await page.click('button[aria-label="Agregar producto"]');
+    const dialog = page.getByRole('dialog', { name: /seleccionar producto/i });
+    await expect(dialog).toBeVisible();
+
+    // Get all product cards in dialog (exclude the close button)
+    const productCards = dialog.locator('button[type="button"]:not([aria-label="Cerrar"])');
+    const cardCount = await productCards.count();
+    if (cardCount === 0) {
       test.skip();
       return;
     }
 
-    const prodId1 = await productOptions[1].getAttribute('value');
-    await productSelector.selectOption(prodId1!);
-    await page.click('[type=button][aria-label=""]');
+    // Click the first card
+    await productCards.first().click();
+    await expect(dialog).not.toBeVisible();
     await page.getByRole('button', { name: /^agregar$/i }).click();
 
     // Set costoUnitario for first product
     const costoInputs = page.locator('input[step="0.01"]');
     await costoInputs.first().fill('5.00');
 
-    // Add second product if available
+    // Add second product if available (and different from first)
     let hasSecondProduct = false;
-    if (productOptions.length >= 3) {
-      const prodId2 = await productOptions[2].getAttribute('value');
-      await productSelector.selectOption(prodId2!);
+    if (cardCount >= 2) {
+      await page.click('button[aria-label="Agregar producto"]');
+      await expect(dialog).toBeVisible();
+      await productCards.nth(1).click();
+      await expect(dialog).not.toBeVisible();
       await page.getByRole('button', { name: /^agregar$/i }).click();
       await costoInputs.nth(1).fill('3.00');
       hasSecondProduct = true;

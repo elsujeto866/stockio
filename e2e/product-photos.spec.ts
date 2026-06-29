@@ -145,18 +145,24 @@ test.describe('Product Photos', () => {
     // Navigate to new order
     await page.goto('/orders/new');
 
-    // Product selector (OrderBuilder)
-    const productSelect = page.locator('select[aria-label="Seleccionar un producto para agregar"]');
-    await expect(productSelect).toBeVisible({ timeout: 10000 });
+    // Open ProductPicker dialog and select the photo product created in PHOTO-S1.
+    // Hard-fails if the picker doesn't show a card matching PRODUCT_NAME.
+    await page.click('button[aria-label="Agregar producto"]');
+    const dialog = page.getByRole('dialog', { name: /seleccionar producto/i });
+    await expect(dialog).toBeVisible({ timeout: 10000 });
 
-    // Deterministically select the photo product created in PHOTO-S1.
-    // OrderBuilder option text: "{nombre} — {formatCurrency(precio_unitario)}"
-    // — we match by partial text (PRODUCT_NAME) since we don't predict the price format.
-    // Hard-fails if the product is not found; no fallback to "first real product".
-    await selectOptionByPartialText(page, productSelect, PRODUCT_NAME);
+    // Filter by name so only this product's card is visible.
+    const searchInput = dialog.getByLabel(/buscar producto/i);
+    await searchInput.fill(PRODUCT_NAME);
+
+    // Click the matching card — no fallback.
+    const productCard = dialog.getByRole('button', { name: new RegExp(PRODUCT_NAME, 'i') });
+    await expect(productCard).toBeVisible({ timeout: 10000 });
+    await productCard.click();
+    await expect(dialog).not.toBeVisible();
 
     // Click "Agregar" to add the line item
-    await page.click('button:has-text("Agregar")');
+    await page.getByRole('button', { name: /^agregar$/i }).click();
 
     // The order-line items list must appear
     const lineItems = page.locator('ul[aria-label="Order items"]');
@@ -185,17 +191,24 @@ test.describe('Product Photos', () => {
     // Navigate to new purchase
     await page.goto('/purchases/new');
 
-    // Product selector (PurchaseBuilder)
-    const productSelect = page.locator('select[aria-label="Seleccionar un producto para agregar"]');
-    await expect(productSelect).toBeVisible({ timeout: 10000 });
+    // Open ProductPicker dialog and select the photo product created in PHOTO-S1.
+    // Hard-fails if the picker doesn't show a card matching PRODUCT_NAME.
+    await page.click('button[aria-label="Agregar producto"]');
+    const dialog = page.getByRole('dialog', { name: /seleccionar producto/i });
+    await expect(dialog).toBeVisible({ timeout: 10000 });
 
-    // PurchaseBuilder option text is just "{nombre}" — partial text match still used
-    // for consistency and to guard against future option-label changes.
-    // Hard-fails if the product is not found; no fallback.
-    await selectOptionByPartialText(page, productSelect, PRODUCT_NAME);
+    // Filter by name so only this product's card is visible.
+    const searchInput = dialog.getByLabel(/buscar producto/i);
+    await searchInput.fill(PRODUCT_NAME);
+
+    // Click the matching card — no fallback.
+    const productCard = dialog.getByRole('button', { name: new RegExp(PRODUCT_NAME, 'i') });
+    await expect(productCard).toBeVisible({ timeout: 10000 });
+    await productCard.click();
+    await expect(dialog).not.toBeVisible();
 
     // Click "Agregar" to add the line item
-    await page.click('button:has-text("Agregar")');
+    await page.getByRole('button', { name: /^agregar$/i }).click();
 
     // The purchase-line items list must appear
     const purchaseItems = page.locator('ul[aria-label="Purchase items"]');

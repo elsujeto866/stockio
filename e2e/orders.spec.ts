@@ -156,7 +156,7 @@ test.beforeAll(async () => {
 });
 
 // ---------------------------------------------------------------------------
-// Shared helper: log in
+// Shared helpers
 // ---------------------------------------------------------------------------
 async function login(page: Page): Promise<void> {
   await page.goto('/login');
@@ -164,6 +164,19 @@ async function login(page: Page): Promise<void> {
   await page.fill('[name=password]', creds.password);
   await page.click('[type=submit]');
   await expect(page).toHaveURL('/dashboard');
+}
+
+/**
+ * Opens the ProductPicker dialog, clicks the card for the given product name,
+ * then clicks the inline "Agregar" button to add the line item.
+ */
+async function pickAndAdd(page: Page, productName: string): Promise<void> {
+  await page.click('button[aria-label="Agregar producto"]');
+  const dialog = page.getByRole('dialog', { name: /seleccionar producto/i });
+  await expect(dialog).toBeVisible();
+  await dialog.getByRole('button', { name: new RegExp(productName, 'i') }).click();
+  await expect(dialog).not.toBeVisible();
+  await page.getByRole('button', { name: /^agregar$/i }).click();
 }
 
 // ---------------------------------------------------------------------------
@@ -181,14 +194,12 @@ test.describe('Orders management', () => {
     // Select the seeded store
     await page.selectOption('select[name="storeId"]', seededStoreId);
 
-    // Add product A (select → Agregar, then increment to cantidad 2)
-    await page.selectOption('select[aria-label="Seleccionar un producto para agregar"]', seededProductAId);
-    await page.click('button:has-text("Agregar")');
+    // Add product A via picker → increment to cantidad 2
+    await pickAndAdd(page, PRODUCT_A_NAME);
     await page.click(`button[aria-label="Aumentar cantidad de ${PRODUCT_A_NAME}"]`);
 
-    // Add product B (cantidad 1)
-    await page.selectOption('select[aria-label="Seleccionar un producto para agregar"]', seededProductBId);
-    await page.click('button:has-text("Agregar")');
+    // Add product B (cantidad 1) via picker
+    await pickAndAdd(page, PRODUCT_B_NAME);
 
     // Preview total: 2×10 + 1×20 = $40.00 (en-US format)
     await expect(page.getByLabel('Total estimado')).toHaveText('$40.00');
@@ -254,11 +265,10 @@ test.describe('Orders management', () => {
       .single();
     const stockBefore = (before as { stock_actual: number } | null)?.stock_actual ?? 0;
 
-    // Create order with product B (cantidad 1)
+    // Create order with product B (cantidad 1) via picker
     await page.goto('/orders/new');
     await page.selectOption('select[name="storeId"]', seededStoreId);
-    await page.selectOption('select[aria-label="Seleccionar un producto para agregar"]', seededProductBId);
-    await page.click('button:has-text("Agregar")');
+    await pickAndAdd(page, PRODUCT_B_NAME);
     await page.click('button[type="submit"]:has-text("Crear pedido")');
     await expect(page).toHaveURL(/\/orders\/[0-9a-f-]{36}$/);
 
@@ -292,8 +302,7 @@ test.describe('Orders management', () => {
 
     await page.goto('/orders/new');
     await page.selectOption('select[name="storeId"]', seededStoreId);
-    await page.selectOption('select[aria-label="Seleccionar un producto para agregar"]', seededProductAId);
-    await page.click('button:has-text("Agregar")');
+    await pickAndAdd(page, PRODUCT_A_NAME);
 
     // Increment to 5 (need 4 more clicks after the initial add gives cantidad=1)
     for (let i = 0; i < 4; i++) {
