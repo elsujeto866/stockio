@@ -22,6 +22,8 @@ export interface Product {
   shelf_life_days: number | null;
   /** Days before expiry to classify the lot as "expiring soon". NOT NULL DEFAULT 30. */
   expiry_alert_days: number;
+  /** Storage path in product-photos bucket. NULL = no photo. */
+  image_path: string | null;
 }
 
 /**
@@ -41,6 +43,10 @@ export interface ProductInput {
   cost_price?: number | null;
   shelf_life_days?: number | null;
   expiry_alert_days?: number;
+  /** Storage path in product-photos bucket. NULL = no photo. */
+  image_path?: string | null;
+  /** Client-generated UUID for deterministic create (D1). */
+  id?: string;
 }
 
 /**
@@ -63,7 +69,7 @@ export class StockUnderflowError extends Error {
 // Column list — shared by all queries and mutations to avoid drift
 // ---------------------------------------------------------------------------
 const SELECT_COLS =
-  'id, tenant_id, nombre, sku, categoria, precio_unitario, stock_actual, stock_minimo, unidad_medida, activo, created_at, units_per_package, precio_paca, cost_price, shelf_life_days, expiry_alert_days';
+  'id, tenant_id, nombre, sku, categoria, precio_unitario, stock_actual, stock_minimo, unidad_medida, activo, created_at, units_per_package, precio_paca, cost_price, shelf_life_days, expiry_alert_days, image_path';
 
 // ---------------------------------------------------------------------------
 // Queries
@@ -167,6 +173,44 @@ export async function deleteProduct(
     .eq('id', id);
 
   if (error) throw error;
+}
+
+// ---------------------------------------------------------------------------
+// Signed URL batch helper — REQ-4 (S4-1, S4-2, S4-3)
+// ---------------------------------------------------------------------------
+
+const PHOTO_BUCKET = 'product-photos';
+
+/**
+ * Resolves signed URLs for a list of storage paths in ONE batched call.
+ *
+ * - Deduplicates paths with a Set before calling storage.
+ * - Short-circuits on empty input: no storage API call made (S4-2).
+ * - expiresIn = 3600 (1-hour TTL, S4-3).
+ * - Degrades gracefully on error: returns empty Map → callers render placeholders.
+ *
+ * @param supabase - Authenticated Supabase client (server-side RSC only).
+ * @param paths - Array of storage paths (may include null/falsy values; filtered internally).
+ * @returns Map<path, signedUrl>
+ */
+export async function getSignedUrls(
+  supabase: SupabaseClient,
+  paths: string[]
+): Promise<Map<string, string>> {
+  const clean = [...new Set(paths.filter((p): p is string => !!p))];
+  const out = new Map<string, string>();
+  if (clean.length === 0) return out; // short-circuit: NO storage call
+
+  const { data, error } = await supabase.storage
+    .from(PHOTO_BUCKET)
+    .createSignedUrls(clean, 3600);
+
+  if (error) return out; // degrade gracefully → placeholders
+
+  for (const item of (data as Array<{ path?: string; signedUrl?: string | null; error?: unknown }>) ?? []) {
+    if (item.signedUrl && !item.error && item.path) out.set(item.path, item.signedUrl);
+  }
+  return out;
 }
 
 /**

@@ -69,6 +69,13 @@ export const ProductInputSchema = z
       (v) => (v === '' || v === undefined || v === null ? undefined : v),
       z.coerce.number().int().positive('Los días de alerta deben ser un número positivo').default(30)
     ),
+    // image_path: nullable storage path. Empty string → null via transform.
+    image_path: z
+      .string()
+      .max(512)
+      .nullable()
+      .optional()
+      .transform((v) => v || null),
   })
   .superRefine((d, ctx) => {
     const hasPack = d.units_per_package !== null;
