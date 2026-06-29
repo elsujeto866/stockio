@@ -39,6 +39,7 @@ const product: Product = {
   shelf_life_days: null,
   expiry_alert_days: 30,
   image_path: null,
+  presentacion: null,
 };
 
 beforeEach(() => {
@@ -232,6 +233,30 @@ describe('ProductForm — pack fields (S1-T7)', () => {
     expect(
       screen.getByText(/dejar vacío si el producto se vende solo por unidad/i)
     ).toBeInTheDocument();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// PC-T7: presentacion field
+// ---------------------------------------------------------------------------
+describe('ProductForm — presentacion field (PC-T7)', () => {
+  it('renders an input with name="presentacion"', () => {
+    render(<ProductForm action={noop} />);
+    const input = document.querySelector('input[name="presentacion"]') as HTMLInputElement | null;
+    expect(input).not.toBeNull();
+  });
+
+  it('seeds defaultValue from initialData.presentacion in edit mode', () => {
+    const productWithPresentacion: Product = { ...product, presentacion: '70 g' };
+    render(<ProductForm action={noop} initialData={productWithPresentacion} />);
+    const input = document.querySelector('input[name="presentacion"]') as HTMLInputElement;
+    expect(input.value).toBe('70 g');
+  });
+
+  it('renders empty presentacion input when initialData.presentacion is null', () => {
+    render(<ProductForm action={noop} initialData={product} />);
+    const input = document.querySelector('input[name="presentacion"]') as HTMLInputElement;
+    expect(input.value).toBe('');
   });
 });
 

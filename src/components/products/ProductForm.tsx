@@ -266,6 +266,24 @@ export function ProductForm({ action, initialData, tenantId, initialImageUrl }: 
             <FieldError messages={state?.fieldErrors?.sku} />
           </div>
 
+          <div className="space-y-1">
+            <label
+              htmlFor="presentacion"
+              className="block text-sm font-medium text-gray-700"
+            >
+              Presentación
+            </label>
+            <input
+              id="presentacion"
+              name="presentacion"
+              type="text"
+              defaultValue={initialData?.presentacion ?? ''}
+              className={inputClass}
+              placeholder="p. ej. 70 g, 22g x6"
+            />
+            <FieldError messages={state?.fieldErrors?.presentacion} />
+          </div>
+
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
               <label

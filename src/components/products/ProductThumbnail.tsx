@@ -18,9 +18,15 @@ interface Props {
   /** Square size in pixels. Default 56. */
   size?: number;
   className?: string;
+  /**
+   * Image loading strategy. Default 'lazy' — keeps all existing callers unchanged.
+   * Pass 'eager' on catalog cards so images load before the synchronous Print dialog
+   * captures the page (ADR-3).
+   */
+  loading?: 'eager' | 'lazy';
 }
 
-export function ProductThumbnail({ url, alt, size = 56, className = '' }: Props) {
+export function ProductThumbnail({ url, alt, size = 56, className = '', loading = 'lazy' }: Props) {
   if (!url) {
     return (
       <div
@@ -38,6 +44,7 @@ export function ProductThumbnail({ url, alt, size = 56, className = '' }: Props)
       width={size}
       height={size}
       unoptimized
+      loading={loading}
       className={`shrink-0 rounded-lg object-cover ${className}`}
     />
   );

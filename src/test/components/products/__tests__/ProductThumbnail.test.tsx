@@ -9,19 +9,20 @@ import { render, screen } from '@testing-library/react';
 import { ProductThumbnail } from '@/components/products/ProductThumbnail';
 
 // ---------------------------------------------------------------------------
-// next/image mock — renders a plain <img> in jsdom
+// next/image mock — renders a plain <img> in jsdom, forwarding loading prop
 // ---------------------------------------------------------------------------
 vi.mock('next/image', () => ({
-  default: ({ src, alt, width, height, unoptimized, className }: {
+  default: ({ src, alt, width, height, unoptimized, className, loading }: {
     src: string;
     alt: string;
     width: number;
     height: number;
     unoptimized?: boolean;
     className?: string;
+    loading?: 'eager' | 'lazy';
   }) => (
     // eslint-disable-next-line @next/next/no-img-element
-    <img src={src} alt={alt} width={width} height={height} data-unoptimized={unoptimized} className={className} />
+    <img src={src} alt={alt} width={width} height={height} data-unoptimized={unoptimized} className={className} data-loading={loading} />
   ),
 }));
 
@@ -96,5 +97,23 @@ describe('ProductThumbnail — className forwarding', () => {
     render(<ProductThumbnail url="https://x.com/img.jpg" alt="test" className="my-img-class" />);
     const img = screen.getByRole('img');
     expect(img.className).toContain('my-img-class');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// PC-T6: loading prop (ADR-3 — eager loading for print fidelity)
+// ---------------------------------------------------------------------------
+describe('ProductThumbnail — loading prop (PC-T6)', () => {
+  it('defaults to lazy loading when loading prop is omitted (backward-compat)', () => {
+    render(<ProductThumbnail url="https://example.com/photo.jpg" alt="test" />);
+    const img = screen.getByRole('img') as HTMLImageElement;
+    // data-loading should be 'lazy' (default) or absent — not 'eager'
+    expect(img.getAttribute('data-loading')).not.toBe('eager');
+  });
+
+  it('forwards loading="eager" to the <img> element', () => {
+    render(<ProductThumbnail url="https://example.com/photo.jpg" alt="test" loading="eager" />);
+    const img = screen.getByRole('img') as HTMLImageElement;
+    expect(img.getAttribute('data-loading')).toBe('eager');
   });
 });
