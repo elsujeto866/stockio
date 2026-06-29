@@ -29,6 +29,7 @@ import { createOrderAction } from '@/app/(app)/orders/actions';
 import type { ActionResult } from '@/app/(app)/orders/actions';
 import { formatCurrency } from '@/lib/format';
 import { ProductThumbnail } from '@/components/products/ProductThumbnail';
+import { ProductPicker } from '@/components/products/ProductPicker';
 
 // ---------------------------------------------------------------------------
 // Pure exported helpers (unit-testable without rendering)
@@ -117,6 +118,7 @@ export function OrderBuilder({ stores, products, photoUrls = {} }: Props) {
   const [lineItems, setLineItems] = useState<LineItem[]>([]);
   const [selectedProductId, setSelectedProductId] = useState('');
   const [pendingSaleUnit, setPendingSaleUnit] = useState<'unit' | 'package'>('unit');
+  const [pickerOpen, setPickerOpen] = useState(false);
 
   /** Fast product lookup by id. */
   const productMap = useMemo(
@@ -257,25 +259,21 @@ export function OrderBuilder({ stores, products, photoUrls = {} }: Props) {
             Productos
           </h2>
 
-          {/* Product selector + sale unit + Add button */}
+          {/* Product trigger button + sale unit + Add button */}
           <div className="flex flex-wrap gap-2">
-            <select
-              value={selectedProductId}
-              onChange={(e) => {
-                setSelectedProductId(e.target.value);
-                setPendingSaleUnit('unit');
-              }}
-              className={`flex-1 ${inputClass} min-h-[44px]`}
-              aria-label="Seleccionar un producto para agregar"
+            {/* Trigger — opens ProductPicker dialog.
+                Constant aria-label="Agregar producto" keeps accessible name
+                stable regardless of selection state. The inline Agregar
+                button below is matched by /^agregar$/i (anchored) — no
+                collision. */}
+            <button
+              type="button"
+              aria-label="Agregar producto"
+              onClick={() => setPickerOpen(true)}
+              className={`flex-1 ${inputClass} min-h-[44px] text-left`}
             >
-              <option value="">Selecciona un producto…</option>
-              {products.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.nombre} — {formatCurrency(p.precio_unitario)}
-                  {p.precio_paca != null ? ` / Paca: ${formatCurrency(p.precio_paca)}` : ''}
-                </option>
-              ))}
-            </select>
+              {selectedProduct ? selectedProduct.nombre : 'Selecciona un producto…'}
+            </button>
 
             {/* Sale unit selector — shown whenever a product is selected */}
             {selectedProductId && (
@@ -384,6 +382,18 @@ export function OrderBuilder({ stores, products, photoUrls = {} }: Props) {
           )}
         </div>
       </div>
+
+      {/* ── Product picker dialog ───────────────────────────────── */}
+      <ProductPicker
+        open={pickerOpen}
+        onClose={() => setPickerOpen(false)}
+        products={products}
+        photoUrls={photoUrls}
+        onSelect={(p) => {
+          setSelectedProductId(p.id);
+          setPendingSaleUnit('unit');
+        }}
+      />
 
       {/* ── Insufficient stock error ─────────────────────────────── */}
       {stockError && (

@@ -16,7 +16,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, act, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, act, waitFor, within } from '@testing-library/react';
 
 vi.mock('@/app/(app)/orders/actions', () => ({
   createOrderAction: vi.fn().mockResolvedValue(null),
@@ -119,9 +119,20 @@ beforeEach(() => {
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
+/**
+ * Simulates the full picker flow:
+ *   1. Click the "Agregar producto" trigger button → opens picker dialog.
+ *   2. Click the product card for the given productId (by nombre) → closes dialog.
+ *   3. Click the inline "Agregar" button → calls addItem().
+ *
+ * Uses /^agregar$/i (anchored) for the inline button to avoid matching the
+ * "Agregar producto" trigger (aria-label="Agregar producto").
+ */
 function addProduct(productId: string) {
-  const selector = screen.getByRole('combobox', { name: /seleccionar un producto/i });
-  fireEvent.change(selector, { target: { value: productId } });
+  const name = products.find((p) => p.id === productId)!.nombre;
+  fireEvent.click(screen.getByRole('button', { name: /agregar producto/i }));
+  const dialog = screen.getByRole('dialog');
+  fireEvent.click(within(dialog).getByRole('button', { name: new RegExp(name, 'i') }));
   fireEvent.click(screen.getByRole('button', { name: /^agregar$/i }));
 }
 
@@ -134,9 +145,9 @@ describe('OrderBuilder — rendering', () => {
     expect(screen.getByRole('combobox', { name: /tienda/i })).toBeInTheDocument();
   });
 
-  it('renders a product selector select', () => {
+  it('renders a product picker trigger button', () => {
     render(<OrderBuilder stores={stores} products={products} />);
-    expect(screen.getByRole('combobox', { name: /seleccionar un producto/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /agregar producto/i })).toBeInTheDocument();
   });
 
   it('submit button is disabled initially (0 items)', () => {
@@ -343,19 +354,24 @@ describe('OrderBuilder — mixed lines (S2-T9 component)', () => {
   it('same productId added as unit then package → two distinct line items', () => {
     render(<OrderBuilder stores={stores} products={products} />);
 
-    // Add prod-3 as unit
-    const selector = screen.getByRole('combobox', { name: /seleccionar un producto/i });
-    fireEvent.change(selector, { target: { value: 'prod-3' } });
-    // Select unit sale
+    const packName = products.find((p) => p.id === 'prod-3')!.nombre; // 'Pack Product'
+
+    // Add prod-3 as unit via picker
+    fireEvent.click(screen.getByRole('button', { name: /agregar producto/i }));
+    const dialog1 = screen.getByRole('dialog');
+    fireEvent.click(within(dialog1).getByRole('button', { name: new RegExp(packName, 'i') }));
+    // Select unit sale (combobox appears after picker closes)
     const saleUnitSelectors = screen.queryAllByRole('combobox', { name: /tipo de venta/i });
     if (saleUnitSelectors.length > 0) {
       fireEvent.change(saleUnitSelectors[saleUnitSelectors.length - 1], { target: { value: 'unit' } });
     }
     fireEvent.click(screen.getByRole('button', { name: /^agregar$/i }));
 
-    // Add prod-3 as package
-    fireEvent.change(selector, { target: { value: 'prod-3' } });
-    // The sale unit selector in the add-row should now show 'package' option
+    // Add prod-3 as package via picker
+    fireEvent.click(screen.getByRole('button', { name: /agregar producto/i }));
+    const dialog2 = screen.getByRole('dialog');
+    fireEvent.click(within(dialog2).getByRole('button', { name: new RegExp(packName, 'i') }));
+    // Select package sale
     const saleUnitSelectors2 = screen.queryAllByRole('combobox', { name: /tipo de venta/i });
     if (saleUnitSelectors2.length > 0) {
       fireEvent.change(saleUnitSelectors2[saleUnitSelectors2.length - 1], { target: { value: 'package' } });
