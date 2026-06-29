@@ -26,6 +26,7 @@ import type { ActionResult } from '@/app/(app)/purchases/actions';
 import { formatCurrency } from '@/lib/format';
 import { computeExpiryDate } from '@/lib/domain/expiry';
 import { ProductThumbnail } from '@/components/products/ProductThumbnail';
+import { ProductPicker } from '@/components/products/ProductPicker';
 
 interface LineItem {
   productId: string;
@@ -61,12 +62,15 @@ export function PurchaseBuilder({ suppliers, products, photoUrls = {} }: Props) 
   );
   const [lineItems, setLineItems] = useState<LineItem[]>([]);
   const [selectedProductId, setSelectedProductId] = useState('');
+  const [pickerOpen, setPickerOpen] = useState(false);
 
   /** Fast product lookup by id. */
   const productMap = useMemo(
     () => new Map(products.map((p) => [p.id, p])),
     [products]
   );
+
+  const selectedProduct = productMap.get(selectedProductId);
 
   /** Active suppliers only — deactivated suppliers hidden from dropdown (REQ-S2). */
   const activeSuppliers = useMemo(
@@ -205,21 +209,20 @@ export function PurchaseBuilder({ suppliers, products, photoUrls = {} }: Props) 
             Productos
           </h2>
 
-          {/* Product selector + Add button */}
+          {/* Product trigger button + Add button */}
           <div className="flex gap-2">
-            <select
-              value={selectedProductId}
-              onChange={(e) => setSelectedProductId(e.target.value)}
-              className={`flex-1 ${inputClass} min-h-[44px]`}
-              aria-label="Seleccionar un producto para agregar"
+            {/* Trigger — opens ProductPicker dialog.
+                Constant aria-label="Agregar producto" keeps accessible name
+                stable. The inline Agregar button is matched by /^agregar$/i
+                (anchored) — no collision. */}
+            <button
+              type="button"
+              aria-label="Agregar producto"
+              onClick={() => setPickerOpen(true)}
+              className={`flex-1 ${inputClass} min-h-[44px] text-left`}
             >
-              <option value="">Selecciona un producto…</option>
-              {products.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.nombre}
-                </option>
-              ))}
-            </select>
+              {selectedProduct?.nombre ?? 'Selecciona un producto…'}
+            </button>
             <button
               type="button"
               onClick={addItem}
@@ -229,6 +232,15 @@ export function PurchaseBuilder({ suppliers, products, photoUrls = {} }: Props) 
               Agregar
             </button>
           </div>
+
+          {/* ProductPicker dialog — set-selected only; addItem runs on Agregar click */}
+          <ProductPicker
+            open={pickerOpen}
+            onClose={() => setPickerOpen(false)}
+            products={products}
+            photoUrls={photoUrls}
+            onSelect={(p) => setSelectedProductId(p.id)}
+          />
 
           <FieldError messages={state?.fieldErrors?.items} />
 

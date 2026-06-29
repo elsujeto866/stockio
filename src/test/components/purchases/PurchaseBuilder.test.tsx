@@ -18,7 +18,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, act } from '@testing-library/react';
+import { render, screen, fireEvent, act, within } from '@testing-library/react';
 
 vi.mock('@/app/(app)/purchases/actions', () => ({
   createPurchaseAction: vi.fn().mockResolvedValue(null),
@@ -109,9 +109,19 @@ beforeEach(() => {
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
+/**
+ * Simulates the full picker flow for PurchaseBuilder:
+ *   1. Click the "Agregar producto" trigger button → opens picker dialog.
+ *   2. Click the product card for the given productId (by nombre) → closes dialog.
+ *   3. Click the inline "Agregar" button → calls addItem().
+ *
+ * PurchaseBuilder has no saleUnit step between picker and addItem.
+ */
 function addProduct(productId: string) {
-  const selector = screen.getByRole('combobox', { name: /seleccionar un producto/i });
-  fireEvent.change(selector, { target: { value: productId } });
+  const name = products.find((p) => p.id === productId)!.nombre;
+  fireEvent.click(screen.getByRole('button', { name: /agregar producto/i }));
+  const dialog = screen.getByRole('dialog');
+  fireEvent.click(within(dialog).getByRole('button', { name: new RegExp(name, 'i') }));
   fireEvent.click(screen.getByRole('button', { name: /^agregar$/i }));
 }
 
