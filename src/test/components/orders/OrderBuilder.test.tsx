@@ -68,6 +68,7 @@ const products: Product[] = [
     cost_price: null,
     shelf_life_days: null,
     expiry_alert_days: 30,
+  image_path: null,
   },
   {
     id: 'prod-2',
@@ -86,6 +87,7 @@ const products: Product[] = [
     cost_price: null,
     shelf_life_days: null,
     expiry_alert_days: 30,
+  image_path: null,
   },
   // Packaged product — for S2-T9 tests
   {
@@ -105,6 +107,7 @@ const products: Product[] = [
     cost_price: null,
     shelf_life_days: null,
     expiry_alert_days: 30,
+  image_path: null,
   },
 ];
 

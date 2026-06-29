@@ -13,15 +13,18 @@
 import Link from 'next/link';
 import type { Product } from '@/lib/data/products';
 import { LowStockBadge } from './LowStockBadge';
+import { ProductThumbnail } from './ProductThumbnail';
 import { deleteProductAction } from '@/app/(app)/products/actions';
 import { formatCurrency, formatPercent } from '@/lib/format';
 import { computeUnitMargin, computePackMargin } from '@/lib/domain/margin';
 
 interface Props {
   product: Product;
+  /** Signed URL for the product photo. NULL renders placeholder. */
+  imageUrl?: string | null;
 }
 
-export function ProductCard({ product }: Props) {
+export function ProductCard({ product, imageUrl = null }: Props) {
   const unitMargin = computeUnitMargin(product);
   const packMargin = computePackMargin(product);
 
@@ -33,7 +36,9 @@ export function ProductCard({ product }: Props) {
       <div className="p-4 space-y-3">
         {/* Header row */}
         <div className="flex items-start justify-between gap-2">
-          <div className="min-w-0">
+          {/* Thumbnail — placeholder when no photo */}
+          <ProductThumbnail url={imageUrl} alt={product.nombre} size={56} className="mt-0.5" />
+          <div className="min-w-0 flex-1">
             <h2 className="font-semibold text-gray-900 truncate">{product.nombre}</h2>
             {product.sku && (
               <p className="text-xs text-gray-500 mt-0.5">SKU: {product.sku}</p>

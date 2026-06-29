@@ -28,6 +28,7 @@ import type { Product } from '@/lib/data/products';
 import { createOrderAction } from '@/app/(app)/orders/actions';
 import type { ActionResult } from '@/app/(app)/orders/actions';
 import { formatCurrency } from '@/lib/format';
+import { ProductThumbnail } from '@/components/products/ProductThumbnail';
 
 // ---------------------------------------------------------------------------
 // Pure exported helpers (unit-testable without rendering)
@@ -83,6 +84,8 @@ interface LineItem {
 interface Props {
   stores: Store[];
   products: Product[];
+  /** productId → signed URL (REQ-5 S5-3). Batched by the RSC page. */
+  photoUrls?: Record<string, string>;
 }
 
 // ---------------------------------------------------------------------------
@@ -105,7 +108,7 @@ const inputClass =
 // Component
 // ---------------------------------------------------------------------------
 
-export function OrderBuilder({ stores, products }: Props) {
+export function OrderBuilder({ stores, products, photoUrls = {} }: Props) {
   const [state, dispatch, isPending] = useActionState<ActionResult, FormData>(
     createOrderAction,
     null
@@ -315,6 +318,13 @@ export function OrderBuilder({ stores, products }: Props) {
                       key={lineKey}
                       className="flex items-center gap-2 rounded-xl border border-gray-100 bg-cream p-3"
                     >
+                      {/* REQ-5 S5-3: thumbnail on added-line row (NOT in native select) */}
+                      <ProductThumbnail
+                        url={photoUrls[item.productId] ?? null}
+                        alt={productName}
+                        size={40}
+                        className="shrink-0"
+                      />
                       <span className="flex-1 text-sm font-medium text-gray-900 truncate">
                         {productName}{saleUnitLabel}
                       </span>

@@ -33,6 +33,7 @@ const mockProduct: Product = {
   cost_price: null,
   shelf_life_days: null,
   expiry_alert_days: 30,
+  image_path: null,
 };
 
 // ---------------------------------------------------------------------------

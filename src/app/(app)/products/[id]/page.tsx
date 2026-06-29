@@ -11,10 +11,11 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import { requireUser } from '@/lib/auth/get-user';
-import { getProduct } from '@/lib/data/products';
+import { getProduct, getSignedUrls } from '@/lib/data/products';
 import { getLotsByProduct } from '@/lib/data/lots';
 import { sortByFEFO } from '@/lib/domain/expiry';
 import { LotList } from '@/components/products/LotList';
+import { ProductThumbnail } from '@/components/products/ProductThumbnail';
 import { getToday } from '@/lib/utils/today';
 
 interface Props {
@@ -32,6 +33,15 @@ export default async function ProductDetailPage({ params }: Props) {
   ]);
 
   if (!product) notFound();
+
+  // REQ-5 (S5-2): resolve single signed URL for the detail photo display.
+  const photoUrlMap = await getSignedUrls(
+    supabase,
+    product.image_path ? [product.image_path] : []
+  );
+  const photoUrl = product.image_path
+    ? (photoUrlMap.get(product.image_path) ?? null)
+    : null;
 
   const today = getToday();
   // sortByFEFO applies FEFO ordering on the client (DB already returns in FEFO order,
@@ -51,6 +61,9 @@ export default async function ProductDetailPage({ params }: Props) {
           </Link>
           <h1 className="text-2xl font-bold text-gray-900">{product.nombre}</h1>
         </div>
+
+        {/* ── Photo (REQ-5 S5-2) ────────────────────────────────── */}
+        <ProductThumbnail url={photoUrl} alt={product.nombre} size={240} />
 
         {/* ── Product summary ────────────────────────────────────── */}
         <div className="rounded-2xl bg-white border border-gray-100 shadow-sm overflow-hidden">

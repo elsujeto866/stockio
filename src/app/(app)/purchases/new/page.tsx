@@ -11,7 +11,7 @@ import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import { requireUser } from '@/lib/auth/get-user';
 import { getSuppliers } from '@/lib/data/suppliers';
-import { getProducts } from '@/lib/data/products';
+import { getProducts, getSignedUrls } from '@/lib/data/products';
 import { PurchaseBuilder } from '@/components/purchases/PurchaseBuilder';
 
 export default async function NewPurchasePage() {
@@ -22,6 +22,21 @@ export default async function NewPurchasePage() {
     getSuppliers(supabase),
     getProducts(supabase),
   ]);
+
+  // REQ-4 (S4-1): ONE batch call for all products — no N+1.
+  const imagePaths = products
+    .map((p) => p.image_path)
+    .filter((p): p is string => !!p);
+  const photoUrlMap = await getSignedUrls(supabase, imagePaths);
+
+  // Convert Map<path, url> to Record<productId, url>
+  const photoUrls: Record<string, string> = {};
+  for (const p of products) {
+    if (p.image_path) {
+      const url = photoUrlMap.get(p.image_path);
+      if (url) photoUrls[p.id] = url;
+    }
+  }
 
   return (
     <main className="min-h-screen bg-cream">
@@ -36,7 +51,7 @@ export default async function NewPurchasePage() {
           <h1 className="text-2xl font-bold text-gray-900">Nueva compra</h1>
         </div>
 
-        <PurchaseBuilder suppliers={suppliers} products={products} />
+        <PurchaseBuilder suppliers={suppliers} products={products} photoUrls={photoUrls} />
       </div>
     </main>
   );

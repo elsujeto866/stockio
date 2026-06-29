@@ -25,6 +25,7 @@ import { createPurchaseAction } from '@/app/(app)/purchases/actions';
 import type { ActionResult } from '@/app/(app)/purchases/actions';
 import { formatCurrency } from '@/lib/format';
 import { computeExpiryDate } from '@/lib/domain/expiry';
+import { ProductThumbnail } from '@/components/products/ProductThumbnail';
 
 interface LineItem {
   productId: string;
@@ -37,6 +38,8 @@ interface LineItem {
 interface Props {
   suppliers: Supplier[];
   products: Product[];
+  /** productId → signed URL (REQ-5 S5-4). Batched by the RSC page. */
+  photoUrls?: Record<string, string>;
 }
 
 function FieldError({ messages }: { messages?: string[] }) {
@@ -51,7 +54,7 @@ function FieldError({ messages }: { messages?: string[] }) {
 const inputClass =
   'w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent';
 
-export function PurchaseBuilder({ suppliers, products }: Props) {
+export function PurchaseBuilder({ suppliers, products, photoUrls = {} }: Props) {
   const [state, dispatch, isPending] = useActionState<ActionResult, FormData>(
     createPurchaseAction,
     null
@@ -241,6 +244,13 @@ export function PurchaseBuilder({ suppliers, products }: Props) {
                       key={item.productId}
                       className="flex items-center gap-2 rounded-xl border border-gray-100 bg-cream p-3"
                     >
+                      {/* REQ-5 S5-4: thumbnail on added-line row */}
+                      <ProductThumbnail
+                        url={photoUrls[item.productId] ?? null}
+                        alt={productName}
+                        size={40}
+                        className="shrink-0"
+                      />
                       <span className="flex-1 text-sm font-medium text-gray-900 truncate min-w-0">
                         {productName}
                       </span>

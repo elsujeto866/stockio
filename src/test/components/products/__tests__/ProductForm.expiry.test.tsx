@@ -37,6 +37,7 @@ const fullProduct: Product = {
   cost_price: null,
   shelf_life_days: 90,
   expiry_alert_days: 14,
+  image_path: null,
 };
 
 beforeEach(() => {

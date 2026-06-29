@@ -42,7 +42,7 @@ function makeStorageMock() {
 beforeEach(() => {
   vi.clearAllMocks();
   // Default compression mock returns a minimal Blob
-  (imageCompression as Mock).mockResolvedValue(new Blob(['x'], { type: 'image/jpeg' }));
+  (imageCompression as unknown as Mock).mockResolvedValue(new Blob(['x'], { type: 'image/jpeg' }));
 });
 
 // ---------------------------------------------------------------------------

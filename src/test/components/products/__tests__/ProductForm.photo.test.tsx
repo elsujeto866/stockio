@@ -66,7 +66,7 @@ const productNoPhoto: Product = { ...product, image_path: null };
 beforeEach(() => {
   vi.clearAllMocks();
   // Default: compression returns tiny blob
-  (imageCompression as Mock).mockResolvedValue(new Blob(['x'], { type: 'image/jpeg' }));
+  (imageCompression as unknown as Mock).mockResolvedValue(new Blob(['x'], { type: 'image/jpeg' }));
   // Default: upload succeeds
   (uploadProductPhoto as Mock).mockResolvedValue('t-1/prod-1.jpg');
   // Default: delete succeeds
@@ -78,6 +78,8 @@ beforeEach(() => {
 // ---------------------------------------------------------------------------
 describe('ProductForm — source file lint guard', async () => {
   it("source has 'use client' at the top and only one occurrence", async () => {
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore — Vite raw import not typed in tsconfig
     const src = await import('@/components/products/ProductForm?raw').catch(() => null);
     if (!src) return; // raw import may not work in jsdom — skip gracefully
     const matches = (src.default as string).match(/'use client'/g);
@@ -157,7 +159,7 @@ describe('ProductForm — post-compress size guard (S2-3)', () => {
   it('shows upload error and does NOT call uploadProductPhoto when compressed > 5 MiB', async () => {
     // Mock compression returning a blob > 5 MiB
     const bigBlob = new Blob([new ArrayBuffer(6 * 1024 * 1024)], { type: 'image/jpeg' });
-    (imageCompression as Mock).mockResolvedValue(bigBlob);
+    (imageCompression as unknown as Mock).mockResolvedValue(bigBlob);
 
     render(<ProductForm action={noop} tenantId="t-1" />);
 

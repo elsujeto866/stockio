@@ -8,13 +8,20 @@
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import { requireUser } from '@/lib/auth/get-user';
-import { getProducts } from '@/lib/data/products';
+import { getProducts, getSignedUrls } from '@/lib/data/products';
 import { ProductList } from '@/components/products/ProductList';
 
 export default async function ProductsPage() {
   await requireUser();
   const supabase = await createClient();
   const products = await getProducts(supabase);
+
+  // REQ-4 (S4-1): ONE batch call for all visible products — no N+1.
+  // S4-2: null image_path filtered before the call.
+  const imagePaths = products
+    .map((p) => p.image_path)
+    .filter((p): p is string => !!p);
+  const photoUrls = await getSignedUrls(supabase, imagePaths);
 
   return (
     <main className="min-h-screen bg-cream">
@@ -29,7 +36,7 @@ export default async function ProductsPage() {
           </Link>
         </div>
 
-        <ProductList products={products} />
+        <ProductList products={products} photoUrls={photoUrls} />
       </div>
     </main>
   );

@@ -11,9 +11,11 @@ import Link from 'next/link';
 
 interface Props {
   products: Product[];
+  /** Signed URL map for product photos (path → url). Built once by the RSC page. */
+  photoUrls?: Map<string, string>;
 }
 
-export function ProductList({ products }: Props) {
+export function ProductList({ products, photoUrls }: Props) {
   if (products.length === 0) {
     return (
       <div className="rounded-2xl bg-white border border-gray-100 shadow-sm p-8 text-center space-y-3">
@@ -33,7 +35,14 @@ export function ProductList({ products }: Props) {
     <ul className="space-y-3" aria-label="Lista de productos">
       {products.map((product) => (
         <li key={product.id}>
-          <ProductCard product={product} />
+          <ProductCard
+            product={product}
+            imageUrl={
+              product.image_path
+                ? (photoUrls?.get(product.image_path) ?? null)
+                : null
+            }
+          />
         </li>
       ))}
     </ul>
