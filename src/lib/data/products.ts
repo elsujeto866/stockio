@@ -24,6 +24,8 @@ export interface Product {
   expiry_alert_days: number;
   /** Storage path in product-photos bucket. NULL = no photo. */
   image_path: string | null;
+  /** Gramaje/presentation, e.g. '70 g'. NULL = unset. */
+  presentacion: string | null;
 }
 
 /**
@@ -45,6 +47,8 @@ export interface ProductInput {
   expiry_alert_days?: number;
   /** Storage path in product-photos bucket. NULL = no photo. */
   image_path?: string | null;
+  /** Gramaje/presentation, e.g. '70 g'. NULL = unset. */
+  presentacion?: string | null;
   /** Client-generated UUID for deterministic create (D1). */
   id?: string;
 }
@@ -69,7 +73,7 @@ export class StockUnderflowError extends Error {
 // Column list — shared by all queries and mutations to avoid drift
 // ---------------------------------------------------------------------------
 const SELECT_COLS =
-  'id, tenant_id, nombre, sku, categoria, precio_unitario, stock_actual, stock_minimo, unidad_medida, activo, created_at, units_per_package, precio_paca, cost_price, shelf_life_days, expiry_alert_days, image_path';
+  'id, tenant_id, nombre, sku, categoria, precio_unitario, stock_actual, stock_minimo, unidad_medida, activo, created_at, units_per_package, precio_paca, cost_price, shelf_life_days, expiry_alert_days, image_path, presentacion';
 
 // ---------------------------------------------------------------------------
 // Queries
@@ -86,6 +90,22 @@ export async function getProducts(supabase: SupabaseClient): Promise<Product[]> 
     .from('products')
     .select(SELECT_COLS)
     .eq('activo', true)
+    .order('nombre');
+
+  if (error) throw error;
+  return (data ?? []) as Product[];
+}
+
+/**
+ * Active products ordered for the catalog: categoria (NULLS LAST), then nombre.
+ * getProducts is left UNTOUCHED (REQ-9 / S9-3).
+ */
+export async function getCatalogProducts(supabase: SupabaseClient): Promise<Product[]> {
+  const { data, error } = await supabase
+    .from('products')
+    .select(SELECT_COLS)
+    .eq('activo', true)
+    .order('categoria', { nullsFirst: false })
     .order('nombre');
 
   if (error) throw error;

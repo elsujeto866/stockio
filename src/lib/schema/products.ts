@@ -76,6 +76,13 @@ export const ProductInputSchema = z
       .nullable()
       .optional()
       .transform((v) => v || null),
+    // presentacion: nullable free-text (gramaje/format). Mirrors sku exactly.
+    presentacion: z
+      .string()
+      .max(100)
+      .nullable()
+      .optional()
+      .transform((v) => v || null),
   })
   .superRefine((d, ctx) => {
     const hasPack = d.units_per_package !== null;
