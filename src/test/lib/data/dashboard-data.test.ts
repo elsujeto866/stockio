@@ -47,6 +47,7 @@ const lowProduct: Product = {
   shelf_life_days: null,
   expiry_alert_days: 30,
   image_path: null,
+  presentacion: null,
 };
 
 const okProduct: Product = {
@@ -67,6 +68,7 @@ const okProduct: Product = {
   shelf_life_days: null,
   expiry_alert_days: 30,
   image_path: null,
+  presentacion: null,
 };
 
 const recentOrder: OrderListItem = {

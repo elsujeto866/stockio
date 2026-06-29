@@ -38,13 +38,16 @@ export function AppShell({ name, email, rol, children }: AppShellProps) {
 
   return (
     <div className="min-h-screen bg-cream flex">
-      {/* Collapsible left sidebar */}
-      <Sidebar mobileOpen={mobileOpen} onClose={() => setMobileOpen(false)} />
+      {/* Collapsible left sidebar — display:contents keeps flex layout identical
+          on screen; print:hidden hides it from printed output (S6-1 / ADR-2) */}
+      <div className="contents print:hidden">
+        <Sidebar mobileOpen={mobileOpen} onClose={() => setMobileOpen(false)} />
+      </div>
 
       {/* Main content column */}
       <div className="flex-1 flex flex-col min-w-0">
-        {/* Top bar */}
-        <header className="bg-brand shadow-md">
+        {/* Top bar — print:hidden keeps the header out of printed output (S6-1 / ADR-2) */}
+        <header className="bg-brand shadow-md print:hidden">
           <div className="flex items-center h-14 px-4 gap-3">
             {/* Hamburger — visible on mobile only, opens the sidebar overlay */}
             <button

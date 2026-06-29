@@ -44,6 +44,7 @@ const SECTIONS: NavSection[] = [
     items: [
       { href: '/dashboard', label: 'Inicio', icon: '🏠' },
       { href: '/products', label: 'Productos', icon: '📦' },
+      { href: '/catalogo', label: 'Catálogo', icon: '📖' },
     ],
   },
   {

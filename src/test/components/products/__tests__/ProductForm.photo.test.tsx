@@ -59,6 +59,7 @@ const product: Product = {
   shelf_life_days: null,
   expiry_alert_days: 30,
   image_path: 't-1/prod-1.jpg',
+  presentacion: null,
 };
 
 const productNoPhoto: Product = { ...product, image_path: null };

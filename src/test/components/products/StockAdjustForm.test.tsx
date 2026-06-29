@@ -38,6 +38,7 @@ const product: Product = {
   shelf_life_days: null,
   expiry_alert_days: 30,
   image_path: null,
+  presentacion: null,
 };
 
 beforeEach(() => {

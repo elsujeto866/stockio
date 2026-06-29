@@ -110,12 +110,13 @@ describe('Sidebar — structure', () => {
 // -----------------------------------------------------------------------
 
 describe('Sidebar — links', () => {
-  it('renders 6 nav links (GENERAL + VENTAS only) while SHOW_COMPRAS is off', () => {
+  it('renders 7 nav links (GENERAL + VENTAS only) while SHOW_COMPRAS is off', () => {
     render(<Sidebar mobileOpen={false} onClose={vi.fn()} />);
 
     // GENERAL section — always visible
     expect(screen.getByRole('link', { name: /inicio/i })).toHaveAttribute('href', '/dashboard');
     expect(screen.getByRole('link', { name: /productos/i })).toHaveAttribute('href', '/products');
+    expect(screen.getByRole('link', { name: /catálogo/i })).toHaveAttribute('href', '/catalogo');
 
     // VENTAS section — always visible
     expect(screen.getByRole('link', { name: /tiendas/i })).toHaveAttribute('href', '/stores');
@@ -275,11 +276,12 @@ describe('Sidebar — SHOW_COMPRAS flag off (default)', () => {
     expect(screen.queryByRole('link', { name: /^compras$/i })).not.toBeInTheDocument();
   });
 
-  it('still renders GENERAL section with Inicio and Productos', () => {
+  it('still renders GENERAL section with Inicio, Productos, and Catálogo', () => {
     render(<Sidebar mobileOpen={false} onClose={vi.fn()} />);
     expect(screen.getByText('GENERAL')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /inicio/i })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /productos/i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /catálogo/i })).toBeInTheDocument();
   });
 
   it('still renders VENTAS section with all four links', () => {

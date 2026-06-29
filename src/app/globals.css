@@ -22,6 +22,15 @@ body {
   color: #2A2724;
 }
 
+/* Print layout — body background and page margins.
+ * The cream body bg (#FFF7EE) is a plain CSS rule on <body>, NOT a Tailwind
+ * utility, so print: variants on wrapper elements cannot override it.
+ * This block IS the only correct fix (ADR-2). */
+@media print {
+  body { background-color: #fff; }
+  @page { margin: 12mm; }
+}
+
 @layer components {
   /* Primary action — brand orange */
   .btn-primary {

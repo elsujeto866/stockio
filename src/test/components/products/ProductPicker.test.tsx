@@ -72,6 +72,7 @@ const products: Product[] = [
     shelf_life_days: null,
     expiry_alert_days: 30,
     image_path: null, // NULL photo — placeholder path
+    presentacion: null,
   },
   {
     id: 'prod-2',
@@ -91,6 +92,7 @@ const products: Product[] = [
     shelf_life_days: null,
     expiry_alert_days: 30,
     image_path: null,
+    presentacion: null,
   },
 ];
 

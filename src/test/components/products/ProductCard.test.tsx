@@ -59,6 +59,7 @@ const baseProduct = {
   shelf_life_days: null,
   expiry_alert_days: 30,
   image_path: null,
+  presentacion: null,
 };
 
 describe('ProductCard', () => {
