@@ -586,6 +586,7 @@ describe('SRI fiscal snapshot — WU4 (create_invoice RPC rewrite)', () => {
     const { data: nullUser } = await admin.auth.admin.createUser({
       email: nullEmail, password: PASSWORD, email_confirm: true,
     });
+    if (!nullUser.user) throw new Error('null-ruc user creation failed');
     const nullUserId = nullUser.user.id;
 
     await admin.from('profiles').insert({
@@ -644,13 +645,10 @@ describe('SRI fiscal snapshot — WU4 (create_invoice RPC rewrite)', () => {
     expect(error).toBeNull();
     expect(invoiceId).not.toBeNull();
 
+    // Single-literal select — no + concatenation (required for Supabase type inference)
     const { data: inv } = await admin
       .from('invoices')
-      .select(
-        'emisor_ruc, emisor_razon_social, emisor_estab, emisor_pto_emi, ' +
-        'comprador_tipo_identificacion, comprador_numero_identificacion, comprador_razon_social, ' +
-        'subtotal_base_imponible, valor_iva'
-      )
+      .select('emisor_ruc, emisor_razon_social, emisor_estab, emisor_pto_emi, comprador_tipo_identificacion, comprador_numero_identificacion, comprador_razon_social, subtotal_base_imponible, valor_iva')
       .eq('id', invoiceId)
       .single();
 
@@ -675,7 +673,7 @@ describe('SRI fiscal snapshot — WU4 (create_invoice RPC rewrite)', () => {
 
     const { data: inv } = await admin
       .from('invoices')
-      .select('comprador_tipo_identificacion, comprador_numero_identificacion, comprador_razon_social')
+      .select('comprador_tipo_identificacion, comprador_numero_identificacion, comprador_razon_social, subtotal_base_imponible')
       .eq('id', invoiceId)
       .single();
 
