@@ -100,6 +100,10 @@ let clientB: SupabaseClient;
 let storeAId: string;
 let storeBId: string;
 
+// WU4 fiscal fixture stores
+let storeSriId: string;     // tipo='05', numero='1713175071', razon='Juan Pérez' — full snapshot test
+let storeFallbackId: string; // tipo='05', numero='1713175071', razon=NULL — razon fallback test
+
 // ---------------------------------------------------------------------------
 // Setup
 // ---------------------------------------------------------------------------
@@ -124,6 +128,19 @@ beforeAll(async () => {
     .single();
   if (tBErr) throw new Error(`tenant B: ${tBErr.message}`);
   tenantBId = tB.id;
+
+  // WU4: set RUC on both tenants so existing gapless tests survive the new NULL-RUC guard
+  const { error: rucAErr } = await admin
+    .from('tenants')
+    .update({ ruc: '0992234789001' })
+    .eq('id', tenantAId);
+  if (rucAErr) throw new Error(`tenant A ruc: ${rucAErr.message}`);
+
+  const { error: rucBErr } = await admin
+    .from('tenants')
+    .update({ ruc: '0992234789002' })
+    .eq('id', tenantBId);
+  if (rucBErr) throw new Error(`tenant B ruc: ${rucBErr.message}`);
 
   // Auth user A
   const { data: uA, error: uAErr } = await admin.auth.admin.createUser({
@@ -172,6 +189,36 @@ beforeAll(async () => {
     .single();
   if (sBErr) throw new Error(`store B: ${sBErr.message}`);
   storeBId = sB.id;
+
+  // WU4 — store with explicit cédula buyer (Scenario 6.1)
+  const { data: sSri, error: sSriErr } = await admin
+    .from('stores')
+    .insert({
+      tenant_id: tenantAId,
+      nombre: `__sri_buyer_${UNIQUE}__`,
+      tipo_identificacion: '05',
+      numero_identificacion: '1713175071',
+      razon_social_comprobante: 'Juan Pérez',
+    })
+    .select('id')
+    .single();
+  if (sSriErr) throw new Error(`store sri: ${sSriErr.message}`);
+  storeSriId = sSri.id;
+
+  // WU4 — store with cédula buyer but NULL razon (Scenario 6.3 fallback)
+  const { data: sFb, error: sFbErr } = await admin
+    .from('stores')
+    .insert({
+      tenant_id: tenantAId,
+      nombre: 'Tienda ABC',
+      tipo_identificacion: '05',
+      numero_identificacion: '1713175071',
+      razon_social_comprobante: null,
+    })
+    .select('id')
+    .single();
+  if (sFbErr) throw new Error(`store fallback: ${sFbErr.message}`);
+  storeFallbackId = sFb.id;
 
   // Authenticate client A
   clientA = createBrowserStyleClient();
@@ -512,5 +559,185 @@ describe('cross-tenant RLS isolation', () => {
     // Tenant B tries to find the invoice by orderId — must return null (RLS blocks)
     const result = await getInvoiceByOrderId(clientB, orderId);
     expect(result).toBeNull();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// WU4 — SRI fiscal snapshot (REQ-4a, REQ-5, REQ-6)
+//
+// RED until migration 20260630120300_create_invoice_sri.sql is applied:
+//   - NULL-RUC test expects RAISE but old RPC succeeds → fails
+//   - Snapshot column tests: old RPC sets them NULL → assertion fails
+//   - IVA tests: old RPC does not compute → subtotal_base_imponible=NULL → fails
+// ---------------------------------------------------------------------------
+describe('SRI fiscal snapshot — WU4 (create_invoice RPC rewrite)', () => {
+  // ── Scenario 4.1 — NULL RUC blocks emit ──────────────────────────────────
+  it('tenant with null RUC: RAISE exception, no invoice row, counter unchanged (Scenario 4.1)', async () => {
+    const nullEmail = `null-ruc+${UNIQUE}@stockio.test`;
+
+    // Create an isolated tenant WITHOUT ruc
+    const { data: nullTenant } = await admin
+      .from('tenants')
+      .insert({ nombre: `__null_ruc_${UNIQUE}__` })
+      .select('id')
+      .single();
+    const nullTenantId = nullTenant!.id;
+
+    const { data: nullUser } = await admin.auth.admin.createUser({
+      email: nullEmail, password: PASSWORD, email_confirm: true,
+    });
+    const nullUserId = nullUser.user.id;
+
+    await admin.from('profiles').insert({
+      id: nullUserId, tenant_id: nullTenantId, nombre: 'NullRuc', rol: 'admin',
+    });
+
+    const { data: nullStore } = await admin
+      .from('stores')
+      .insert({ tenant_id: nullTenantId, nombre: 'NullRucStore' })
+      .select('id')
+      .single();
+
+    const nullClient = createBrowserStyleClient();
+    await nullClient.auth.signInWithPassword({ email: nullEmail, password: PASSWORD });
+
+    // Counter before
+    const { data: ctrBefore } = await admin
+      .from('tenant_invoice_counters')
+      .select('last_number')
+      .eq('tenant_id', nullTenantId)
+      .maybeSingle();
+    const numBefore = ctrBefore?.last_number ?? 0;
+
+    const orderId = await insertOrder(nullTenantId, nullStore!.id, { total: 100.00 });
+
+    // RED: old RPC has no NULL-RUC check → succeeds; after WU4 migration → RAISE
+    const { data: invoiceId, error } = await nullClient.rpc('create_invoice', { p_order_id: orderId });
+    expect(error).not.toBeNull();
+    expect(invoiceId).toBeNull();
+    expect(error?.message).toMatch(/ruc/i);
+
+    // No invoice row created
+    const { data: rows } = await admin.from('invoices').select('id').eq('order_id', orderId);
+    expect(rows).toHaveLength(0);
+
+    // Counter must not advance
+    const { data: ctrAfter } = await admin
+      .from('tenant_invoice_counters')
+      .select('last_number')
+      .eq('tenant_id', nullTenantId)
+      .maybeSingle();
+    expect(ctrAfter?.last_number ?? 0).toBe(numBefore);
+
+    // Cleanup
+    await nullClient.auth.signOut();
+    await admin.auth.admin.deleteUser(nullUserId);
+    await admin.from('tenants').delete().eq('id', nullTenantId);
+  }, 30_000);
+
+  // ── Scenario 6.1 — Full snapshot ─────────────────────────────────────────
+  it('full fiscal snapshot: all 9 cols populated from tenant + store (Scenario 6.1)', async () => {
+    const orderId = await insertOrder(tenantAId, storeSriId, { total: 115.00 });
+
+    // RED: old RPC → fiscal cols are NULL
+    const { data: invoiceId, error } = await clientA.rpc('create_invoice', { p_order_id: orderId });
+    expect(error).toBeNull();
+    expect(invoiceId).not.toBeNull();
+
+    const { data: inv } = await admin
+      .from('invoices')
+      .select(
+        'emisor_ruc, emisor_razon_social, emisor_estab, emisor_pto_emi, ' +
+        'comprador_tipo_identificacion, comprador_numero_identificacion, comprador_razon_social, ' +
+        'subtotal_base_imponible, valor_iva'
+      )
+      .eq('id', invoiceId)
+      .single();
+
+    expect(inv?.emisor_ruc).toBe('0992234789001');
+    expect(inv?.emisor_razon_social).not.toBeNull();
+    expect(inv?.emisor_estab).toBe('001');
+    expect(inv?.emisor_pto_emi).toBe('001');
+    expect(inv?.comprador_tipo_identificacion).toBe('05');
+    expect(inv?.comprador_numero_identificacion).toBe('1713175071');
+    expect(inv?.comprador_razon_social).toBe('Juan Pérez');
+  });
+
+  // ── Scenario 6.2 — Consumidor Final snapshot ─────────────────────────────
+  it('consumidor final: storeA has tipo=07 + NULL numero → comprador_* defaults (Scenario 6.2)', async () => {
+    // storeA: tipo='07', numero_identificacion=NULL (WU3 migration default) → falls back to consumidor final
+    const orderId = await insertOrder(tenantAId, storeAId, { total: 50.00 });
+
+    // RED: old RPC → comprador_* are NULL
+    const { data: invoiceId, error } = await clientA.rpc('create_invoice', { p_order_id: orderId });
+    expect(error).toBeNull();
+    expect(invoiceId).not.toBeNull();
+
+    const { data: inv } = await admin
+      .from('invoices')
+      .select('comprador_tipo_identificacion, comprador_numero_identificacion, comprador_razon_social')
+      .eq('id', invoiceId)
+      .single();
+
+    expect(inv?.comprador_tipo_identificacion).toBe('07');
+    expect(inv?.comprador_numero_identificacion).toBe('9999999999999');
+    expect(inv?.comprador_razon_social).toBe('CONSUMIDOR FINAL');
+  });
+
+  // ── Scenario 6.3 — razon_social fallback ─────────────────────────────────
+  it('comprador_razon_social falls back to store.nombre when razon_social_comprobante is NULL (Scenario 6.3)', async () => {
+    const orderId = await insertOrder(tenantAId, storeFallbackId, { total: 30.00 });
+
+    // RED: old RPC → comprador_razon_social NULL
+    const { data: invoiceId, error } = await clientA.rpc('create_invoice', { p_order_id: orderId });
+    expect(error).toBeNull();
+    expect(invoiceId).not.toBeNull();
+
+    const { data: inv } = await admin
+      .from('invoices')
+      .select('comprador_razon_social')
+      .eq('id', invoiceId)
+      .single();
+
+    expect(inv?.comprador_razon_social).toBe('Tienda ABC');
+  });
+
+  // ── Scenario 5.1 — IVA round total ───────────────────────────────────────
+  it('total=115.00 → subtotal_base_imponible=100.00, valor_iva=15.00 (Scenario 5.1)', async () => {
+    const orderId = await insertOrder(tenantAId, storeAId, { total: 115.00 });
+
+    // RED: old RPC → subtotal_base_imponible=NULL
+    const { data: invoiceId, error } = await clientA.rpc('create_invoice', { p_order_id: orderId });
+    expect(error).toBeNull();
+    expect(invoiceId).not.toBeNull();
+
+    const { data: inv } = await admin
+      .from('invoices')
+      .select('subtotal_base_imponible, valor_iva, total')
+      .eq('id', invoiceId)
+      .single();
+
+    expect(Number(inv?.subtotal_base_imponible)).toBeCloseTo(100.00, 2);
+    expect(Number(inv?.valor_iva)).toBeCloseTo(15.00, 2);
+    expect(Number(inv?.subtotal_base_imponible) + Number(inv?.valor_iva)).toBeCloseTo(Number(inv?.total), 2);
+  });
+
+  // ── Scenario 5.2 — IVA non-round total ───────────────────────────────────
+  it('total=23.00 → subtotal_base_imponible=20.00, valor_iva=3.00 (Scenario 5.2)', async () => {
+    const orderId = await insertOrder(tenantAId, storeAId, { total: 23.00 });
+
+    // RED: old RPC → subtotal_base_imponible=NULL
+    const { data: invoiceId, error } = await clientA.rpc('create_invoice', { p_order_id: orderId });
+    expect(error).toBeNull();
+    expect(invoiceId).not.toBeNull();
+
+    const { data: inv } = await admin
+      .from('invoices')
+      .select('subtotal_base_imponible, valor_iva')
+      .eq('id', invoiceId)
+      .single();
+
+    expect(Number(inv?.subtotal_base_imponible)).toBeCloseTo(20.00, 2);
+    expect(Number(inv?.valor_iva)).toBeCloseTo(3.00, 2);
   });
 });
