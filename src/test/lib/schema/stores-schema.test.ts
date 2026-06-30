@@ -183,3 +183,188 @@ describe('StoreInputSchema — payment_terms_days', () => {
     }
   });
 });
+
+// ---------------------------------------------------------------------------
+// StoreInputSchema — fiscal identifier fields (REQ-3a–3e)
+// ---------------------------------------------------------------------------
+describe('StoreInputSchema — fiscal identifier fields', () => {
+  // ---- tipo_identificacion default ----
+
+  it('defaults tipo_identificacion to 07 when absent', () => {
+    const result = StoreInputSchema.safeParse({ nombre: 'X' });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.tipo_identificacion).toBe('07');
+    }
+  });
+
+  it('rejects tipo_identificacion value not in enum (e.g. "03")', () => {
+    const result = StoreInputSchema.safeParse({ nombre: 'X', tipo_identificacion: '03' });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      const errors = result.error.flatten().fieldErrors;
+      expect(errors.tipo_identificacion).toBeDefined();
+    }
+  });
+
+  // ---- Cédula (tipo 05) — REQ-3a ----
+
+  it('Scenario 3.1 — tipo=05, valid cédula → parse succeeds', () => {
+    const result = StoreInputSchema.safeParse({
+      nombre: 'X',
+      tipo_identificacion: '05',
+      numero_identificacion: '1713175071',
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it('Scenario 3.2 — tipo=05, invalid cédula → parse error on numero_identificacion', () => {
+    const result = StoreInputSchema.safeParse({
+      nombre: 'X',
+      tipo_identificacion: '05',
+      numero_identificacion: '1234567890',
+    });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      const errors = result.error.flatten().fieldErrors;
+      expect(errors.numero_identificacion).toBeDefined();
+    }
+  });
+
+  it('tipo=05, missing numero → parse error on numero_identificacion', () => {
+    const result = StoreInputSchema.safeParse({
+      nombre: 'X',
+      tipo_identificacion: '05',
+    });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      const errors = result.error.flatten().fieldErrors;
+      expect(errors.numero_identificacion).toBeDefined();
+    }
+  });
+
+  // ---- RUC (tipo 04) — REQ-3b ----
+
+  it('Scenario 3.3 — tipo=04, 11-digit numero → parse error (expects 13)', () => {
+    const result = StoreInputSchema.safeParse({
+      nombre: 'X',
+      tipo_identificacion: '04',
+      numero_identificacion: '17131750710',
+    });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      const errors = result.error.flatten().fieldErrors;
+      expect(errors.numero_identificacion).toBeDefined();
+    }
+  });
+
+  it('tipo=04, valid 13-digit RUC → parse succeeds', () => {
+    const result = StoreInputSchema.safeParse({
+      nombre: 'X',
+      tipo_identificacion: '04',
+      numero_identificacion: '1713175071001',
+    });
+    expect(result.success).toBe(true);
+  });
+
+  // ---- Consumidor Final (tipo 07) — REQ-3e ----
+
+  it('Scenario 3.4 — tipo=07, empty numero → auto-fills 9999999999999 and CONSUMIDOR FINAL', () => {
+    const result = StoreInputSchema.safeParse({
+      nombre: 'X',
+      tipo_identificacion: '07',
+      numero_identificacion: '',
+    });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.numero_identificacion).toBe('9999999999999');
+      expect(result.data.razon_social_comprobante).toBe('CONSUMIDOR FINAL');
+    }
+  });
+
+  it('tipo=07, absent numero → auto-fills consumidor final values', () => {
+    const result = StoreInputSchema.safeParse({
+      nombre: 'X',
+      tipo_identificacion: '07',
+    });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.numero_identificacion).toBe('9999999999999');
+      expect(result.data.razon_social_comprobante).toBe('CONSUMIDOR FINAL');
+    }
+  });
+
+  // ---- Pasaporte (tipo 06) — REQ-3c ----
+
+  it('Scenario 3.5 — tipo=06, free-form string → parse succeeds', () => {
+    const result = StoreInputSchema.safeParse({
+      nombre: 'X',
+      tipo_identificacion: '06',
+      numero_identificacion: 'AB123456',
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it('tipo=06, missing numero → parse error (non-empty required)', () => {
+    const result = StoreInputSchema.safeParse({
+      nombre: 'X',
+      tipo_identificacion: '06',
+    });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      const errors = result.error.flatten().fieldErrors;
+      expect(errors.numero_identificacion).toBeDefined();
+    }
+  });
+
+  // ---- Exterior (tipo 08) — REQ-3d ----
+
+  it('tipo=08, any non-empty string → parse succeeds', () => {
+    const result = StoreInputSchema.safeParse({
+      nombre: 'X',
+      tipo_identificacion: '08',
+      numero_identificacion: 'PASSPORT-999',
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it('tipo=08, missing numero → parse error (non-empty required)', () => {
+    const result = StoreInputSchema.safeParse({
+      nombre: 'X',
+      tipo_identificacion: '08',
+    });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      const errors = result.error.flatten().fieldErrors;
+      expect(errors.numero_identificacion).toBeDefined();
+    }
+  });
+
+  // ---- razon_social_comprobante ----
+
+  it('razon_social_comprobante empty string transforms to null', () => {
+    const result = StoreInputSchema.safeParse({
+      nombre: 'X',
+      tipo_identificacion: '04',
+      numero_identificacion: '1713175071001',
+      razon_social_comprobante: '',
+    });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.razon_social_comprobante).toBeNull();
+    }
+  });
+
+  it('razon_social_comprobante present value is preserved', () => {
+    const result = StoreInputSchema.safeParse({
+      nombre: 'X',
+      tipo_identificacion: '04',
+      numero_identificacion: '1713175071001',
+      razon_social_comprobante: 'Juan Pérez',
+    });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.razon_social_comprobante).toBe('Juan Pérez');
+    }
+  });
+});
