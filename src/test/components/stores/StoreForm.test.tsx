@@ -109,6 +109,80 @@ describe('StoreForm — create vs edit mode', () => {
 });
 
 // ---------------------------------------------------------------------------
+// WU7 — Fiscal card
+//
+// RED until StoreForm is updated with the "Datos fiscales (comprobante)" card.
+// ---------------------------------------------------------------------------
+describe('StoreForm — fiscal card (WU7)', () => {
+  it('renders "Datos fiscales (comprobante)" section heading', () => {
+    render(<StoreForm action={noop} />);
+    expect(screen.getByText(/datos fiscales/i)).toBeInTheDocument();
+  });
+
+  it('renders tipo_identificacion select with 5 options (04, 05, 06, 07, 08)', () => {
+    render(<StoreForm action={noop} />);
+    const select = screen.getByRole('combobox', { name: /tipo.*identificaci/i });
+    expect(select).toBeInTheDocument();
+    const options = Array.from((select as HTMLSelectElement).options).map((o) => o.value);
+    expect(options).toEqual(expect.arrayContaining(['04', '05', '06', '07', '08']));
+    expect(options).toHaveLength(5);
+  });
+
+  it('renders numero_identificacion input', () => {
+    render(<StoreForm action={noop} />);
+    expect(screen.getByLabelText(/n[uú]mero.*identificaci/i)).toBeInTheDocument();
+  });
+
+  it('renders razon_social_comprobante input', () => {
+    render(<StoreForm action={noop} />);
+    expect(screen.getByLabelText(/raz[oó]n social/i)).toBeInTheDocument();
+  });
+
+  it('pre-fills tipo_identificacion from initialData', () => {
+    const storeWithRuc = { ...store, tipo_identificacion: '04' };
+    render(<StoreForm action={noop} initialData={storeWithRuc} />);
+    const select = screen.getByRole('combobox', { name: /tipo.*identificaci/i }) as HTMLSelectElement;
+    expect(select.value).toBe('04');
+  });
+
+  it('pre-fills numero_identificacion from initialData', () => {
+    const storeWithNum = { ...store, numero_identificacion: '1713175071' };
+    render(<StoreForm action={noop} initialData={storeWithNum} />);
+    expect(screen.getByDisplayValue('1713175071')).toBeInTheDocument();
+  });
+
+  it('pre-fills razon_social_comprobante from initialData', () => {
+    const storeWithRazon = { ...store, razon_social_comprobante: 'Tienda Los Andes' };
+    render(<StoreForm action={noop} initialData={storeWithRazon} />);
+    expect(screen.getByDisplayValue('Tienda Los Andes')).toBeInTheDocument();
+  });
+
+  it('displays a field error on numero_identificacion when action returns that fieldError', async () => {
+    const errAction = vi.fn().mockResolvedValue({
+      fieldErrors: { numero_identificacion: ['Cédula inválida'] },
+    } satisfies ActionResult);
+
+    const { container } = render(<StoreForm action={errAction} />);
+    await act(async () => {
+      fireEvent.submit(container.querySelector('form')!);
+    });
+    expect(screen.getByText('Cédula inválida')).toBeInTheDocument();
+  });
+
+  it('displays a field error on razon_social_comprobante when action returns that fieldError', async () => {
+    const errAction = vi.fn().mockResolvedValue({
+      fieldErrors: { razon_social_comprobante: ['Razón social requerida'] },
+    } satisfies ActionResult);
+
+    const { container } = render(<StoreForm action={errAction} />);
+    await act(async () => {
+      fireEvent.submit(container.querySelector('form')!);
+    });
+    expect(screen.getByText('Razón social requerida')).toBeInTheDocument();
+  });
+});
+
+// ---------------------------------------------------------------------------
 // Error display
 // ---------------------------------------------------------------------------
 describe('StoreForm — error display', () => {

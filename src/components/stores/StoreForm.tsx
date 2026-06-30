@@ -149,6 +149,77 @@ export function StoreForm({ action, initialData }: Props) {
         </div>
       </div>
 
+      {/* ── Fiscal card (WU7) ───────────────────────────────────── */}
+      <div className="rounded-2xl bg-white border border-gray-100 shadow-sm overflow-hidden">
+        <div className="h-1 bg-warning" />
+        <div className="p-4 space-y-4">
+          <h2 className="text-sm font-semibold text-amber-700 uppercase tracking-wide">
+            Datos fiscales (comprobante)
+          </h2>
+
+          {/* tipo_identificacion */}
+          <div className="space-y-1">
+            <label
+              htmlFor="tipo_identificacion"
+              className="block text-sm font-medium text-gray-700"
+            >
+              Tipo de identificación
+            </label>
+            <select
+              id="tipo_identificacion"
+              name="tipo_identificacion"
+              defaultValue={initialData?.tipo_identificacion ?? '07'}
+              className={inputClass}
+            >
+              <option value="04">RUC</option>
+              <option value="05">Cédula</option>
+              <option value="06">Pasaporte</option>
+              <option value="07">Consumidor Final</option>
+              <option value="08">Identificación del Exterior</option>
+            </select>
+            <FieldError messages={state?.fieldErrors?.tipo_identificacion} />
+          </div>
+
+          {/* numero_identificacion */}
+          <div className="space-y-1">
+            <label
+              htmlFor="numero_identificacion"
+              className="block text-sm font-medium text-gray-700"
+            >
+              Número de identificación
+            </label>
+            <input
+              id="numero_identificacion"
+              name="numero_identificacion"
+              type="text"
+              defaultValue={initialData?.numero_identificacion ?? ''}
+              className={inputClass}
+              placeholder="Número según tipo seleccionado"
+            />
+            <FieldError messages={state?.fieldErrors?.numero_identificacion} />
+          </div>
+
+          {/* razon_social_comprobante */}
+          <div className="space-y-1">
+            <label
+              htmlFor="razon_social_comprobante"
+              className="block text-sm font-medium text-gray-700"
+            >
+              Razón social (comprobante)
+            </label>
+            <input
+              id="razon_social_comprobante"
+              name="razon_social_comprobante"
+              type="text"
+              defaultValue={initialData?.razon_social_comprobante ?? ''}
+              className={inputClass}
+              placeholder="Nombre legal para el comprobante"
+            />
+            <FieldError messages={state?.fieldErrors?.razon_social_comprobante} />
+          </div>
+        </div>
+      </div>
+
       {/* ── Global error ─────────────────────────────────────────── */}
       {state?.error && (
         <p
