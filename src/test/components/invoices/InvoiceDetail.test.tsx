@@ -136,3 +136,101 @@ describe('InvoiceDetail — line items', () => {
 // Direct payment status toggle is replaced by AbonoForm (record_payment RPC).
 // These tests are intentionally removed.
 // ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
+// WU6 — SRI comprobante blocks
+//
+// RED until InvoiceDetail is updated with emisor/buyer/IVA blocks.
+// ---------------------------------------------------------------------------
+
+// SRI invoice fixture with all fiscal snapshot fields populated.
+// IVA values (80.00 / 12.00) are deliberately different from item prices (20.00, 15.00)
+// to avoid getByText conflicts in the IVA breakdown assertions.
+// 92 / 1.15 = 80.00 exactly; 92 - 80 = 12. ✓
+const sriInvoice: InvoiceDetailType = {
+  ...baseInvoice,
+  total: 92.00,
+  subtotal_base_imponible: 80.00,
+  valor_iva: 12.00,
+  emisor_ruc: '0992234789001',
+  emisor_razon_social: 'Distribuidora El Sol',
+  emisor_estab: '001',
+  emisor_pto_emi: '001',
+  comprador_tipo_identificacion: '07',
+  comprador_numero_identificacion: '9999999999999',
+  comprador_razon_social: 'CONSUMIDOR FINAL',
+};
+
+describe('InvoiceDetail — WU6 SRI comprobante blocks', () => {
+  // Scenario 7.3 — pre-SRI invoice (all null) renders without crash
+  it('pre-SRI invoice (all SRI cols null): renders without throwing; no emisor/buyer/IVA block (Scenario 7.3)', () => {
+    // baseInvoice has all SRI cols null
+    render(<InvoiceDetail invoice={baseInvoice} />);
+    expect(screen.getByText(/Factura #7/i)).toBeInTheDocument();
+    expect(screen.queryByText(/ruc/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/consumidor/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/iva/i)).not.toBeInTheDocument();
+  });
+
+  // Scenario 7.1 — secuencial formatted correctly
+  it('emisor block shows formatted secuencial 001-001-000000007 (Scenario 7.1)', () => {
+    // numero=7, estab='001', pto_emi='001' → '001-001-000000007'
+    render(<InvoiceDetail invoice={sriInvoice} />);
+    expect(screen.getByText('001-001-000000007')).toBeInTheDocument();
+  });
+
+  // Scenario 7.1 — emisor block header fields
+  it('emisor block shows emisor_razon_social and emisor_ruc', () => {
+    render(<InvoiceDetail invoice={sriInvoice} />);
+    expect(screen.getByText('Distribuidora El Sol')).toBeInTheDocument();
+    expect(screen.getByText('0992234789001')).toBeInTheDocument();
+  });
+
+  // Scenario 7.2 — IVA breakdown visible
+  it('IVA breakdown shows subtotal (80), IVA 15% label, and iva amount (12) (Scenario 7.2)', () => {
+    render(<InvoiceDetail invoice={sriInvoice} />);
+    // IVA 15% label
+    expect(screen.getByText(/iva.*15/i)).toBeInTheDocument();
+    // Subtotal base imponible ($80.00 — unique, no collision with item prices 20/15)
+    expect(screen.getByText(formatCurrency(80))).toBeInTheDocument();
+    // IVA amount ($12.00 — unique)
+    expect(screen.getByText(formatCurrency(12))).toBeInTheDocument();
+  });
+
+  // Scenario 7.4 — tipo code '07' → 'Consumidor Final'
+  it('buyer block shows human label Consumidor Final for tipo 07 (Scenario 7.4)', () => {
+    render(<InvoiceDetail invoice={sriInvoice} />);
+    expect(screen.getByText('Consumidor Final')).toBeInTheDocument();
+    // Raw code '07' must NOT appear as a label
+    expect(screen.queryByText(/^07$/)).not.toBeInTheDocument();
+  });
+
+  // REQ-7e — independent block guards
+  it('buyer block absent when comprador_tipo_identificacion is null even if emisor block is present (REQ-7e)', () => {
+    const noComprador: InvoiceDetailType = {
+      ...sriInvoice,
+      comprador_tipo_identificacion: null,
+      comprador_numero_identificacion: null,
+      comprador_razon_social: null,
+    };
+    render(<InvoiceDetail invoice={noComprador} />);
+    // Emisor block present
+    expect(screen.getByText('Distribuidora El Sol')).toBeInTheDocument();
+    // Buyer block absent
+    expect(screen.queryByText('Consumidor Final')).not.toBeInTheDocument();
+    expect(screen.queryByText('9999999999999')).not.toBeInTheDocument();
+  });
+
+  // Backward compat with specific tipo labels
+  it('buyer block shows Cédula label for tipo 05', () => {
+    const cedula: InvoiceDetailType = {
+      ...sriInvoice,
+      comprador_tipo_identificacion: '05',
+      comprador_numero_identificacion: '1713175071',
+      comprador_razon_social: 'Juan Pérez',
+    };
+    render(<InvoiceDetail invoice={cedula} />);
+    expect(screen.getByText('Cédula')).toBeInTheDocument();
+    expect(screen.getByText('Juan Pérez')).toBeInTheDocument();
+  });
+});
