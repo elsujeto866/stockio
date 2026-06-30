@@ -17,6 +17,25 @@ export interface Invoice {
   due_date: string | null;
   /** Sum of all recorded payments for this invoice (maintained by record_payment RPC). */
   total_paid: number;
+  // ── SRI fiscal snapshot (WU4/WU5) — all nullable for backward compat ──
+  /** IVA base = round(total/1.15, 2). NULL on pre-SRI invoices. */
+  subtotal_base_imponible: number | null;
+  /** IVA 15% = total - subtotal_base_imponible. NULL on pre-SRI invoices. */
+  valor_iva: number | null;
+  /** Buyer fiscal type code ('04'=RUC,'05'=Cédula,'06'=Pasaporte,'07'=ConsumidorFinal,'08'=Exterior). */
+  comprador_tipo_identificacion: string | null;
+  /** Buyer fiscal ID number snapshotted at emit time. */
+  comprador_numero_identificacion: string | null;
+  /** Buyer legal name snapshotted at emit time. */
+  comprador_razon_social: string | null;
+  /** Emisor RUC snapshotted from tenants.ruc at emit time. */
+  emisor_ruc: string | null;
+  /** Emisor legal name snapshotted from tenants.nombre at emit time. */
+  emisor_razon_social: string | null;
+  /** Emisor establishment code snapshotted from tenants.estab at emit time. */
+  emisor_estab: string | null;
+  /** Emisor emission point snapshotted from tenants.pto_emi at emit time. */
+  emisor_pto_emi: string | null;
 }
 
 /**
@@ -82,11 +101,12 @@ export async function getInvoice(
   supabase: SupabaseClient,
   id: string
 ): Promise<InvoiceDetail | null> {
+  // SRI fiscal snapshot cols are included here (ADR D5 — comprobante is the sole consumer).
+  // Single string literal (no + concatenation) required for Supabase type-level column inference.
   const { data, error } = await supabase
     .from('invoices')
     .select(
-      'id, tenant_id, order_id, numero, fecha_emision, total, estado_pago, created_at, due_date, total_paid, ' +
-        'order:orders(id, fecha, total, notas, store:stores(nombre), items:order_items(id, product_id, cantidad, precio_unitario, subtotal, product:products(nombre)))'
+      'id, tenant_id, order_id, numero, fecha_emision, total, estado_pago, created_at, due_date, total_paid, subtotal_base_imponible, valor_iva, comprador_tipo_identificacion, comprador_numero_identificacion, comprador_razon_social, emisor_ruc, emisor_razon_social, emisor_estab, emisor_pto_emi, order:orders(id, fecha, total, notas, store:stores(nombre), items:order_items(id, product_id, cantidad, precio_unitario, subtotal, product:products(nombre)))'
     )
     .eq('id', id)
     .single();

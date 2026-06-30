@@ -11,6 +11,12 @@ export interface Store {
   created_at: string;
   /** Days after invoice issue date when payment is due. Default 30. */
   payment_terms_days: number;
+  /** Fiscal buyer identification type code. Default '07' (Consumidor Final). */
+  tipo_identificacion: string;
+  /** Fiscal buyer ID number (cédula, RUC, pasaporte). NULL means consumidor final. */
+  numero_identificacion: string | null;
+  /** Legal name for the comprobante. NULL falls back to stores.nombre at emit time. */
+  razon_social_comprobante: string | null;
 }
 
 /**
@@ -23,13 +29,18 @@ export interface StoreInput {
   direccion?: string | null;
   telefono?: string | null;
   payment_terms_days?: number;
+  tipo_identificacion?: string;
+  numero_identificacion?: string | null;
+  razon_social_comprobante?: string | null;
 }
 
 // ---------------------------------------------------------------------------
-// Column list — shared by all queries and mutations to avoid drift
+// Column list — shared by all queries and mutations to avoid drift.
+// Must be a single string literal (no + concatenation) so Supabase's
+// type-level parser can infer column names correctly.
 // ---------------------------------------------------------------------------
 const SELECT_COLS =
-  'id, tenant_id, nombre, contacto, direccion, telefono, activo, created_at, payment_terms_days';
+  'id, tenant_id, nombre, contacto, direccion, telefono, activo, created_at, payment_terms_days, tipo_identificacion, numero_identificacion, razon_social_comprobante';
 
 // ---------------------------------------------------------------------------
 // Queries

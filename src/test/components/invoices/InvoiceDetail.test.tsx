@@ -38,6 +38,16 @@ const baseInvoice: InvoiceDetailType = {
   created_at: '2026-06-25T10:00:00Z',
   due_date: null,
   total_paid: 0,
+  // SRI snapshot — null on pre-SRI invoices (backward compat, WU5)
+  subtotal_base_imponible: null,
+  valor_iva: null,
+  comprador_tipo_identificacion: null,
+  comprador_numero_identificacion: null,
+  comprador_razon_social: null,
+  emisor_ruc: null,
+  emisor_razon_social: null,
+  emisor_estab: null,
+  emisor_pto_emi: null,
   order: {
     id: 'order-1',
     fecha: '2026-06-20',

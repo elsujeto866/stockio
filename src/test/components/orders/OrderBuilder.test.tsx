@@ -47,6 +47,10 @@ const stores: Store[] = [
     activo: true,
     created_at: '2026-01-01T00:00:00Z',
     payment_terms_days: 30,
+    // WU5 fiscal fields
+    tipo_identificacion: '07',
+    numero_identificacion: null,
+    razon_social_comprobante: null,
   },
 ];
 
